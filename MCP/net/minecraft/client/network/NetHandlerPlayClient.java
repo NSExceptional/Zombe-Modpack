@@ -1,5 +1,7 @@
 package net.minecraft.client.network;
 
+import zombe.core.ZHandle;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
@@ -248,6 +250,10 @@ import org.apache.logging.log4j.Logger;
 
 public class NetHandlerPlayClient implements INetHandlerPlayClient
 {
+    //-ZMod-------------------------------------------------------------------
+    protected static boolean zmodmarker = true;
+    //------------------------------------------------------------------------
+ 
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**

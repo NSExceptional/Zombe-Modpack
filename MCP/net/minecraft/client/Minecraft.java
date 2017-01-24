@@ -1,5 +1,8 @@
 package net.minecraft.client;
 
+import zombe.core.ZHandle;
+import zombe.core.wrapper.*;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
@@ -416,6 +419,10 @@ public class Minecraft implements IThreadListener, ISnooperInfo
         ImageIO.setUseCache(false);
         Bootstrap.register();
         this.dataFixer = DataFixesManager.createFixer();
+        
+        //-ZMod-core----------------------------------------------------------
+        ZHandle.onMinecraftInit(this);
+        //--------------------------------------------------------------------
     }
 
     public void run()
@@ -578,11 +585,21 @@ public class Minecraft implements IThreadListener, ISnooperInfo
         this.renderManager = new RenderManager(this.renderEngine, this.renderItem);
         this.itemRenderer = new ItemRenderer(this);
         this.mcResourceManager.registerReloadListener(this.renderItem);
-        this.entityRenderer = new EntityRenderer(this, this.mcResourceManager);
+        
+        //-ZMod-core----------------------------------------------------------
+        // this.entityRenderer = new EntityRenderer(this, this.mcResourceManager);
+        this.entityRenderer = new ZEntityRenderer(this, this.mcResourceManager);
+        //--------------------------------------------------------------------
+        
         this.mcResourceManager.registerReloadListener(this.entityRenderer);
         this.blockRenderDispatcher = new BlockRendererDispatcher(this.modelManager.getBlockModelShapes(), this.blockColors);
         this.mcResourceManager.registerReloadListener(this.blockRenderDispatcher);
-        this.renderGlobal = new RenderGlobal(this);
+        
+        //-ZMod-core----------------------------------------------------------
+        // this.renderGlobal = new RenderGlobal(this);
+        this.renderGlobal = new ZRenderGlobal(this);
+        //--------------------------------------------------------------------
+        
         this.mcResourceManager.registerReloadListener(this.renderGlobal);
         this.guiAchievement = new GuiAchievement(this);
         GlStateManager.viewport(0, 0, this.displayWidth, this.displayHeight);
@@ -1749,6 +1766,10 @@ public class Minecraft implements IThreadListener, ISnooperInfo
      */
     public void runTick() throws IOException
     {
+        //-ZMod-core----------------------------------------------------------
+        ZHandle.onMinecraftTick();
+        //--------------------------------------------------------------------
+        
         if (this.rightClickDelayTimer > 0)
         {
             --this.rightClickDelayTimer;

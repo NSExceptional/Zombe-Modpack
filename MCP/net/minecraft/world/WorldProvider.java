@@ -1,5 +1,7 @@
 package net.minecraft.world;
 
+import zombe.core.ZHandle;
+
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Biomes;
@@ -19,6 +21,10 @@ import net.minecraft.world.gen.FlatGeneratorInfo;
 
 public abstract class WorldProvider
 {
+    //-ZModpack---------------------------------------------------------------
+    protected static final boolean zmodmarker = true;
+    //------------------------------------------------------------------------
+ 
     public static final float[] MOON_PHASE_FACTORS = new float[] {1.0F, 0.75F, 0.5F, 0.25F, 0.0F, 0.25F, 0.5F, 0.75F};
 
     /** world object being used */
@@ -114,6 +120,14 @@ public abstract class WorldProvider
      */
     public float calculateCelestialAngle(long worldTime, float partialTicks)
     {
+        //-ZMod---------------------------------------------------------------
+        long zSunOffset = ZHandle.handle("getSunOffset", 0L);
+        if (zSunOffset != 0) {
+           partialTicks = 0f;
+        }
+        worldTime += zSunOffset;
+        //--------------------------------------------------------------------
+   
         int i = (int)(worldTime % 24000L);
         float f = ((float)i + partialTicks) / 24000.0F - 0.25F;
 
@@ -202,7 +216,10 @@ public abstract class WorldProvider
      */
     public float getCloudHeight()
     {
-        return 128.0F;
+        //-ZMod-Cloud-------------------------------------------------------------
+        // return 128.0F;
+        return ZHandle.handle("getCloudHeight", 128.0F);
+        //------------------------------------------------------------------------
     }
 
     public boolean isSkyColored()

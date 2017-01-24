@@ -1,5 +1,7 @@
 package net.minecraft.entity.player;
 
+import zombe.core.ZHandle;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
@@ -96,6 +98,10 @@ import net.minecraft.world.WorldServer;
 @SuppressWarnings("incomplete-switch")
 public abstract class EntityPlayer extends EntityLivingBase
 {
+    //-ZMod-------------------------------------------------------------------
+    protected static boolean zmodmarker = true;
+    //------------------------------------------------------------------------
+ 
     private static final DataParameter<Float> ABSORPTION = EntityDataManager.<Float>createKey(EntityPlayer.class, DataSerializers.FLOAT);
     private static final DataParameter<Integer> PLAYER_SCORE = EntityDataManager.<Integer>createKey(EntityPlayer.class, DataSerializers.VARINT);
     protected static final DataParameter<Byte> PLAYER_MODEL_FLAG = EntityDataManager.<Byte>createKey(EntityPlayer.class, DataSerializers.BYTE);
@@ -231,6 +237,10 @@ public abstract class EntityPlayer extends EntityLivingBase
      */
     public void onUpdate()
     {
+        //-ZMod---------------------------------------------------------------
+        ZHandle.handle("onPlayerUpdate",this);
+        //--------------------------------------------------------------------
+ 
         this.noClip = this.isSpectator();
 
         if (this.isSpectator())

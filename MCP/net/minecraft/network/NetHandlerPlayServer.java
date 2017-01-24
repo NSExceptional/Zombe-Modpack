@@ -177,6 +177,10 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
      */
     public void update()
     {
+        //-ZMod---------------------------------------------------------------
+        ZHandle.onNetworkTick(this.playerEntity);
+        //--------------------------------------------------------------------
+ 
         this.captureCurrentPosition();
         this.playerEntity.onUpdateEntity();
         this.playerEntity.setPositionAndRotation(this.firstGoodX, this.firstGoodY, this.firstGoodZ, this.playerEntity.rotationYaw, this.playerEntity.rotationPitch);
@@ -639,7 +643,10 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
                 double d2 = this.playerEntity.posZ - ((double)blockpos.getZ() + 0.5D);
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
 
-                if (d3 > 36.0D)
+                //-ZMod-Dig-reach-----------------------------------------------------
+                // if (d3 > 36.0D)
+                if (d3 > ZHandle.handle("getPlayerReachDigSq", 36.0D))
+                //--------------------------------------------------------------------
                 {
                     return;
                 }
@@ -726,6 +733,9 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
 
         if (!itemstack.func_190926_b())
         {
+            //-ZMod-TODO
+//            if (this.hasMoved && this.playerEntity.getDistanceSq((double)var5.getX() + 0.5D, (double)var5.getY() + 0.5D, (double)var5.getZ() + 0.5D) < ZHandle.handle("getPlayerReachPlaceSq",64.0F) && !this.serverController.isBlockProtected(var2, var5, this.playerEntity) && var2.getWorldBorder().contains(var5)) //-ZMod-Dig-reach
+            
             this.playerEntity.interactionManager.processRightClick(this.playerEntity, worldserver, itemstack, enumhand);
         }
     }
@@ -1044,7 +1054,10 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
         if (entity != null)
         {
             boolean flag = this.playerEntity.canEntityBeSeen(entity);
-            double d0 = 36.0D;
+            //-ZMod-Dig-reach-----------------------------------------------------
+            // double d0 = 36.0D;
+            double d0 = ZHandle.handle("getPlayerReachUseSq", 36.0D);
+            //--------------------------------------------------------------------
 
             if (!flag)
             {

@@ -1,5 +1,12 @@
 package net.minecraft.client.entity;
 
+import zombe.core.ZHandle;
+import zombe.core.ZWrapper;
+import zombe.core.util.Orientation;
+import zombe.core.util.BlockFace;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
+
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
@@ -156,7 +163,65 @@ public class EntityPlayerSP extends AbstractClientPlayer
     private boolean autoJumpEnabled = true;
     private int autoJumpTime;
     private boolean wasFallFlying;
-
+    
+    //-ZModpack---------------------------------------------------------------
+    protected static boolean zmodmarker2 = true;
+    
+    //-ZMod-Ghost-------------------------------------------------------------
+    @Override
+    public void setAngles(float yaw, float pitch) {
+        Orientation rot = (Orientation) ZHandle.handle("onSetAngles", new Orientation(yaw, pitch));
+        super.setAngles(rot.yaw, rot.pitch);
+    }
+    
+    //-ZMod-Dig---------------------------------------------------------------
+    /**
+     * Performs a ray trace for the distance specified and using the partial tick time. Args: distance, partialTickTime
+     */
+    @Override
+    public MovingObjectPosition func_174822_a(double distance, float delta) {
+        return rayTrace(distance, delta);
+    }
+    public MovingObjectPosition superRayTrace(double distance, float delta) {
+        return super.func_174822_a(distance, delta);
+    }
+    public MovingObjectPosition rayTrace(double distance, float delta) {
+        return (MovingObjectPosition) ZHandle.handle("onPlayerRayTrace", superRayTrace(distance, delta));
+    }
+    /*@Override
+     public boolean isCurrentToolAdventureModeExempt(int x, int y, int z) {
+     if (!ZHandle.handle("checkReachDig", new BlockFace(x,y,z),true)) return false;
+     return super.isCurrentToolAdventureModeExempt(x,y,z);
+     }*/
+    
+    //-ZMod-Fly---------------------------------------------------------------
+    @Override
+    public void moveEntity(double mx, double my, double mz) {
+        ZHandle.handle("beforePlayerMove", new Vec3(mx,my,mz));
+        Vec3 motion = new Vec3(this.motionX, this.motionY, this.motionZ);
+        super.moveEntity(this.motionX, this.motionY, this.motionZ);
+        ZHandle.handle("afterPlayerMove", motion);
+    }
+    
+    @Override
+    public void jump() {
+        super.jump();
+        ZHandle.handle("onPlayerJump", this);
+    }
+    
+    @Override
+    public boolean isEntityInsideOpaqueBlock() {
+        if (ZHandle.handle("ignorePlayerInsideOpaqueBlock", false)) return false;
+        return super.isEntityInsideOpaqueBlock();
+    }
+    
+    @Override
+    public boolean func_175149_v() {
+        if (ZHandle.handle("isNoclip",this,false)) ZWrapper.setNoclip(this,true);
+        return super.func_175149_v();
+    }
+    //------------------------------------------------------------------------
+    
     public EntityPlayerSP(Minecraft mcIn, World worldIn, NetHandlerPlayClient netHandler, StatisticsManager statFile)
     {
         super(worldIn, netHandler.getGameProfile());
@@ -226,6 +291,9 @@ public class EntityPlayerSP extends AbstractClientPlayer
     {
         if (this.world.isBlockLoaded(new BlockPos(this.posX, 0.0D, this.posZ)))
         {
+            //-ZMod-----------------------------------------------------------
+            ZHandle.handle("onClientUpdate",this);
+            //----------------------------------------------------------------
             super.onUpdate();
             
             if (this.isRiding())
@@ -241,7 +309,11 @@ public class EntityPlayerSP extends AbstractClientPlayer
             }
             else
             {
+                //-ZMod-------------------------------------------------------
+                ZHandle.handle("beforeSendMotion", this);
                 this.onUpdateWalkingPlayer();
+                ZHandle.handle("afterSendMotion", this);
+                //------------------------------------------------------------
             }
         }
     }
@@ -364,6 +436,9 @@ public class EntityPlayerSP extends AbstractClientPlayer
     
     public void swingArm(EnumHand hand)
     {
+        //-ZMod-ghost---------------------------------------------------------
+        if (!ZHandle.handle("allowSwing", true)) return;
+        //--------------------------------------------------------------------
         super.swingArm(hand);
         this.connection.sendPacket(new CPacketAnimation(hand));
     }
@@ -967,8 +1042,9 @@ public class EntityPlayerSP extends AbstractClientPlayer
         this.pushOutOfBlocks(this.posX + (double)this.width * 0.35D, axisalignedbb.minY + 0.5D, this.posZ - (double)this.width * 0.35D);
         this.pushOutOfBlocks(this.posX + (double)this.width * 0.35D, axisalignedbb.minY + 0.5D, this.posZ + (double)this.width * 0.35D);
         boolean flag4 = (float)this.getFoodStats().getFoodLevel() > 6.0F || this.capabilities.allowFlying;
-
-        if (this.onGround && !flag1 && !flag2 && this.movementInput.moveForward >= 0.8F && !this.isSprinting() && flag4 && !this.isHandActive() && !this.isPotionActive(MobEffects.BLINDNESS))
+        
+        if (/* ZMod-Fly */ ZHandle.handle("allowVanillaSprint", true) && /* ZEnd */
+            this.onGround && !flag1 && !flag2 && this.movementInput.moveForward >= 0.8F && !this.isSprinting() && flag4 && !this.isHandActive() && !this.isPotionActive(MobEffects.BLINDNESS))
         {
             if (this.sprintToggleTimer <= 0 && !this.mc.gameSettings.keyBindSprint.isKeyDown())
             {
@@ -989,8 +1065,9 @@ public class EntityPlayerSP extends AbstractClientPlayer
         {
             this.setSprinting(false);
         }
-
-        if (this.capabilities.allowFlying)
+        
+        if (/* ZMod-Fly */ ZHandle.handle("allowVanillaFly", true) && /* ZEnd */
+            this.capabilities.allowFlying)
         {
             if (this.mc.playerController.isSpectatorMode())
             {
@@ -1026,8 +1103,9 @@ public class EntityPlayerSP extends AbstractClientPlayer
         }
         
         this.wasFallFlying = this.isElytraFlying();
-
-        if (this.capabilities.isFlying && this.isCurrentViewEntity())
+        
+        if (/* ZMod-Fly */ !ZHandle.handle("isFlying", this, false) && /* ZEnd */
+            this.capabilities.isFlying && this.isCurrentViewEntity())
         {
             if (this.movementInput.sneak)
             {
@@ -1087,8 +1165,14 @@ public class EntityPlayerSP extends AbstractClientPlayer
         }
         
         super.onLivingUpdate();
-
-        if (this.onGround && this.capabilities.isFlying && !this.mc.playerController.isSpectatorMode())
+        
+        //-Zmod-Fly-----------------------------------------------------------
+        // if (this.onGround && this.capabilities.isFlying && !this.mc.playerController.isSpectatorMode())
+        if (ZHandle.handle("isPlayerOnGround", this.onGround)
+            && this.capabilities.isFlying
+            && !this.mc.playerController.isSpectatorMode()
+            && !ZHandle.handle("isFlying", this, false))
+        //--------------------------------------------------------------------
         {
             this.capabilities.isFlying = false;
             this.sendPlayerAbilities();

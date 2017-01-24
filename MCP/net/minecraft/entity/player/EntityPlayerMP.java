@@ -1,5 +1,8 @@
 package net.minecraft.entity.player;
 
+import zombe.core.ZHandle;
+import zombe.core.ZWrapper;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
@@ -107,6 +110,10 @@ import org.apache.logging.log4j.Logger;
 
 public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 {
+    //-ZMod-------------------------------------------------------------------
+    protected static boolean zmodmarker2 = true;
+    //------------------------------------------------------------------------
+ 
     private static final Logger LOGGER = LogManager.getLogger();
     private String language = "en_US";
 
@@ -356,6 +363,10 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
     public void onUpdateEntity()
     {
+        //-ZMod-----------------------------------------------------------
+        ZHandle.handle("onServerUpdate",this);
+        //----------------------------------------------------------------
+ 
         try
         {
             super.onUpdate();
@@ -500,6 +511,10 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public void onDeath(DamageSource cause)
     {
+        //-ZMod-Death---------------------------------------------------------
+        ZHandle.handle("onPlayerDeath", this);
+        //--------------------------------------------------------------------
+ 
         boolean flag = this.world.getGameRules().getBoolean("showDeathMessages");
         this.connection.sendPacket(new SPacketCombatEvent(this.getCombatTracker(), SPacketCombatEvent.Event.ENTITY_DIED, flag));
 
@@ -1200,6 +1215,10 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public boolean isSpectator()
     {
+        //-ZMod-Fly-noclip----------------------------------------------------
+        if (ZHandle.handle("isNoclip", this, false)) ZWrapper.setNoclip(this, true);
+        //--------------------------------------------------------------------
+        
         return this.interactionManager.getGameType() == GameType.SPECTATOR;
     }
 
