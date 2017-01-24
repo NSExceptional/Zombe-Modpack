@@ -6,9 +6,9 @@ public class MovementInputFromOptions extends MovementInput
 {
     private final GameSettings gameSettings;
 
-    public MovementInputFromOptions(GameSettings gameSettingsIn)
+    public MovementInputFromOptions(GameSettings p_i1237_1_)
     {
-        this.gameSettings = gameSettingsIn;
+        this.gameSettings = p_i1237_1_;
     }
 
     public void updatePlayerMoveState()
