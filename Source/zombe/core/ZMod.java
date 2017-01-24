@@ -311,7 +311,7 @@ public abstract class ZMod {
         return arg;
     }
 
-    protected static final int NAMES = 1, ENTITIES = 2, BLOCKS = 4, 
+    protected static final int NAMES = 1, ENTITIES = 2, BLOCKS = 4,
         ITEMS = 8;
 
     /**
@@ -685,7 +685,7 @@ public abstract class ZMod {
     */
     protected void onGUIDraw(float delta) {}
 
-    /*
+    /**
         Returns tag
     */
     protected String getTag() {

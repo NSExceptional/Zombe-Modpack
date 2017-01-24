@@ -35,8 +35,8 @@ import org.lwjgl.opengl.GL11;
     It also provides APIs for config files, GUI, drawing and text handling.
 
     Mod objects each have a different class which extends ZMod.
-    ZMod-derivatives are listed dynamically at runtime by scanning the 
-    zombe.mod package both in Minecraft.jar and in the %APPDATA%/mods/ 
+    ZMod-derivatives are listed dynamically at runtime by scanning the
+    zombe.mod package both in Minecraft.jar and in the %APPDATA%/mods/
     folder (by default).
 */
 public final class ZModpack extends ZMod {
@@ -215,11 +215,11 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         if (!initializedMods) {
             try {
-                zombesModLoader = new ZModLoader(new URL[] { 
-                    ClassHelper.getClassSourceURL(ZModpack.class), 
+                zombesModLoader = new ZModLoader(new URL[] {
+                    ClassHelper.getClassSourceURL(ZModpack.class),
                     versionDir.toURI().toURL(),
                     modsDir.toURI().toURL() });
                 zombesModLoader.loadMods("zombe.mod", ZMod.class);
@@ -238,7 +238,7 @@ public final class ZModpack extends ZMod {
         initialized = true;
     }
 
-    
+
     // CENTRAL EVENTS
 
     /**
@@ -261,11 +261,11 @@ public final class ZModpack extends ZMod {
         for (ZMod mod : zombesMods)
         try {
             mod.notifyWorldChange();
-        } catch (Exception e) { 
+        } catch (Exception e) {
             err("in mod \""+mod.getName()+"\": world change failed",e);
         }
     }
-    
+
     //=Event=ClientTick=======================================================
     private static PlayerControllerMP PC = null;
     private static String chatLast = null;
@@ -328,7 +328,7 @@ public final class ZModpack extends ZMod {
             for (ZMod mod : zombesMods)
             try {
                 mod.notifyClientTick(player);
-            } catch (Exception e) { 
+            } catch (Exception e) {
                 err("in mod \""+mod.getName()+"\": update failed",e);
             }
         } catch(Exception error) { err("error: update-handle failed", error); }
@@ -373,7 +373,7 @@ public final class ZModpack extends ZMod {
             Entity view = getView();
             Vec3 pos = getPositionDelta(view, delta);
             float x = (float) getX(pos), y = (float) getY(pos), z = (float) getZ(pos);
-            
+
             // draw in 3d
             boolean gltex2d = GL11.glGetBoolean(GL11.GL_TEXTURE_2D);
             boolean gldepth = GL11.glGetBoolean(GL11.GL_DEPTH_TEST);
@@ -409,7 +409,7 @@ public final class ZModpack extends ZMod {
     */
     static void guiDraw(float delta) {
         if (!initialized) return;
-        
+
         // show options
         checkConfigMenu();
         if (!isInMenu() && !wasInConfigMenu && wasKeyPressedThisFrame(keyShowOptions)) {
@@ -446,7 +446,7 @@ public final class ZModpack extends ZMod {
                 printMessage("radar",-2,2);
                 */
             }
-            
+
             // notify mods
             if (!isInMenu() || getMenu() instanceof GuiChat || getMenu() instanceof GuiContainer)
             for (ZMod mod : zombesMods)
@@ -544,7 +544,7 @@ public final class ZModpack extends ZMod {
     static Object getOptionValue(String name) {
         return getCurrentConfig().getValue(name);
     }
-    
+
     static Collection getOptionValues(String name) {
         return getCurrentConfig().getValues(name);
     }
