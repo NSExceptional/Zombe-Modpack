@@ -1,15 +1,17 @@
 
 ## All included files
-Files                   | Purpose                    | Used by
-------------------------+----------------------------+-----------------------
-`changelog.txt`         | changelog                  | you
-`README.txt`            | install/usage instructions | you
-(this file)             | package files listing      | you
-`classes/*.class`       | modified minecraft classes | ZModpack's core, mods
-`classes/zombe/*.class` | zombe's modpack classes    | ZModpack's core, mods
-`config/*.txt`          | configuration files        | ZModpack, you
-`mods/**/*.class`       | zombe's mods classes       | ZModpack's core, mods
-`source/*.java`         | modpack's source code      | ZModpack's devs, MCP
+Files                           | Purpose                    | Used by
+--------------------------------+----------------------------+-----------------------
+`changelog.md`                  | changelog                  | you
+`README.md`                     | install/usage instructions | you
+`FAQs.md`                       | updated FAQ page           | you
+`readme_original.html`          | old, original zmod readme  | you
+`LICENSE`                       | source code license        | developers
+(this file)                     | package files listing      | you
+`Mod/jar/*.class`               | modified minecraft classes | ZModpack's core, mods
+`Mod/version/zombe/mod/*.class` | zombe's modpack classes    | ZModpack's core, mods
+`Mod/config/*.txt`              | configuration files        | ZModpack, you
+`source/**/*.java`              | modpack's source code      | ZModpack's devs, MCP
 
 ## Mod dependencies
 Mod     | Class dependencies
