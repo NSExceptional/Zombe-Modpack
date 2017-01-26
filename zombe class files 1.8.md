@@ -9,7 +9,7 @@ Files                   | Purpose                    | Used by
 `classes/zombe/*.class` | zombe's modpack classes    | ZModpack's core, mods
 `config/*.txt`          | configuration files        | ZModpack, you
 `mods/**/*.class`       | zombe's mods classes       | ZModpack's core, mods
-`src/*.java`            | modpack's source code      | ZModpack's devs, MCP
+`source/*.java`         | modpack's source code      | ZModpack's devs, MCP
 
 ## Mod dependencies
 Mod     | Class dependencies
@@ -28,6 +28,7 @@ Motion  | `EntityPlayerSP`
 Radar   | None
 Safe    | None
 Sun     | `WorldProvider`
+?       | `EntityList`, `BlockFire`
 
 ## Optional mod dependencies
 Mod     | Class dependencies
@@ -40,22 +41,15 @@ Resize  | `RenderLiving`
 ## Modified Minecraft classes
 File   | Class name                 | Relevant mod(s)
 -------+----------------------------+----------------
-`bgd`  | `WorldProvider`            | Cloud, Sun
-`bsu`  | `Minecraft`                | modpack
-`cem`  | `PlayerControllerMP`       | Dig, Ghost
-`cin`  | `MovementInputFromOptions` | Fly
-`cio`  | `EntityPlayerSP`           | Cheat, Dig, Fly, Ghost, Motion
-`qw`   | `EntityPlayerMP`           | Death, Fly
-`rj`   | `NetHandlerPlayServer`     | Build, Dig
-
-## Modified classes absent from package for now
-File   | Class name             | Relevant mod(s)
--------+------------------------+----------------
-`ahd`  | `EntityPlayer`         | None
-`cee`  | `NetHandlerPlayClient` | None
-       | `EnumGameType`         | Fly
-       | `Explosion`            | Boom
-       | `GuiContainer`         | Craft
-       | `RenderLiving`         | Resize
-       | `TileEntityFurnace`    | Furnace
+`avd`  | `WorldProvider`            | Cloud, Sun
+`beq`  | `Minecraft`                | modpack
+`bnn`  | `PlayerControllerMP`       | Dig, Ghost
+`bpp`  | `MovementInputFromOptions` | Fly
+`bpq`  | `EntityPlayerSP`           | Cheat, Dig, Fly, Ghost, Motion
+`ly`   | `EntityPlayerMP`           | Death, Fly
+`mi`   | `NetHandlerPlayServer`     | Build, Dig
+`so`   | `EntityList`               | ?
+`anl`  | `BlockFire`                | ?
+`aax`  | `EntityPlayer`             | WIP
+`bnm`  | `NetHandlerPlayClient`     | WIP
 
