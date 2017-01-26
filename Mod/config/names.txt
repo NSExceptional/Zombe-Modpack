@@ -1,0 +1,499 @@
+// ###########################################################################
+// Here you can define names for items.
+// Most useful items, blocks & entities are already defined for your convenience.
+// Since version 9.0.0 of the modpack, names are also fetched from the game;
+// therefore it is no longer necessary to declare things like "Creeper".
+//
+// Syntax:
+//     Name Id
+//     Name Id/Meta
+//
+// Ids can be any integer value. Colors can be written in (A)RGB format, ex:
+//     yellow 0xFFFF00
+//
+// When you want to match all possible metas of an item, set meta to -1:
+//     wood 5/-1
+//
+// There can be multiple definitions per line and entries can have many names; 
+// Examples:
+//     cobble 4   S 4
+//     wood 5/-1  W 5/-1
+//     oreG 14     oreI 15     oreC 16
+//
+// PS. You can find all the existing item numbers (aka id) http://www.minecraftwiki.net/wiki/Data_values
+// PS. You can find some of the other mods item/block ids here: http://www.minecraftwiki.net/wiki/Mod_data_values
+// PS. You can find ANY item/block id ingame using the F3 debug menu or
+// using the option "optRecipeShowId = yes" from the Recipe mod
+
+// BLOCKS
+
+// natural blocks
+smooth    1                         // smoothstone
+grass     2                         // grass
+dirt      3                         // dirt
+cobble    4     S 4                 // cobblestone
+bedrock   7     adminium 7          // bedrock
+water     8     waterS 9            // water and stationary water
+lava     10     lavaS 11            // lava and stationary lava
+sand     12                         // sand
+gravel   13                         // gravel
+trunk    17/-1                      // any tree trunk
+mossy    48                         // mossy cobblestone
+obsidian 49     obs 49              // obsidian
+fire     51     X 51                // fire
+cage     52                         // spawncage
+snowcap  78                         // snowcap
+ice      79                         // ice
+snow     80                         // snow
+clay     82                         // clay
+blood    87     nether 87           // netherrack
+slow     88     soul 88             // soul sand
+
+cageGhast       52/1
+cageCow         52/2
+cageSpider      52/3
+cageSheep       52/4
+cageSkelly      52/5
+cageCreeper     52/6
+cageZombie      52/7
+cageSlimes      52/8
+cagePig         52/9
+cageChicken     52/10
+cageSquid       52/11
+cagePigzombie   52/12
+cageWolf        52/15
+cageCavespider  52/16
+cageEnderman    52/17
+cageSilverfish  52/18
+cageLavaSlime   52/19
+cageMushroomCow 52/20
+cageVillager    52/21
+cageSnowMan     52/22
+cageBlaze       52/23
+cageEnderDragon 52/24
+cageGolem       52/25
+cageOzelot      52/26
+
+// ores
+oreG 14     oreI 15     oreC 16     // gold-, iron-, coal ore
+oreD 56     oreR 73     oreY 89     // diamond-, redstone-, light/yellow ore (glowstone)
+            oreRLit 74              // glowing redstone ore block in the world
+
+// misc-plants
+sapling 6/-1                        // any sapling
+leaves 18                           // leaves
+flowerY 37  flowerR 38              // yellow-, red flower
+shroomB 39  shroomR 40              // brown-, red mushroom
+cactus 81
+pumpkin 86  pumpkinC 91             // pumpkin, jack-o'-lantern
+
+// blocks
+wood 5/-1   # 5/-1      W 5/-1      // wood
+blockG 41   blockI 42   blockD 57   // gold-, iron-, diamond block
+blockB 45                           // brick block
+sponge 19                           // sponge
+glass 20                            // glass
+cloth 35/-1             wool 35/-1  // cloth (all damage values)
+clothAll 35/-1          woolAll 35/-1
+double 43   half 44                 // double-halfstep, halfstep
+tnt 46                              // tnt
+shelves 47                          // bookshelves
+box 54      storage 54  chest 54    // chest
+bench 58    workbench 58            // workbench
+furnace 61                          // furnace
+furnaceLit 62                       // lit furnace block in the world
+stepW 53    stairW 53               // wooden steps
+stepC 67    stairC 67               // cobblestone steps
+jukebox 84                          // jukebox
+farmland 60                         // farmland / tilled dirt
+portal 90                           // portal block in the world
+
+// ITEMS
+
+// tools weapons armor (all damage values)
+shovelWAll 269/-1 shovelGAll 284/-1 shovelSAll 273/-1 shovelIAll 256/-1 shovelDAll 277/-1 // shovels             Wood/Gold/cobbleStone/Iron/Diamond
+pickWAll 270/-1 pickGAll 285/-1 pickSAll 274/-1 pickIAll 257/-1 pickDAll 278/-1           // pickaxes
+axeWAll 271/-1 axeGAll 286/-1 axeSAll 275/-1 axeIAll 258/-1 axeDAll 279/-1                // axes/hatchets
+hoeWAll 290/-1 hoeGAll 294/-1 hoeSAll 291/-1 hoeIAll 292/-1 hoeDAll 293/-1                // hoes
+swordWAll 268/-1 swordGAll 283/-1 swordSAll 272/-1 swordIAll 267/-1 swordDAll 276/-1      // swords
+hatLAll 298/-1 hatCAll 302/-1 hatIAll 306/-1 hatDAll 310/-1 hatGAll 314/-1                // hats/helmets        Leather/Chainmail/Iron/Diamond/Gold
+vestLAll 299/-1 vestCAll 303/-1 vestIAll 307/-1 vestDAll 311/-1 vestGAll 315/-1           // vests/breastplates
+pantsLAll 300/-1 pantsCAll 304/-1 pantsIAll 308/-1 pantsDAll 312/-1 pantsGAll 316/-1      // pants/greaves
+shoesLAll 301/-1 shoesCAll 305/-1 shoesIAll 309/-1 shoesDAll 313/-1 shoesGAll 317/-1      // pants/boots
+
+// tools weapons armor
+shovelW 269 shovelG 284 shovelS 273 shovelI 256 shovelD 277 // shovels             Wood/Gold/cobbleStone/Iron/Diamond
+pickW 270 pickG 285 pickS 274 pickI 257 pickD 278           // pickaxes
+axeW 271 axeG 286 axeS 275 axeI 258 axeD 279                // axes/hatchets
+hoeW 290 hoeG 294 hoeS 291 hoeI 292 hoeD 293                // hoes
+swordW 268 swordG 283 swordS 272 swordI 267 swordD 276      // swords
+hatL 298 hatC 302 hatI 306 hatD 310 hatG 314                // hats/helmets        Leather/Chainmail/Iron/Diamond/Gold
+vestL 299 vestC 303 vestI 307 vestD 311 vestG 315           // vests/breastplates
+pantsL 300 pantsC 304 pantsI 308 pantsD 312 pantsG 316      // pants/greaves
+shoesL 301 shoesC 305 shoesI 309 shoesD 313 shoesG 317      // pants/boots
+
+bow 261
+arrow 262
+
+// food
+apple 260   appleG 322              // apple, golden apple
+bowl 281    soup 282    stew 282    // empty bowl, stew
+seeds 295   wheat 296   bread 297   // seeds, wheat, bread
+rawpork 319 pork 320                // raw beef, cooked beef
+rawfish 349 fish 350                // raw fish, cooked fish
+egg 344                             // egg
+wheatBlock 59                       // wheat block in the world
+
+// resources
+stick 280   / 280                   // stick
+torch 50    torchR 76               // torch / red-torch
+            torchROff 75            // off state red-torch block in the world
+coal 263    C 263                   // coal
+diamond 264 D 264                   // diamond
+iron 265    I 265                   // iron bar
+gold 266    G 266                   // gold bar
+red 331     R 331                   // redstone-dust
+redBlock 55                         // redstone wire block in the world
+yellow 348  Y 348                   // lightstone-dust (yellow)
+hide 334    leather 334 L 334       // leather
+feather 288 flint 318   string 287  // feather, flint, string
+gun 289     gunpowder 289           // gunpowder
+* 332       snowball 332            // snowball
+slime 341   slimeball 341           // slimeball
+clayball 337 brick 336              // clayball, brick
+reed 338    paper 339   book 340    // reed, paper, book
+reedBlock 83                        // reed block in the world
+
+// transportation
+ladder 65   rails 66    tracks 66   // ladder, tracks
+cart 328    boxcart 342 powercart 343 // minecafr, minecart with chest, powered minecart
+saddle 329                          // saddle
+boat 333                            // boat
+
+// misc
+switch 69   lever 69                // lever
+plateS 70   plateW 72               // stone-, wood switch-plate
+button 77                           // button
+fence 85                            // fence
+
+lighterAll 259/-1                   // flint and steel (all damage values)
+lighter 259                         // flint and steel
+picture 321 pic 321    painting 321 // painting
+sign 323                            // sign
+signBlockPost 63                    // sign post block in the world
+signBlockWall 68                    // wall sign block in the world
+doorW 324   doorI 330               // wooden door, iron door
+doorWBlock 64 doorIBlock 71         // wooden door and iron blocks in the world
+bucket 325  bucketW 326  bucketL 327  bucketM 335 // bucket, Water bucket, Lava bucket and Milk bucket
+compass 345                         // compass
+rodAll 346/-1  fishingrodAll 346/-1 // fishingrod (all damage values)
+rod 346     fishingrod 346          // fishingrod
+watch 347   clock 347               // watch
+recordY 2256 recordG 2257           // yellow-, green record
+record13 2256 recordCat 2257        // yellow-, green record
+
+// added in beta 1.2
+
+oak 17/0                            // the original tree trunk
+pine 17/1                           // pine tree trunk
+birch 17/2                          // birch tree trunk
+jungle 17/3                         // jungle tree trunk
+oreL 21                             // lapis lazuli ore
+blockL 22                           // brick block, lapis lazuli block
+dispenser 23                        // dispenser
+sandstone 24                        // sandstone
+note 25                             // note
+cakeblock 92                        // cake block
+
+charcoal 263/1                      // charcoal
+
+dye 351/-1         dyeAll 351/-1    // any dye
+dyeBlack 351       ink 351          // ink sack
+dyeGray 351/8                       // gray dye
+dyeLightGray 351/7                  // light gray dye
+dyeWhite 351/15    bonemeal 351/15  // bonemeal
+dyeRed 351/1                        // rose red
+dyePurple 351/5                     // purple dye
+dyeOrange 351/14                    // orange dye
+dyeGreen 351/2                      // cactus green
+dyeLime 351/10                      // lime dye
+dyeCyan 351/6                       // cyan dye
+dyeLightBlue 351/12                 // light blue dye
+dyeMagenta 351/13                   // magenta dye
+dyeYellow 351/11                    // dandelion yellow
+dyeBlue 351/4                       // lapis lazuli
+dyePink 351/9                       // pink dye
+dyeBrown 351/3     cocobean 351/3   // coco bean
+
+woolWhite 35/0                      // white wool
+woolGray 35/7                       // gray wool
+woolPurple 35/10                    // purple wool
+woolMagenta 35/2                    // magenta wool
+woolPink 35/6                       // pink wool
+woolRed 35/14                       // red wool
+woolOrange 35/1                     // orange wool
+woolYellow 35/4                     // yellow wool
+woolLightGray 35/8                  // light gray wool
+woolGreen 35/13                     // green wool
+woolLime 35/5                       // lime wool
+woolCyan 35/9                       // cyan wool
+woolBlue 35/11                      // blue wool
+woolLightBlue 35/3                  // light blue wool
+woolBlack 35/15                     // black wool
+woolBrown 35/12                     // brown wool
+
+bone 352                            // bone
+sugar 353                           // sugar
+cake 354                            // cake
+
+// added in beta 1.3
+
+halfStone 44/0                      // same as half
+halfSand 44/1                       // half block of sandstone
+halfWood 44/2                       // half block of wood
+halfCobble 44/3                     // half block of cobblestone
+repeater 356                        // repeater
+repeaterBlock 93 repeaterBlockLit 94 // repeater blocks in the world
+bed 355                             // bed
+bedBlock 26                         // bed block in the world
+boxLocked 95                        // deprecated locked chest block
+
+// added in beta 1.4
+
+cookie 357                          // Cookie
+
+// added in beta 1.5
+
+railDetect 28     railP 28          // detector rail
+railPowered 27    railG 27          // powered rail
+web 30                              // spiderweb
+saplingNormal 6/0 saplingOak 6/0    // regular tree sapling from the old days
+saplingPine 6/1                     // pine tree sapling
+saplingBirch 6/2                    // birch tree sapling
+saplingJungle 6/3                   // jungle tree sapling
+
+// added in beta 1.6
+
+grassTall 31      tallGrass 31      // tall grass
+deadShrubs 32                       // dead shrubs
+doorTrap 96       trapDoor 96       // trapdoor
+map 358                             // map
+
+// added in beta 1.7
+
+piston 33                           // normal piston
+pistonSticky 29                     // sticky piston
+pistonHead 34                       // block id for the piston head part
+shears 359                          // shears
+shearsAll 359/-1                    // any shear
+
+// added in beta 1.8
+halfBrick 44/4                      // half block of brick
+halfBrickS 44/5                     // half block of stone brick
+bars 101                            // iron bars
+window 102                          // glass plane
+melon 103                           // melon
+vines 106                           // vines
+gate 107                            // fence gate
+stairB 108                          // brick stairs
+stairS 109                          // stone brick stairs
+stoneBrick 98/0                     // stone brick
+stoneBrickMossy 98/1                // stone brick mossy
+stoneBrickCracked 98/2              // stone brick cracked
+melonSlice 360                      // melon slice
+seedsPumpkin 361                    // pumpkin seeds
+seedsMelon 362                      // melon seeds
+rawbeef 363                         // raw beef
+beef 364    steak 364               // steak
+rawchicken 365                      // raw chicken
+chicken 366                         // cooked chicken
+rotten 367                          // rotten flesh
+pearl 368                           // ender pearl
+reserved 36                         // reserved location (block moved by piston)
+smoothSF 97/0                       // smooth stone with silverfish in it
+cobbleSF 97/1                       // cobble stone with silverfish in it
+brickSF 97/2                        // brick stone with silverfish in it
+hugeShroomB 99/0                    // huge brown shroom (pores on all sides)
+hugeShroomBtop 99/5                 //                   (top pice)
+hugeShroomBstem 99/10               //                   (stem)
+hugeShroomR 100/0                   // huge red shroom   (pores on all sides)
+hugeShroomRtop 100/5                //                   (top pice)
+hugeShroomRstem 100/10              //                   (stem)
+stemPumpkin 104                     // pumpkin stem
+stemMelon 105                       // melon stem
+
+// added in beta 1.9-pre
+mycelium 110                        // mycelium
+lilyPad 111                         // lily pad
+brickN 112                          // nether brick
+fenceN 113                          // nether brick fence
+stairN 114                          // nether brick stairs
+netherWartBlock 115                 // nether wart
+blazeRod 369                        // blaze rod
+ghastTear 370                       // ghast tear
+goldNugget 371     Gn 371           // gold nugget
+netherWart 372                      // nether wart
+
+// added in beta 1.9-pre2
+potion 373                          // potions ???
+bottle 374                          // empty bottle
+spiderEye 375                       // spider eye
+fermentedEye 376                    // fermented spider eye
+blazePowder 377                     // blaze powder
+magmaCream 378                      // magma cream
+recordBlocks 2258                   // record: blocks
+recordChirp 2259                    // record: chirp
+recordFar 2260                      // record: far
+recordMall 2261                     // record: mall
+recordMellohi 2262                  // record: mellohi
+recordStal 2263                     // record: stal
+recordStrad 2264                    // record: strad
+recordWard 2265                     // record: ward
+record11 2266                       // record: 11
+
+// added in beta 1.9-pre3
+enchantmentTable 116                // enchantment table
+brewingStandBlock 117               // brewing stand block
+cauldronBlock 118                   // cauldron block
+airPortalBlock 119  endPortalBlock 119 // end portal block
+airFrame 120        endFrame 120    // end portal frame
+brewingStand 379                    // brewing stand
+cauldron 380                        // cauldron
+enderEye 381                        // eye of Ender
+
+// added in beta 1.9-pre4
+whiteCobble 121     endStone 121    // White stone
+melonG 382                          // Glistering melon
+
+// added in RC2
+dragonEggBlock 122                  // dragon egg block
+
+// added in 1.1
+mobEgg 383                          // monster placer / mob egg
+
+// added in 1.2
+lampR 124                           // redstone lamp (off)
+lampROff 123                        // redstone lamp (on)
+potionEnchant 384                   // bottle o' enchanting
+fireball 385        fireCharge 385  // fire charge
+
+// added in 1.2.4
+sandstoneAny 24/-1                  // any sandstone block
+sandstoneBlock 24/2                 // monolithic sandstone block
+sandstoneDouble 24/1                // double halfblock of sandstone
+woodOak 5/0                         // wood from oak tree
+woodPine 5/1                        // wood from pine tree
+woodBirch 5/2                       // wood from birch tree
+woodJungle 5/3                      // wood from jungle tree
+
+// added in 1.3.1
+oreE 129                            // emerald ore
+blockE 133                          // emerald block
+emerald 388     E 388               // emerald
+boxE 130        chestE 130          // ender chest
+wirehook 131                        // tripwire hook
+halfWoodOak    126/0                // half block of oakwood
+halfWoodPine   126/1                // half block of pinewood
+halfWoodBirch  126/2                // half block of birchwood
+halfWoodJungle 126/3                // half block of junglewood
+stepSS 128      stairSS 128         // sandstone steps
+stepWO 53       stairWO 53          // oakwood steps (= wooden steps)
+stepWP 134      stairWP 134         // pinewood steps
+stepWB 135      stairWB 135         // birchwood steps
+stepWJ 136      stairWJ 136         // junglewood steps
+bookandquill 386                    // book and quill
+
+// added in 1.4.2
+
+command 137  control 137            // command block
+beacon 138                          // beacon
+wallAny 139/-1                      // walls
+wallCobble 139/0                    // cobble wall
+wallMossy 139/1                     // mossy cobble wall
+buttonW 143                         // wooden button
+headBlock 144                       // mob head as block
+anvil 145                           // anvil
+itemFrame 389  frame 389            // item frame
+flowerPot 390  pot 390              // flower pot
+carrot 391                          // vegetable: carrot
+potato 392                          // vegetable: potato
+carrotGolden 396                    // golden carrot
+mobHead 397  head 397  skull 397    // mob head
+stickCarrot 398                     // carrot on a stick
+netherStar 399  star 399            // nether star
+pumpkinPie 400  pie 400             // pumpkin pie
+
+// added in 1.4.6
+
+fireworkRocket 401  rocket 401      // firework rocket
+fireworkStar 402  firework 402      // firework star
+
+// added in 1.5
+
+chestTrap 146                       // trapped chest
+plateG 147   plateI 148             // weighted pressure plates
+comparatorBlock 149 comparatorBlockLit 150 // comparator block
+sensor 151  daylightSensor 151      // daylight sensor
+blockR 152                          // redstone block
+oreQ 153    quartzOre 153           // nether quartz ore
+hopper 154                          // hopper
+blockQ 155  quartzBlock 155         // quartz block
+stairQ 156  quartzStairs 156        // quartz stairs
+halfQ 44/7  fullQ 43/7            // quartz slab
+railActivator 157                   // activator rail
+dropper 158                         // dropper
+comparator 404                      // comparator item
+netherB 405                         // one brick of nether stonebrick
+quartz 406   Q 406                  // nether quartz
+tntCart 407                         // cart with TNT
+hopCart 408                         // cart with hopper
+
+
+// ENTITIES
+// reminder: the modpack fetches the default names right from the game
+// therefore it would be a waste to have anything but aliases here
+// however, default names are kept for compatibility until v9 is backported
+// note: since those definitions were erroneous until v9, 
+//       old versions might bug using these new values
+
+Object       0                      // non-alive items
+Player       3                      // other players
+Other       48                      // Other living creatures
+Creeper     50                      // enemy mob: Creeper
+Skelly      51                      // enemy mob: Skelly
+Spider      52                      // enemy mob: Spider
+Zombie      54                      // enemy mob: Zombie
+Slimes      55                      // enemy mob: Slimes
+Ghast       56                      // nether mob: Ghast
+Pigzombie   57                      // nether mob: Pigzombie
+Enderman    58                      // enemy mob: Enderman
+Cavespider  59                      // enemy mob: CaveSpider
+Silverfish  60                      // neutral mob: Silverfish
+Blaze       61                      // nether mob: Blaze
+LavaSlime   62                      // nether mob: LavaSlime
+EnderDragon 63                      // ???: Ender Dragon
+Pig         90                      // neutral mob: Pig
+Sheep       91                      // neutral mob: Sheep
+Cow         92                      // neutral mob: Cow
+Chicken     93                      // neutral mob: Chicken
+Squid       94                      // neutral mob: Squid
+Wolf        95                      // neutral mob: Wolf
+MushroomCow 96                      // neutral mob: MushroomCow
+SnowMan     97                      // neutral mob: SnowMan
+Ocelot      98                      // neutral mob: Ozelot
+Golem       99                      // neutral mob: Golem
+Villager   120                      // neutral mob: Villager
+
+
+// COLORS
+// Colors are here in hexadecimal formal: 0xRRGGBB or 0xAARRGGBB, 
+// where A/R/G/B are the color components in hexadecimal format.
+
+                        Black   0x000000
+DarkBlue    0x000044    Blue    0x000088    LightBlue    0x0000ff
+DarkGreen   0x004400    Green   0x008800    LightGreen   0x00ff00
+DarkCyan    0x004444    Cyan    0x008888    LightCyan    0x00ffff
+DarkRed     0x440000    Red     0x880000    LightRed     0xff0000
+DarkMagenta 0x440044    Magenta 0x880088    LightMagenta 0xff00ff
+DarkYellow  0x444400    Yellow  0x888800    LightYellow  0xffff00
+DarkWhite   0x444444    White   0x888888    LightWhite   0xffffff

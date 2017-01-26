@@ -13,17 +13,43 @@ I am not the offical distributor. This is only a fork to keep it updated, as the
 
 I don't plan on taking donations.
 
-## Installation
+# Installation
 
 *You can skip this part entirely if you are using a mod-installation tool
-like MCPatcher, MagicLauncher or else, and if it worked of course.*
+like MCPatcher, MagicLauncher or else, and if it worked of course. But I doubt it will.*
 
-Notes:
+If you just want to try out the mod, you can download a pre-packaged version by checking out the [Releases](https://github.com/ThePantsThief/Zombe-Modpack/releases) tab. Put the profile in the `versions` folder in your minecraft folder (see instructions for finding this) and put the other folder in the `mods` folder in your minecraft folder. Then, configure a profile to use the `release 1.11-zmod` version.
+
+### Notes:
 
 - Your local Minecraft folder will hereby be referred to as `$minecraft`
-- The downloaded modpack folder will be referred to as `$modpack`
+- The folder called `Mod` inside the root folder will be referred to as `$modpack`
 - Subfolders of either folder will be referred to as `$folder/subfolder` and nested subfolders as `$folder/subfolder/nested`, etc. You get the picture.
 - `$version` refers to a minecraft version number, i.e. `1.8` or `11.1.2`
+
+You can skip to ***New to this?*** if you need careful step-by-step instructions.
+
+--
+#### Know what you're doing?
+
+Note: `folder/subfolder/*` means "contents of `folder `". Don't confuse it with `folder/subfolder` which refers to the folder `subfolder` itself.
+
+- Copy `$minecraft/versions/1.11` to `$minecraft/versions/1.11-whatever`
+    - Rename files inside accordingly
+    - In the JSON file, change `"id": "1.11"` to `"id": "1.11-whatever"`
+    - In the JSON file, delete the `downloads` entry entirely
+- Open the Minecraft version jar in an archive editor, and
+    - Delete the `META-INF` folder
+    - Copy `$modpack/jar/*` into the jar
+    - Save and close the jar
+- Copy `$modpack/config/*` to `$minecraft/mods/zombe`
+- Do one of the following:
+    - Copy `$modpack/version/zombe/mod`into `$minecraft/mods/zombe` (only has to be done once per mod version)
+    - Copy `$modpack/version/zombe` into `$minecraft/versions/1.11-whatever` alongside the JAR and JSON files (must be done for each profile and version)
+- Configure a profile to use the new version you created.
+
+--
+#### New to this?
 
 1. Locate `$minecraft`. It is in the following locations depending on your OS:
 
@@ -40,19 +66,19 @@ Notes:
     - `versions/$version-zombe/$version-zombe.json`
 5. Open the file `$version-zombe.json` and make the following change:
   - `"id": "$version"` → `"id": "$version-zombe"`
+  - Delete the entire `"downloads"` section (this prevents the launcher from overwriting the jar)
 6. Locate `$version-zombe.jar` (aka "the jar"). Open it with an archive editor like 7-zip and inside,
   - Delete the folder `META-INF` (or just delete `META-INF/MOJANGCS.SF`)
-  - Copy the contents of `$modpack/classes` into the root of the jar for the mods you wish to use, as not all class files are required for the mod to work  (see here)
+  - Copy the contents of `$modpack/jar` into the root of the jar for the mods you wish to use, ~~as not all class files are required for the mod to work.~~
 7. **Save and close the jar**
-8. Copy contents of `$modpack/mods` into `$minecraft/versions/$version-zombe`. You should be left with `$minecraft/versions/$version-zombe/zombe/mod/Fly.class` etc.
-  - Alternatively, these files can be installed globally for all versions in `$minecraft/mods` as above.
-
+8. Copy contents of `$modpack/version` into `$minecraft/versions/$version-zombe`. You should be left with `$minecraft/versions/$version-zombe/zombe/mod/Fly.class` etc.
+  - Alternatively, these files can be installed globally for all versions in `$minecraft/mods` as above. Careful not to overwrite the contents of `$minecraft/mods` from step 3.
 9. Make a new profile in the Minecraft Launcher and use the version `release $version-zombe`
 
 That's it.
 
 
-## Configuration of the mod
+# Configuration of the mod
 
 You can configure the mod in-game by pressing the `F7` key.
 
@@ -62,7 +88,7 @@ Alternatively, you can edit the configuration file directly. It is located at `$
     enableSomeOtherMod = no
 
 
-## Compatibility
+# Compatibility
 
 1. This mod may or may not be compatible with modloader or Forge, 
     depending on many factors (mods versions, installation order...)
@@ -98,6 +124,6 @@ Of course, with missing files you should also expect missing features.
 - md_5 for 1.3.1
 - NolanSyKinsley for 1.3.2 and 1.4.2
 - Nilat for 1.4.4 to 1.8
-- [ThePantsThief](https://github.com/ThePantsThief) for 11.1.2
+- [ThePantsThief](https://github.com/ThePantsThief) for 1.11 and 1.11.2
 
 
