@@ -1,12 +1,10 @@
 package zombe.core;
 
-import net.minecraft.client.*;
-import net.minecraft.client.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.player.EntityPlayerMP;
 
-import java.lang.*;
-import java.util.*;
+import java.util.Collection;
 
 /**
     Public handle for the modpack's hooks.
@@ -73,7 +71,7 @@ public class ZHandle {
         Object obj = handle(name, (Double) arg);
         return (obj instanceof Double) ? (Double) obj : arg;
     }
-    
+
     public static boolean handle(String name, Object arg, boolean def) {
         Object obj = handle(name, arg);
         return (obj instanceof Boolean) ? (Boolean) obj : def;
@@ -145,6 +143,6 @@ public class ZHandle {
 
     /* WorldProvider */
 
-    
+
 
 }

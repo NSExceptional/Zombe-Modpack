@@ -28,22 +28,16 @@ public class ZRenderGlobal extends RenderGlobal {
     */
 
     @Override
-    public void func_180447_b(float p_180447_1_, int p_180447_2_) {
-        renderClouds(p_180447_1_, p_180447_2_);
-    }
-    public void superRenderClouds(float p_180447_1_, int p_180447_2_) {
-        super.func_180447_b(p_180447_1_, p_180447_2_);
-    }
-    public void renderClouds(float delta, int arg2) {
-        //if (ZHandle.handle("beforeRenderClouds", (Float) delta, true))
-        superRenderClouds(delta, arg2);
-        //ZHandle.handle("afterRenderClouds", delta);
+    public void renderClouds(float partialTicks, int pass) {
+        //if (ZHandle.handle("beforeRenderClouds", (Float) partialTicks, true))
+        super.renderClouds(partialTicks, pass);
+        //ZHandle.handle("afterRenderClouds", partialTicks);
     }
 
     @Override
-    public void func_174970_a(Entity p1, double p2, ICamera p3, int p4, boolean p5) {
+    public void setupTerrain(Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator) {
         sortAndRender();
-        super.func_174970_a(p1, p2, p3, p4, p5);
+        super.setupTerrain(viewEntity, partialTicks, camera, frameCount, playerSpectator);
     }
     public void sortAndRender() {
         ZHandle.handle("onSortAndRender");

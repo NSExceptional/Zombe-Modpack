@@ -1,24 +1,31 @@
 package zombe.mod;
 
-import net.minecraft.block.*;
-import net.minecraft.block.material.*;
-import net.minecraft.client.entity.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.GuiChat;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
+import org.lwjgl.input.Keyboard;
+import zombe.core.ZHandle;
+import zombe.core.ZMod;
+import zombe.core.ZWrapper;
+import zombe.core.util.BlockFace;
+import zombe.core.util.TimeHelper;
+
+import java.util.List;
+import java.util.Random;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import zombe.core.util.*;
-import java.lang.*;
-import java.util.*;
-import org.lwjgl.input.Keyboard;
 
 public final class Info extends ZMod {
-    
+
     private static int keyToggle;
     private static boolean optHideAchievement, optTagPos, optTagDirection, optTagCompass, optTagBiome, optTagFPS, optTagTime, optShowPos, optShowDirection, optShowTime, optShowBiome, optShowItem, optShowBlock, optShowEntity;
 
@@ -29,7 +36,7 @@ public final class Info extends ZMod {
 
     public Info() {
         super("info", "1.8", "9.0.2");
-        
+
         addOption("optInfoHideAchievement", "Hide the obnoxious achievements", false);
         addOption("optInfoTagPos", "Tag your coordinates", false);
         addOption("optInfoTagCompass", "Tag a compass", true);
@@ -72,18 +79,19 @@ public final class Info extends ZMod {
         infoShow = false;
         infoServer = false;
     }
-    
+
     @Override
     protected void quit() {
         setMessage("info", null);
     }
-    
+
     @Override
     protected void onWorldChange() {
         infoServer = false;
         infoDeath = false;
     }
 
+    @SuppressWarnings({"UnusedAssignment", "ConstantConditions"})
     @Override
     protected void onClientTick(EntityPlayerSP player) {
         List list = getEntities();
@@ -96,14 +104,14 @@ public final class Info extends ZMod {
         double px = getX(player), py = getY(player), pz = getZ(player);
         double vx = getX(view),   vy = getY(view),   vz = getZ(view);
         int x = fix(vx), y = fix(vy), z = fix(vz);
-        
+
         if (getHealth(player) <= 0) {
             infoDeath = true;
             infoDeathX = fix(px);
             infoDeathY = fix(py);
             infoDeathZ = fix(pz);
         }
-        
+
         if (isInMenu() && !(getMenu() instanceof GuiChat)) return;
 
         if (!infoShow) return;
@@ -114,13 +122,13 @@ public final class Info extends ZMod {
         BlockPos at;
 
         // fog & exp
-        info += "\nFog: \u00a7b" + getViewDistance() 
+        info += "\nFog: \u00a7b" + getViewDistance()
              +  "\u00a7f    Exp-orbs: \u00a7b" + player.experienceTotal;
 
         // light level
-        if (y >= 0) info += "\nLight real=\u00a7b" 
+        if (y >= 0) info += "\nLight real=\u00a7b"
             + getRealLightLevel(x,y,z) + "\u00a7f (block=\u00a78"
-            + getBlockLightLevel(x,y,z) + "\u00a7f sky=\u00a7e" 
+            + getBlockLightLevel(x,y,z) + "\u00a7f sky=\u00a7e"
             + getSkyLightLevel(x,y,z) + "\u00a7f)";
 
         // chunk
@@ -135,15 +143,15 @@ public final class Info extends ZMod {
         if (infoServer) {
             // slimes
             Random rnd = new Random(getSeed() + (long)(cx * cx * 0x4c1906) + (long)(cx * 0x5ac0db) + (long)(cz * cz) * 0x4307a7L + (long)(cz * 0x5f24f) ^ 0x3ad8025f); // the silliest nonsense i have ever seen x_x
-            info += "  Slimes: \u00a7b" 
+            info += "  Slimes: \u00a7b"
                  +  (rnd.nextInt(10)==0 ? "yes" : "no ");
 
             // stronghold
             //BlockPos stronghold = getWorld().findClosestStructure("Stronghold", x, y, z);
-            BlockPos stronghold = null;
+            BlockPos stronghold = getWorld().func_190528_a("Stronghold", new BlockPos(x, y, z), true);
             if (stronghold != null) {
                 info += "\nStronghold: \u00a7b" + (mx = getX(stronghold))
-                     +  "\u00a7f , \u00a7b" + getY(stronghold) 
+                     +  "\u00a7f , \u00a7b" + getY(stronghold)
                      +  "\u00a7f , \u00a7b" + (mz = getZ(stronghold));
                 mx -= x; mz -= z;
                 info += "\u00a7f (\u00a7b" + (int)Math.sqrt(mx*mx + mz*mz)
@@ -163,7 +171,7 @@ public final class Info extends ZMod {
         at = getBed(player);
         if (at != null) {
             info += "\nYour bed: \u00a7b" + (mx = getX(at))
-                 +  "\u00a7f,\u00a7b" + (my = getY(at)) 
+                 +  "\u00a7f,\u00a7b" + (my = getY(at))
                  +  "\u00a7f,\u00a7b" + (mz = getZ(at));
             mx -= x; mz -= z;
             info += "\u00a7f (\u00a7b" + (int)Math.sqrt(mx*mx + mz*mz)
@@ -173,10 +181,10 @@ public final class Info extends ZMod {
         // last death
         if (infoDeath) {
             info += "\nYou died:   \u00a7b" + (mx = infoDeathX)
-                 +  "\u00a7f , \u00a7b" + (my = infoDeathY) 
+                 +  "\u00a7f , \u00a7b" + (my = infoDeathY)
                  +  "\u00a7f , \u00a7b" + (mz = infoDeathZ);
             mx -= x; mz -= z;
-            info += "\u00a7f (\u00a7b" + (int)Math.sqrt(mx*mx + mz*mz) 
+            info += "\u00a7f (\u00a7b" + (int)Math.sqrt(mx*mx + mz*mz)
                  +  "\u00a7fm)";
         }
 
@@ -184,7 +192,7 @@ public final class Info extends ZMod {
         if (infoServer) {
             info += "\nWorld:  name=\u00a7b" + getWorldName()
                  +  "  seed=\u00a7b" + getSeed();
-        
+
             info += "\nRaining: \u00a7b" + (getRaining() ? "yes" : "no");
             if (!getIsHell()) info += "\u00a7f the next \u00a7b"
                 + (getRainingTime() / 20) + "\u00a7fs";
@@ -208,15 +216,16 @@ public final class Info extends ZMod {
             meta = getMeta(stack);
             cnt = getStackSize(stack);
             Item item = getItem(id);
-            info += "\nSelected item: \u00a7b" + ZWrapper.getName(item) 
-                 +  "\u00a7f (\u00a7b" + id 
-                 +  "\u00a7f/"+ (hasSubTypes(item) 
-                     ? "\u00a7b" + meta 
+            info += "\nSelected item: \u00a7b" + ZWrapper.getName(item)
+                 +  "\u00a7f (\u00a7b" + id
+                 +  "\u00a7f/"+ (hasSubTypes(item)
+                     ? "\u00a7b" + meta
                      : "(\u00a7b"+ meta +"\u00a7f)")
-                 + "\u00a7f)  stack: \u00a7b" + cnt 
+                 + "\u00a7f)  stack: \u00a7b" + cnt
                  + "\u00a7f/\u00a7b" + getItemMax(item);
             Block block = getBlock(item);
-            info += "\nType: \u00a7b" 
+
+            info += "\nType: \u00a7b"
                  +  (block != null ? "Block" : "Item");
             if ((cap = getItemDmgCap(item)) != 0)
             info += "\u00a7f  damage: \u00a7b" + meta
@@ -241,7 +250,7 @@ public final class Info extends ZMod {
             }
         }
 
-        MovingObjectPosition mop = null;
+        RayTraceResult mop = null;
         BlockFace face = null;
         Entity ent = null;
         if (optShowBlock || optShowEntity) {
@@ -264,7 +273,7 @@ public final class Info extends ZMod {
                  +  "\u00a7f (" + getId(ent)
                  +  "\u00a7f)";
         }
-        
+
         setMessage("info", info);
     }
 
@@ -280,7 +289,7 @@ public final class Info extends ZMod {
     protected void onGUIDraw(float delta) {
         if (optHideAchievement) killAchievement();
     }
-    
+
     @Override
     protected String getTag() {
         String tag = "";
@@ -293,11 +302,11 @@ public final class Info extends ZMod {
             tag += ""+x+","+y+","+z+" ";
         }
         if (optTagDirection && view != null) {
-            Vec3 look = getLookVector(view, 1f);
+            Vec3d look = getLookVector(view, 1f);
             tag += getFineFacingName(getX(look), getY(look), getZ(look))+" ";
         }
         if (optTagCompass && view != null) {
-            Vec3 look = getLookVector(view, 1f);
+            Vec3d look = getLookVector(view, 1f);
             Vec3i dir = getDirectionVec(EnumFacing.NORTH);
             tag += "("+getRelativeCompass(getX(dir), getZ(dir), getX(look), getZ(look))+") ";
         }

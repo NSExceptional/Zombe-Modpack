@@ -1,11 +1,9 @@
 package zombe.core.wrapper;
 
-import net.minecraft.client.*;
-import net.minecraft.client.entity.*;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.resources.*;
-import net.minecraft.entity.*;
-import zombe.core.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.resources.IResourceManager;
+import zombe.core.ZHandle;
 
 public final class ZEntityRenderer extends EntityRenderer {
 
@@ -17,26 +15,27 @@ public final class ZEntityRenderer extends EntityRenderer {
     }
 
     @Override
-    public void updateCameraAndRender(float par) {
-        super.updateCameraAndRender(par);
-        ZHandle.onUpdateCameraAndRender(par);
+    public void updateCameraAndRender(float partialTicks, long nanoTime) {
+        super.updateCameraAndRender(partialTicks, nanoTime);
+        ZHandle.onUpdateCameraAndRender(partialTicks);
     }
-    
+
     @Override
     public void renderWorld(float par1, long par2) {
         // ZMod.beginRenderWorld(par1, par2);
         super.renderWorld(par1, par2);
         // ZMod.endRenderWorld(par1, par2);
     }
-    
+
     @Override
     protected void renderRainSnow(float par) {
         ZHandle.beginRenderRainSnow(par);
+        //noinspection ConstantConditions
         if (ZHandle.forwardRenderRainSnow())
             super.renderRainSnow(par);
         ZHandle.endRenderRainSnow(par);
     }
-    
+
     @Override
     public void updateRenderer() {
         ZHandle.handle("beforeUpdateRenderer");

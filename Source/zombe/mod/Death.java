@@ -1,13 +1,13 @@
 package zombe.mod;
 
-import net.minecraft.client.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.ItemStack;
+import zombe.core.ZMod;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import java.lang.*;
-import org.lwjgl.input.Keyboard;
 
 public final class Death extends ZMod {
 
@@ -19,7 +19,7 @@ public final class Death extends ZMod {
     private static ItemStack deathArmor[];
     private static int deathXpLevel, deathXpTotal;
     private static float deathXpP;
-    
+
     public Death() {
         super("death", "1.8", "9.0.0");
         registerListener("onServerUpdate");
@@ -63,21 +63,21 @@ public final class Death extends ZMod {
 
     @Override
     protected Object handle(String name, Object arg) {
-        if (name == "onServerUpdate")
+        if (name.equals("onServerUpdate"))
             onServerUpdate((EntityPlayerMP) arg);
-        if (name == "onPlayerDeath")
+        if (name.equals("onPlayerDeath"))
             onPlayerDeath((EntityPlayerMP) arg);
         return arg;
     }
-    
+
     private static void deathVoid(EntityPlayer ent) {
         if (!optDropInv) {
             InventoryPlayer inv = ent.inventory;
-            for (int i = 0; i < deathInv.length; ++i) { 
-                inv.mainInventory[i] = null;
+            for (int i = 0; i < deathInv.length; ++i) {
+                inv.mainInventory.set(i, ItemStack.field_190927_a);
             }
             for (int i = 0; i < deathArmor.length; ++i) {
-                inv.armorInventory[i] = null;
+                inv.armorInventory.set(i, ItemStack.field_190927_a);
             }
         }
         if (!optLoseExp) {
@@ -86,20 +86,20 @@ public final class Death extends ZMod {
             ent.experienceLevel = 0;
         }
     }
-    
+
     private static void deathSave(EntityPlayer ent) {
         if (!optDropInv) { // save inventory
             deathHaveInv = true;
             InventoryPlayer inv = ent.inventory;
-            deathInv = new ItemStack[inv.mainInventory.length];
-            deathArmor = new ItemStack[inv.armorInventory.length];
-            for (int i = 0; i < deathInv.length; ++i) { 
-                ItemStack is = inv.mainInventory[i];
-                deathInv[i] = (is == null) ? is : is.copy();
+            deathInv = new ItemStack[inv.mainInventory.size()];
+            deathArmor = new ItemStack[inv.armorInventory.size()];
+            for (int i = 0; i < deathInv.length; ++i) {
+                ItemStack is = inv.mainInventory.get(i);
+                deathInv[i] = is.copy();
             }
             for (int i = 0; i < deathArmor.length; ++i) {
-                ItemStack is = inv.armorInventory[i];
-                deathArmor[i] = (is == null) ? is : is.copy();
+                ItemStack is = inv.armorInventory.get(i);
+                deathArmor[i] = is.copy();
             }
         }
         if (!optLoseExp) {
@@ -109,17 +109,19 @@ public final class Death extends ZMod {
             deathXpLevel = ent.experienceLevel;
         }
     }
-    
+
     private static void deathLoad(EntityPlayer ent) {
         if (!optDropInv && deathHaveInv) { // load inventory
             InventoryPlayer inv = ent.inventory;
-            for (int i = 0; i < deathInv.length; ++i) { 
+            for (int i = 0; i < deathInv.length; ++i) {
                 ItemStack is = deathInv[i];
-                inv.mainInventory[i] = (is == null) ? is : is.copy();
+                is = (is == null) ? ItemStack.field_190927_a : is.copy();
+                inv.mainInventory.set(i, is);
             }
             for (int i = 0; i < deathArmor.length; ++i) {
                 ItemStack is = deathArmor[i];
-                inv.armorInventory[i] = (is == null) ? is : is.copy();
+                is = (is == null) ? ItemStack.field_190927_a : is.copy();
+                inv.armorInventory.set(i, is);
             }
         }
         if (!optLoseExp && deathHaveExp) {
@@ -128,7 +130,7 @@ public final class Death extends ZMod {
             ent.experienceLevel = deathXpLevel;
         }
     }
-    
+
     private void onPlayerDeath(EntityPlayerMP ent) {
         synchronized(this) {
             deathSave(ent);

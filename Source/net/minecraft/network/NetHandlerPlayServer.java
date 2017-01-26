@@ -1,5 +1,7 @@
 package net.minecraft.network;
 
+import zombe.core.ZHandle;
+
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Floats;
@@ -180,7 +182,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
         //-ZMod---------------------------------------------------------------
         ZHandle.onNetworkTick(this.playerEntity);
         //--------------------------------------------------------------------
- 
+
         this.captureCurrentPosition();
         this.playerEntity.onUpdateEntity();
         this.playerEntity.setPositionAndRotation(this.firstGoodX, this.firstGoodY, this.firstGoodZ, this.playerEntity.rotationYaw, this.playerEntity.rotationPitch);
@@ -735,7 +737,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
         {
             //-ZMod-TODO
 //            if (this.hasMoved && this.playerEntity.getDistanceSq((double)var5.getX() + 0.5D, (double)var5.getY() + 0.5D, (double)var5.getZ() + 0.5D) < ZHandle.handle("getPlayerReachPlaceSq",64.0F) && !this.serverController.isBlockProtected(var2, var5, this.playerEntity) && var2.getWorldBorder().contains(var5)) //-ZMod-Dig-reach
-            
+
             this.playerEntity.interactionManager.processRightClick(this.playerEntity, worldserver, itemstack, enumhand);
         }
     }

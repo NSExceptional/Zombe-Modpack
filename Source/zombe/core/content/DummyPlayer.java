@@ -1,17 +1,23 @@
 package zombe.core.content;
 
-import zombe.core.*;
-import static zombe.core.ZWrapper.*;
-import zombe.core.util.*;
+import net.minecraft.block.Block;
+import net.minecraft.client.entity.AbstractClientPlayer;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.MovementInput;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
+import zombe.core.ZHandle;
+import zombe.core.ZWrapper;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.*;
-import net.minecraft.client.multiplayer.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import static zombe.core.ZWrapper.*;
 
 public final class DummyPlayer extends AbstractClientPlayer {
     public EntityPlayer playerBody;
@@ -26,14 +32,14 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void moveEntity(double mx, double my, double mz) {
+    public void moveEntity(MoverType t, double mx, double my, double mz) {
         if (this == getView()) {
-            ZHandle.handle("beforeViewMove", new Vec3(mx,my,mz));
-            Vec3 motion = new Vec3(this.motionX, this.motionY, this.motionZ);
-            super.moveEntity(this.motionX, this.motionY, this.motionZ);
+            ZHandle.handle("beforeViewMove", new Vec3d(mx,my,mz));
+            Vec3d motion =  new Vec3d(this.motionX, this.motionY, this.motionZ);
+            super.moveEntity(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
             ZHandle.handle("afterViewMove", motion);
         } else {
-            super.moveEntity(mx, my, mz);
+            super.moveEntity(t, mx, my, mz);
         }
     }
 
@@ -71,10 +77,10 @@ public final class DummyPlayer extends AbstractClientPlayer {
      * Gets the player's field of view multiplier. (ex. when flying)
      */
     public float getFOVMultiplier() {
-        return func_175156_o();
+        return getFovModifier();
     }
     @Override
-    public float func_175156_o() {
+    public float getFovModifier() {
         return 1.0F;
     }
 
@@ -87,8 +93,9 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     private boolean isMostlyEmpty(BlockPos p) {
-        return !getBlockAt(getWorld(this),p).isNormalCube() 
-            && !getBlockAt(getWorld(this),p.offsetUp()).isNormalCube();
+        Block block = getBlockAt(getWorld(this),p);
+        return !block.isNormalCube(block.getDefaultState())
+            && !getBlockAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube(null);
     }
 
     /**
@@ -106,23 +113,24 @@ public final class DummyPlayer extends AbstractClientPlayer {
             byte var12 = -1;
             double var13 = 9999.0D;
 
-            if (isMostlyEmpty(var7.offsetWest()) && var8 < var13) {
+            if (isMostlyEmpty(var7.offset(EnumFacing.WEST)) && var8 < var13) {
                 var13 = var8;
                 var12 = 0;
             }
 
-            if (isMostlyEmpty(var7.offsetEast()) && 1.0D - var8 < var13) {
+            if (isMostlyEmpty(var7.offset(EnumFacing.EAST)) && 1.0D - var8 < var13) {
                 var13 = 1.0D - var8;
                 var12 = 1;
             }
 
-            if (isMostlyEmpty(var7.offsetNorth()) && var10 < var13) {
+            if (isMostlyEmpty(var7.offset(EnumFacing.NORTH)) && var10 < var13) {
                 var13 = var10;
                 var12 = 4;
             }
 
-            if (isMostlyEmpty(var7.offsetSouth()) && 1.0D - var10 < var13) {
-                var13 = 1.0D - var10;
+            if (isMostlyEmpty(var7.offset(EnumFacing.SOUTH)) && 1.0D - var10 < var13) {
+                // Never used...
+                //var13 = 1.0D - var10;
                 var12 = 5;
             }
 
@@ -141,25 +149,17 @@ public final class DummyPlayer extends AbstractClientPlayer {
      * Performs a ray trace for the distance specified and using the partial tick time. Args: distance, partialTickTime
      */
     @Override
-    public MovingObjectPosition func_174822_a(double distance, float delta) {
-        return rayTrace(distance, delta);
-    }
-    public MovingObjectPosition superRayTrace(double distance, float delta) {
-        return super.func_174822_a(distance, delta);
-    }
-    public MovingObjectPosition rayTrace(double distance, float delta) {
-        MovingObjectPosition mop = superRayTrace(distance, delta);
-        if (this == getView())
-            return (MovingObjectPosition) ZHandle.handle("onViewRayTrace", mop);
-        return mop;
+    public RayTraceResult rayTrace(double blockReachDistance, float partialTicks) {
+        RayTraceResult trace = super.rayTrace(blockReachDistance, partialTicks);
+        return (RayTraceResult) ZHandle.handle("onPlayerRayTrace", trace);
     }
 
     @Override
-    public boolean func_175149_v() {
+    public boolean isSpectator() {
         if (ZHandle.handle("isNoclip",this,false)) ZWrapper.setNoclip(this,true);
-        return super.func_175149_v();
+        return super.isSpectator();
     }
-    
+
     public void placeAt(Entity ent) {
         //placeAt(ent.posX, getAABB(ent).minY + getYOffset(this) - this.ySize, ent.posZ);
         placeAt(getX(ent), getY(ent), getZ(ent));
@@ -179,8 +179,8 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public ItemStack getHeldItem() {
-        return playerBody.getHeldItem();
+    public ItemStack getHeldItem(EnumHand hand) {
+        return playerBody.getHeldItem(hand);
     }
 
     @Override
@@ -200,7 +200,7 @@ public final class DummyPlayer extends AbstractClientPlayer {
     //public boolean isClientWorld() { return true; } // < 1.8 MCP 9.10
     public boolean isServerWorld() { return true; }
     @Override
-    public void addChatMessage(IChatComponent message) {}
+    public void addChatMessage(ITextComponent message) {}
     @Override
     public boolean canCommandSenderUseCommand(int par1, String par2Str) { return false; }
     @Override

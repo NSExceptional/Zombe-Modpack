@@ -1,26 +1,25 @@
 package zombe.mod;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.util.*;
+import net.minecraft.entity.MoverType;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.Vec3d;
+import zombe.core.ZMod;
+import zombe.core.content.DummyPlayer;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import zombe.core.content.DummyPlayer;
-import java.lang.*;
 
 public final class Motion extends ZMod {
 
     private static boolean optFixMovedWrongly, optFixMovedTooQuickly;
 
     private static DummyPlayer serverDummy = null, clientDummy = null;
-    private static Vec3 sentPosition = null;
-    private static Vec3 serverPosition = null;
-    private static Vec3 serverNextPosition = null;
-    private static Vec3 serverMotion = null;
-    private static Vec3 serverNextMotion = null;
-    private static Vec3 clientPosition = null;
-    private static Vec3 clientMotion = null;
+    private static Vec3d sentPosition = null;
+    private static Vec3d serverPosition = null;
+    private static Vec3d serverNextPosition = null;
+    private static Vec3d serverMotion = null;
+    private static Vec3d serverNextMotion = null;
+    private static Vec3d clientPosition = null;
+    private static Vec3d clientMotion = null;
     private static int ticksForForceSync;
     private static boolean anticipated;
 
@@ -68,25 +67,26 @@ public final class Motion extends ZMod {
         init();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected Object handle(String name, Object arg) {
-        if (name == "getServerMotion")
+        if (name.equals("getServerMotion"))
             return serverMotion;
-        if (name == "getServerNextMotion")
+        if (name.equals("getServerNextMotion"))
             return serverNextMotion;
-        if (name == "getServerPosition")
+        if (name.equals("getServerPosition"))
             return serverPosition;
-        if (name == "getServerNextPosition")
+        if (name.equals("getServerNextPosition"))
             return serverNextPosition;
-        if (name == "onClientUpdate")
+        if (name.equals("onClientUpdate"))
             onClientUpdate((EntityPlayer) arg);
-        if (name == "beforePlayerMove")
-            beforePlayerMove((Vec3) arg);
-        if (name == "afterPlayerMove")
-            afterPlayerMove((Vec3) arg);
-        if (name == "beforeSendMotion")
+        if (name.equals("beforePlayerMove"))
+            beforePlayerMove((Vec3d) arg);
+        if (name.equals("afterPlayerMove"))
+            afterPlayerMove((Vec3d) arg);
+        if (name.equals("beforeSendMotion"))
             beforeSendMotion((EntityPlayer) arg);
-        if (name == "afterSendMotion")
+        if (name.equals("afterSendMotion"))
             afterSendMotion((EntityPlayer) arg);
         return arg;
     }
@@ -114,7 +114,7 @@ public final class Motion extends ZMod {
         }
         clientPosition = getPosition(player);
         // if motion was changed between two updates, use it
-        Vec3 gain = getMotion(player).subtract(clientMotion);
+        Vec3d gain = getMotion(player).subtract(clientMotion);
         //serverMotion = serverMotion.add(gain);
         if (gain.dotProduct(gain) > 0) serverMotion = getMotion(player);
         // anticipated new position and motion
@@ -126,7 +126,7 @@ public final class Motion extends ZMod {
         anticipated = true;
     }
 
-    private static void beforePlayerMove(Vec3 move) {
+    private static void beforePlayerMove(Vec3d move) {
         EntityPlayer player = getPlayer();
         if (isSleeping(player) || player.isRiding()) return;
         move = getMotion(player);
@@ -162,22 +162,22 @@ public final class Motion extends ZMod {
                     log("in mod Motion: FixMovedTooQuickly looped way too much");
                     break;
                 }
-                move = new Vec3(mx,my,mz);
+                move = new Vec3d(mx,my,mz);
             }
         }
         if (optFixMovedWrongly && !isCreative(player) && !getNoclip(player)) {
             boolean wrong;
             do {
-                Vec3 noclipDestination = clientPosition.add(move);
+                Vec3d noclipDestination = clientPosition.add(move);
                 setPosition(clientDummy, clientPosition);
                 double mx = getX(move), my = getY(move), mz = getZ(move);
-                clientDummy.moveEntity(mx,my,mz);
-                Vec3 actualDestination = getPosition(clientDummy);
-                Vec3 diff = actualDestination.subtract(serverPosition);
+                clientDummy.moveEntity(MoverType.PLAYER, mx,my,mz);
+                Vec3d actualDestination = getPosition(clientDummy);
+                Vec3d diff = actualDestination.subtract(serverPosition);
                 mx = getX(diff); my = getY(diff); mz = getZ(diff);
                 setPosition(clientDummy, serverPosition);
-                clientDummy.moveEntity(mx,my,mz);
-                Vec3 serverDestination = getPosition(clientDummy);
+                clientDummy.moveEntity(MoverType.SELF, mx,my,mz);
+                Vec3d serverDestination = getPosition(clientDummy);
                 if (wrong = wasMoveWrong(actualDestination, serverDestination)) {
                     move = serverDestination.subtract(clientPosition);
                 }
@@ -186,8 +186,8 @@ public final class Motion extends ZMod {
         setMotion(player, move);
     }
 
-    private static void afterPlayerMove(Vec3 move) {
-        
+    private static void afterPlayerMove(Vec3d move) {
+
     }
 
     private static void beforeSendMotion(EntityPlayer player) {
@@ -201,7 +201,7 @@ public final class Motion extends ZMod {
 
     private static void emulateSendMotion(EntityPlayer player) {
         // emulate client player's sendMotion
-        Vec3 newPosition = null;
+        Vec3d newPosition = null;
         if (player.isRiding()) {
             // needs improvement
             newPosition = getPosition(player);
@@ -210,7 +210,7 @@ public final class Motion extends ZMod {
             double dx = getX(sentPosition) - getX(player);
             double dy = getY(sentPosition) - getY(player);
             double dz = getZ(sentPosition) - getZ(player);
-            boolean sync = (dx*dx + dy*dy + dz*dz > 9.0E-4D 
+            boolean sync = (dx*dx + dy*dy + dz*dz > 9.0E-4D
                 || ticksForForceSync >= 20);
             ++ticksForForceSync;
             if (sync) {
@@ -221,9 +221,9 @@ public final class Motion extends ZMod {
         }
     }
 
-    private static void emulateHandleMotion(EntityPlayer player, Vec3 newPosition, boolean packetOnGround) {
+    private static void emulateHandleMotion(EntityPlayer player, Vec3d newPosition, boolean packetOnGround) {
         // emulate server handling of C03PacketPlayer
-        Vec3 oldPosition = serverPosition;
+        Vec3d oldPosition = serverPosition;
         if (newPosition == null) newPosition = oldPosition;
         if (player.isRiding()) {
             // needs improvement
@@ -257,13 +257,13 @@ public final class Motion extends ZMod {
         // server movement attempt
         setPosition(serverDummy, oldPosition);
         double spacing = 0.0625;
-        boolean wasFree = getWorld(player).getCollidingBoundingBoxes(player, getAABB(serverDummy).contract(spacing, spacing, spacing)).isEmpty();
+        boolean wasFree = getWorld(player).getCollisionBoxes(player, getAABB(serverDummy).contract(spacing)).isEmpty();
         if (getOnGround(serverDummy) && !packetOnGround
          && getX(player) > getX(oldPosition)) {
             serverDummy.jump();
         }
-        Vec3 move = newPosition.subtract(oldPosition);
-        serverDummy.moveEntity(getX(move), getY(move), getZ(move));
+        Vec3d move = newPosition.subtract(oldPosition);
+        serverDummy.moveEntity(MoverType.SELF, getX(move), getY(move), getZ(move));
         setOnGround(serverDummy, packetOnGround);
         // moved wrongly check
         boolean moveWrong = false;
@@ -273,7 +273,7 @@ public final class Motion extends ZMod {
         }
         setPosition(serverDummy, newPosition);
         if (!getNoclip(player)) {
-            boolean isFree = getWorld(player).getCollidingBoundingBoxes(player, getAABB(serverDummy).contract(spacing, spacing, spacing)).isEmpty();
+            boolean isFree = getWorld(player).getCollisionBoxes(player, getAABB(serverDummy).contract(spacing)).isEmpty();
             if (wasFree && (moveWrong || !isFree) && !isSleeping(player)) {
                 serverNextPosition = serverPosition = oldPosition;
                 // note: motion is kept as is and a position packet is sent
@@ -287,7 +287,7 @@ public final class Motion extends ZMod {
         serverNextMotion   = serverMotion   = getMotion(serverDummy);
     }
 
-    private static boolean isMoveTooQuick(Vec3 move) {
+    private static boolean isMoveTooQuick(Vec3d move) {
         double nx = Math.abs(getX(move) - getX(serverNextPosition));
         double ny = Math.abs(getY(move) - getY(serverNextPosition));
         double nz = Math.abs(getZ(move) - getZ(serverNextPosition));
@@ -298,11 +298,11 @@ public final class Motion extends ZMod {
         return dist >= 100;
     }
 
-    private static boolean wasMoveWrong(EntityPlayer what, Vec3 move) {
+    private static boolean wasMoveWrong(EntityPlayer what, Vec3d move) {
         return wasMoveWrong(getPosition(what), move);
     }
 
-    private static boolean wasMoveWrong(Vec3 pos1, Vec3 pos2) {
+    private static boolean wasMoveWrong(Vec3d pos1, Vec3d pos2) {
         double dx = getX(pos1) - getX(pos2);
         double dy = getY(pos1) - getY(pos2);
         double dz = getZ(pos1) - getZ(pos2);

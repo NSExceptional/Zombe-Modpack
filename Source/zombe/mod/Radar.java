@@ -1,17 +1,18 @@
 package zombe.mod;
 
-import net.minecraft.client.entity.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.inventory.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.util.*;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.Vec3d;
+import org.lwjgl.input.Keyboard;
+import zombe.core.ZMod;
+import zombe.core.ZWrapper;
+
+import java.util.List;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import java.lang.*;
-import java.util.*;
-import org.lwjgl.input.Keyboard;
 
 public final class Radar extends ZMod {
 
@@ -21,10 +22,10 @@ public final class Radar extends ZMod {
     private static float optRangeMax = 1000, optRangeNear = 1;
 
     private static boolean radarShow;
-    
+
     public Radar() {
         super("radar", "1.8", "9.0.2");
-        
+
         addOption("keyRadar", "Toggle radar", Keyboard.KEY_F4);
         addOption("optRadar", "Radar enabled by default", true);
         addOption("optRadarShowCompass", "Show players compass on radar", true);
@@ -34,12 +35,12 @@ public final class Radar extends ZMod {
         addOption("optRadarPrefixNear", "'near' color prefix", "b");
         addOption("optRadarPrefixFar", "'far' color prefix", "9");
     }
-    
+
     @Override
     protected void init() {
         radarShow = optRadar;
     }
-    
+
     @Override
     protected void quit() {
         setMessage("radar", null);
@@ -56,7 +57,7 @@ public final class Radar extends ZMod {
         optPrefixNear      = getOptionString("optRadarPrefixNear");
         optPrefixFar       = getOptionString("optRadarPrefixFar");
     }
-    
+
     @Override
     protected void onClientTick(EntityPlayerSP player) {
         List list = getEntities();
@@ -67,14 +68,14 @@ public final class Radar extends ZMod {
         if (view == null) view = player;
         double px = getX(player), py = getY(player), pz = getZ(player);
         double vx = getX(view),   vy = getY(view),   vz = getZ(view);
-        
+
         if (radarShow && (!isInMenu() || getMenu() instanceof GuiChat
             || getMenu() instanceof GuiContainer)) {
             double mX, mY, mZ, distp, distv;
             final double rangemax = optRangeMax*optRangeMax;
             String radar = "";
-            Vec3 lookp = getLookVector(player, 1f);
-            Vec3 lookv = getLookVector(view, 1f);
+            Vec3d lookp = getLookVector(player, 1f);
+            Vec3d lookv = getLookVector(view, 1f);
             for (Object obj : list) {
                 if (!(obj instanceof EntityPlayer)
                  || obj == view && player == view)
@@ -96,17 +97,17 @@ public final class Radar extends ZMod {
                 distp = Math.sqrt(distp);
                 distv = Math.sqrt(distv);
                 String partp = "\u00a7b" + ((int)distp) + "\u00a7fm"
-                             + (optShowCompass 
+                             + (optShowCompass
                              ? " [\u00a7b" + comp + "\u00a7f]" : "")
                              + (optShowDirection
                              ? " \u00a7b" + dirp : "");
-                String partv = (player == view) ? "" 
+                String partv = (player == view) ? ""
                              : " \u00a7f/ \u00a7b" + ((int)distv) + "\u00a7fm"
-                             + (optShowCompass 
+                             + (optShowCompass
                              ? " [\u00a7b" + comv + "\u00a7f]" : "")
                              + (optShowDirection
                              ? " \u00a7b" + dirv : "");
-                radar += "\u00a7" + (distp < optRangeNear 
+                radar += "\u00a7" + (distp < optRangeNear
                       ?  optPrefixNear : optPrefixFar)
                       +  ZWrapper.getName(ent) + " \u00a7f("
                       +  partp + partv + "\u00a7f)\n";

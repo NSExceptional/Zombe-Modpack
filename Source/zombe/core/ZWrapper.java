@@ -1,44 +1,72 @@
 package zombe.core;
 
-import zombe.core.content.*;
-import zombe.core.gui.Keys;
-import zombe.core.util.*;
-
+import com.google.common.collect.ImmutableList;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.*;
-import net.minecraft.client.entity.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.achievement.*;
-import net.minecraft.client.gui.inventory.*;
-import net.minecraft.client.multiplayer.*;
-import net.minecraft.client.network.*;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.entity.*;
-import net.minecraft.client.renderer.texture.*;
-import net.minecraft.client.resources.*;
-import net.minecraft.client.settings.*;
-import net.minecraft.entity.*;
+import net.minecraft.client.gui.achievement.GuiAchievement;
+import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiCrafting;
+import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.RenderItem;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.effect.EntityLightningBolt;
-import net.minecraft.entity.item.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.item.crafting.*;
-import net.minecraft.nbt.*;
-import net.minecraft.network.*;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ContainerPlayer;
+import net.minecraft.inventory.ContainerWorkbench;
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.Packet;
 import net.minecraft.tileentity.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import net.minecraft.world.chunk.*;
-import net.minecraft.world.storage.*;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.*;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldEntitySpawner;
+import net.minecraft.world.biome.BiomeProvider;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.storage.WorldInfo;
+import zombe.core.content.ConfigMenu;
+import zombe.core.content.RecipeComparator;
+import zombe.core.gui.Keys;
+import zombe.core.util.BlockFace;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.logging.*;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
+
+import static java.lang.System.exit;
 
 /**
     Wrapper around Minecraft objects and methods.
@@ -65,7 +93,7 @@ public class ZWrapper {
     /* REFLECTION STUFF */
 
     /* table of MCP / obfuscated attribute names correspondance */
-    private static final String MCPnames[] = {
+    private static final String[] MCPnames = {
         // EntityMinecart
         "em_fuel",                  "fuel",                     "c",
         // EntityEnderman
@@ -75,28 +103,16 @@ public class ZWrapper {
         // TileEntityChest
         "tec_chestContents",        "chestContents",            "i",
         // TileEntityDispenser
-        "ted_dispenserContents",    "dispenserContents",        "b",
-        // CraftingManager
-        "cm_recipes",               "recipes",                  "b",
-        // ShapedRecipes
-        "sr_recipeWidth",           "recipeWidth",              "b",
-        "sr_recipeHeight",          "recipeHeight",             "c",
-        "sr_recipeItems",           "recipeItems",              "d",
-        "sr_recipeOutput",          "recipeOutput",             "e",
-        // ShapelessRecipes
-        "lr_recipeOutput",          "recipeOutput",             "a",
-        "lr_recipeItems",           "recipeItems",              "b",
-        // InventoryCrafting
-        "ic_stackList",             "stackList",                "a",
+        "ted_stacks",               "stacks",                   "i",
         // GuiNewChat
         "gnc_ChatLines",            "chatLines",                "c",
         // Block
-        "b_blockHardness",          "blockHardness",            "cG",
+        "b_blockHardness",          "blockHardness",            "v",
         "b_blockResistance",        "blockResistance",          "cH",
-        // BlockFire
-        "bf_chanceToEncourageFire", "chanceToEncourageFire",    "a",
-        "bf_abilityToCatchFire",    "abilityToCatchFire",       "b"
+        // ItemStack
+        "is_stackSize",             "stackSize",                ""
     };
+    private static final List<String> MCPNamesList = ImmutableList.copyOf(MCPnames);
 
     private static void log(String text, Exception e) {
         ZMod.log(text, e);
@@ -125,10 +141,10 @@ public class ZWrapper {
        return false;
     }
     public static Field getField(Class c, String name) {
-        int index = -1;
-        for (int i = 0; i < MCPnames.length && index == -1; i += 3) 
-            if (name.equals(MCPnames[i])) index = i;
-        if (index == -1) { log("getField failed for: " + name); return null; }
+        int index = MCPNamesList.indexOf(name);
+        if (index == -1) {
+            log("getField failed for: " + name); return null;
+        }
         Field field;
         try {
             field = c.getDeclaredField(MCPnames[index+1]);
@@ -175,8 +191,8 @@ public class ZWrapper {
 
     //-Biome------------------------------------------------------------------
     public static String getBiomeName(int x, int z) {
-        //return getChunkFromBlockCoords(x, z).getBiomeGenForWorldCoords(x & 0xf, z & 0xf, getWorld().getWorldChunkManager()).biomeName; // < 1.8
-        return getChunkFromBlockCoords(x, z).getBiome(new BlockPos(x,0,z), getWorld().getWorldChunkManager()).biomeName; // 1.8
+        BiomeProvider provider = getWorld().getBiomeProvider();
+        return getChunkFromBlockCoords(x, z).getBiome(new BlockPos(x, 0, z), provider).getBiomeName();
     }
 
     //-Block------------------------------------------------------------------
@@ -220,7 +236,7 @@ public class ZWrapper {
         return state == null ? 0 : Block.getStateId(state);
     }
     public static int getBlockIdMeta(int id, int meta) {
-        return (((meta < 0 || meta == ID_ANY || meta == BLOCK_ANY) 
+        return (((meta < 0 || meta == ID_ANY || meta == BLOCK_ANY)
             ? BLOCK_ANY : meta & BLOCK_ONE) << 12) | (id & BLOCK_BASE);
     }
     public static int getBlockIdMeta(int idmeta) {
@@ -258,7 +274,7 @@ public class ZWrapper {
     }
     public static Material getBlockMaterial(Block block) {
         //return block.blockMaterial; // < 1.8
-        return block.getMaterial();
+        return block.getMaterial(null);
     }
     public static Material getBlockMaterial(int id) {
         return getBlockMaterial(getBlock(id));
@@ -266,7 +282,7 @@ public class ZWrapper {
     public static Field fBlockHardness = getField(Block.class, "b_blockHardness");
     public static float getBlockHardness(Block block) {
         //return (Float)getValue(fBlockHardness, block);
-        return block.getBlockHardness(null, null);
+        return block.getBlockHardness(null, null, null);
     }
     public static void setBlockHardness(Block block, float val) {
         setValue(fBlockHardness, block, val);
@@ -286,14 +302,14 @@ public class ZWrapper {
         block.slipperiness = val;
     }
     public static boolean getBlockIsOpaque(Block block) {
-        return block != null && block.isOpaqueCube();
+        return block != null && block.isOpaqueCube(null);
     }
     public static boolean getBlockIsOpaque(int id) {
         //return Block.opaqueCubeLookup[id]; // < 1.8
         return getBlockIsOpaque(getBlock(id));
     }
     public static int getBlockOpacity(Block block) {
-        return block == null ? 0 : block.getLightOpacity();
+        return block == null ? 0 : block.getLightOpacity(null);
     }
     public static int getBlockOpacity(int id) {
         //return Block.lightOpacity[id]; // < 1.8
@@ -303,7 +319,7 @@ public class ZWrapper {
         //Block.lightOpacity[id] = val; // < 1.8
     }
     public static int getBlockLight(Block block) {
-        return block == null ? 0 : block.getLightValue();
+        return block == null ? 0 : block.getLightValue(null);
     }
     public static int getBlockLight(int id) {
         //return Block.lightValue[id]; // < 1.8
@@ -314,7 +330,7 @@ public class ZWrapper {
     }
     public static boolean getBlockIsFull(Block block) {
         //return block != null && block.renderAsNormalBlock(); // < 1.8 MCP 9.10
-        return block != null && block.isFullCube();
+        return block != null && block.isFullCube(null);
     }
     public static boolean getBlockIsFull(int id) {
         return getBlockIsFull(getBlock(id));
@@ -325,25 +341,15 @@ public class ZWrapper {
     public static void setBlockGraphicsLevel(Block block, boolean flag) {
         //((BlockLeaves)block).setGraphicsLevel(flag);
     }
-    
+
     //-BlockFire--------------------------------------------------------------
-    public static Field fBlockFireSpread = getField(BlockFire.class, "bf_chanceToEncourageFire");
     public static int getFireSpread(int id) {
-        if (fBlockFireSpread == null) return -1;
-        return Array.getInt(getValue(fBlockFireSpread, getBlock(51)), id);
+        return Blocks.FIRE.getEncouragement(getBlock(id));
     }
-    public static void setFireSpread(int id, int val) {
-        Array.setInt(getValue(fBlockFireSpread, getBlock(51)), id, val);
-    }
-    public static Field fBlockFireBurn = getField(BlockFire.class, "bf_abilityToCatchFire");
     public static int getFireBurn(int id) {
-        if (fBlockFireBurn == null) return -1;
-        return Array.getInt(getValue(fBlockFireBurn, getBlock(51)), id);
+        return Blocks.FIRE.getFlammability(getBlock(id));
     }
-    public static void setFireBurn(int id, int val) {
-        Array.setInt(getValue(fBlockFireBurn, getBlock(51)), id, val);
-    }
-    
+
     //-ChatLine---------------------------------------------------------------
     public static ChatLine getChatLine(List<ChatLine> lines, int line) {
         return lines == null ? null : lines.get(line);
@@ -362,23 +368,6 @@ public class ZWrapper {
     public static int getZ(ChunkCoordinates pos) { return pos.posZ; }
     */
 
-    //-CraftingManager--------------------------------------------------------
-    public static Field fCMRecipes = getField(CraftingManager.class, "cm_recipes");
-    public static CraftingManager getCraftingManager() {
-        return CraftingManager.getInstance();
-    }
-    public static List<IRecipe> getRecipes() {
-        //return (List<IRecipe>)getValue(fCMRecipes, getCManager()); // < 1.8
-        return getCraftingManager().getRecipeList();
-    }
-    public static void setRecipes(List<IRecipe> recipes) {
-        //setValue(fCMRecipes, getCManager(), recipes); // < 1.8
-        List<IRecipe> dest = getRecipes();
-        if (recipes != dest && recipes != null) {
-            dest.clear();
-            dest.addAll(recipes);
-        }
-    }
     public static void sortRecipes(List<IRecipe> recipes) {
         //Collections.sort(recipes, new RecipeSorter(getCManager())); // < 1.8
         Collections.sort(recipes, new RecipeComparator());
@@ -393,25 +382,23 @@ public class ZWrapper {
             ent.noClip = val;
         }
     }
-    public static MovingObjectPosition rayTrace(Entity ent, double dist, float f) {
-        //return ent.rayTrace(dist, f);
-        return ent.func_174822_a(dist, f); // MCP 9.10
+    public static RayTraceResult rayTrace(Entity ent, double dist, float f) {
+        return ent.rayTrace(dist, f);
     }
-    public static MovingObjectPosition rayTrace(double dist, float f) {
+    public static RayTraceResult rayTrace(double dist, float f) {
         return rayTrace(getView(), dist, f);
     }
     public static boolean rayTraceHit(Entity ent, double dist, float f) {
-        return rayTrace(ent,dist,f) != null;
+        return rayTrace(ent, dist, f) != null;
     }
     public static boolean rayTraceHit(double dist, float f) {
         return rayTraceHit(getView(), dist,f);
     }
-    public static Vec3 getLookVector(Entity ent, float delta) {
+    public static Vec3d getLookVector(Entity ent, float delta) {
         return ent.getLook(delta);
     }
     public static World getWorld(Entity ent) {
-        return ent.worldObj;
-        //return ent.getEntityWorld(); // > 1.8 ?
+        return ent.getEntityWorld(); // > 1.8 ?
     }
     public static double getYOffset(Entity ent) {
         //return ent.yOffset; // < 1.8
@@ -423,19 +410,19 @@ public class ZWrapper {
     public static BlockPos getPos(Entity ent) {
         return ent.getPosition();
     }
-    public static Vec3 getPosition(Entity ent) {
+    public static Vec3d getPosition(Entity ent) {
         return ent.getPositionVector();
     }
-    public static Vec3 getPositionDelta(Entity ent, float delta) {
+    public static Vec3d getPositionDelta(Entity ent, float delta) {
         double x = getX(ent), px = getPrevX(ent);
         double y = getY(ent), py = getPrevY(ent);
         double z = getZ(ent), pz = getPrevZ(ent);
-        return new Vec3(px + (x-px)*delta, py + (y-py)*delta, pz + (z-pz)*delta);
+        return new Vec3d(px + (x-px)*delta, py + (y-py)*delta, pz + (z-pz)*delta);
     }
     public static void setPos(Entity ent, BlockPos pos) {
         ent.setPosition(getX(pos), getY(pos), getZ(pos));
     }
-    public static void setPosition(Entity ent, Vec3 vec) {
+    public static void setPosition(Entity ent, Vec3d vec) {
         ent.setPosition(getX(vec), getY(vec), getZ(vec));
     }
     public static void setPosition(Entity ent, double x, double y, double z) {
@@ -450,7 +437,7 @@ public class ZWrapper {
     }
     public static void setBoundingBox(Entity ent, AxisAlignedBB box) {
         //ent.boundingBox = box; // < 1.8
-        ent.func_174826_a(box); // MCP 9.10
+        ent.setEntityBoundingBox(box);
     }
     public static void setAABB(Entity ent, AxisAlignedBB box) {
         setBoundingBox(ent, box);
@@ -462,20 +449,20 @@ public class ZWrapper {
     public static void  setYaw(Entity ent, float yaw) { ent.rotationYaw = yaw; }
     public static float getPitch(Entity ent) { return ent.rotationPitch; }
     public static void  setPitch(Entity ent, float pitch) { ent.rotationPitch = pitch; }
-    public static Entity getOnEntity(Entity ent) { return ent.ridingEntity; }
+    public static Entity getOnEntity(Entity ent) { return ent.getRidingEntity(); }
     public static double getMountOffset(Entity ent) { return ent.getMountedYOffset(); }
     public static float getSteps(Entity ent) {    return ent.distanceWalkedModified; }
     public static void  setSteps(Entity ent, float val) { ent.distanceWalkedModified = val; }
     public static void dieEntity(Entity ent) { ent.setDead(); }
     public static boolean getOnGround(Entity ent) {    return ent.onGround; }
     public static void    setOnGround(Entity ent, boolean val) { ent.onGround = val; }
-    public static Vec3 getMotion(Entity ent) {
-        return new Vec3(getMotionX(ent), getMotionY(ent), getMotionZ(ent));
+    public static Vec3d getMotion(Entity ent) {
+        return new Vec3d(getMotionX(ent), getMotionY(ent), getMotionZ(ent));
     }
     public static void setMotion(Entity ent, double x, double y, double z) {
         ent.setVelocity(x,y,z);
     }
-    public static void setMotion(Entity ent, Vec3 motion) {
+    public static void setMotion(Entity ent, Vec3d motion) {
         setMotion(ent, getX(motion), getY(motion), getZ(motion));
     }
     public static double getMotionX(Entity ent) {    return ent.motionX; }
@@ -524,10 +511,10 @@ public class ZWrapper {
         ARROW = 10, SNOWBALL = 11, FIREBALL = 12, SMALLFIREBALL = 13,
         THROWNENDERPEARL = 14, EYEOFENDERSIGNAL = 15, THROWNPOTION = 16,
         THROWNEXPBOTTLE = 17, ITEMFRAME = 18, WITHERSKULL = 19,
-        PRIMEDTNT = 20, FALLINGSAND = 21, FIREWORKSROCKETENTITY = 22, 
-        ARMORSTAND = 30, 
-        MINECARTCOMMANDBLOCK = 40, BOAT = 41, MINECART = 42, 
-        MINECARTCHEST = 43, MINECARTFURNACE = 44, MINECARTTNT = 45, 
+        PRIMEDTNT = 20, FALLINGSAND = 21, FIREWORKSROCKETENTITY = 22,
+        ARMORSTAND = 30,
+        MINECARTCOMMANDBLOCK = 40, BOAT = 41, MINECART = 42,
+        MINECARTCHEST = 43, MINECARTFURNACE = 44, MINECARTTNT = 45,
         MINECARTHOPPER = 46, MINECARTSPAWNER = 47,
         MOB = 48, LIVING=48, MONSTER = 49,
         CREEPER = 50, SKELETON = 51, SKELLY=51,
@@ -546,13 +533,13 @@ public class ZWrapper {
 
     public static int getId(Entity ent) {
         if (ent instanceof EntityPlayer) return PLAYER;
-        return EntityList.getEntityID(ent);
+        return ent.getEntityId();
     }
     public static int getEntityId(String type) {
-        if (type == "???")    return 0;
-        if (type == "Player") return PLAYER;
-        if (type == "Pig")    return PIG; // bugfix for func_180122_a()
-        int id = EntityList.func_180122_a(type);
+        if (type.equals("???"))    return 0;
+        if (type.equals("Player")) return PLAYER;
+        if (type.equals("Pig"))    return PIG; // bugfix for func_180122_a()
+        int id = EntityList.getEntityIDFromString(type);
         return (id == PIG) ? 0 : id;      // bugfix for func_180122_a()
     }
 
@@ -563,7 +550,7 @@ public class ZWrapper {
     }
     public static String getEntityType(int id) {
         if (id == PLAYER) return "Player";
-        String type = EntityList.getStringFromID(id);
+        String type = EntityList.getEntityStringFromID(id);
         return (type == null) ? "???" : type;
     }
     public static String getName(Entity ent) {
@@ -583,12 +570,12 @@ public class ZWrapper {
         "Arrow", "Snowball", "Fireball", "SmallFireball", "ThrownEnderpearl",
         "EyeOfEnderSignal", "ThrownPotion", "ThrownExpBottle", "ItemFrame", "WitherSkull",
         // 20
-        "PrimedTnt", "FallingSand", "FireworksRocketEntity", null, null, 
+        "PrimedTnt", "FallingSand", "FireworksRocketEntity", null, null,
         null, null, null, null, null,
         // 30
         "ArmorStand", null, null, null, null, null, null, null, null, null,
         // 40
-        "MinecartCommandBlock", "Boat", "Minecart", "MinecartChest", "MinecartFurnace", 
+        "MinecartCommandBlock", "Boat", "Minecart", "MinecartChest", "MinecartFurnace",
         "MinecartTnt", "MinecartHopper", "MinecartSpawner", "Mob", "Monster",
         // 50
         "Creeper", "Skeleton", "Spider", "Giant", "Zombie",
@@ -619,7 +606,7 @@ public class ZWrapper {
         // 200
         "EnderCrystal"
     };
-    
+
 
     //-EntityLivingBase-------------------------------------------------------
     public static void setHealth(EntityLivingBase ent, float val) {
@@ -657,16 +644,15 @@ public class ZWrapper {
         return null;
     }
     public static BlockPos getBed(EntityPlayer ent) {
-        return ent.playerLocation;
+        return ent.bedLocation;
     }
     public static boolean isServerPlayer(EntityPlayer e) {
         EntityPlayerSP player = getPlayer();
-        return player != null && e instanceof EntityPlayerMP 
+        return player != null && e instanceof EntityPlayerMP
              && getPlayerName(e).equals(getPlayerName(player));
     }
     public static boolean isCreative(EntityPlayer ent) {
-        if (ent == null) return false;
-        return ent.capabilities.isCreativeMode;
+        return ent != null && ent.capabilities.isCreativeMode;
     }
     public static boolean isSleeping(EntityPlayer ent) {
         return ent.isPlayerSleeping();
@@ -684,9 +670,9 @@ public class ZWrapper {
 
     //-EntityPlayerSP---------------------------------------------------------
     public static void chatClient(String str) {
-        addChatMessage(new ChatComponentText(str));
+        addChatMessage(new TextComponentString(str));
     }
-    public static void addChatMessage(IChatComponent message) {
+    public static void addChatMessage(ITextComponent message) {
         getPlayer().addChatMessage(message);
     }
     public static void sendChat(String message) {
@@ -709,9 +695,10 @@ public class ZWrapper {
     }
     public static void sendMotionUpdates(EntityPlayerSP player) {
         //player.sendMotionUpdates(); // < 1.8
-        player.func_175161_p(); // MCP 9.10
+        //player.func_175161_p(); // MCP 9.10
+        player.onUpdateWalkingPlayer();
     }
-    
+
     //-EntityItem-------------------------------------------------------------
     private static ItemStack getEntityItemStack(EntityItem ent) {
         return ent.getEntityItem();
@@ -722,7 +709,7 @@ public class ZWrapper {
     //private static int getCartType(EntityMinecart ent) { return ent.minecartType; }
     //private static int getCartFuel(EntityMinecart ent) { return (Integer)getValue(fCartFuel, ent); }
     //private static void setCartFuel(EntityMinecart ent, int val) { setValue(fCartFuel, ent, val); }
-    
+
     //-EnumFacing-------------------------------------------------------------
     public static int getFacing(EnumFacing facing) {
         return facing == null ? -1 : facing.getIndex();
@@ -751,7 +738,7 @@ public class ZWrapper {
             case WEST:  return "W";
             case EAST:  return "E";
         }
-        return null;
+        return "";
     }
     public static String getFacingShortName(int facing) {
         return getShortName(getFacing(facing));
@@ -805,11 +792,10 @@ public class ZWrapper {
         return getMinecraft().fontRendererObj;
     }
     public static void drawString(String str, int x, int y, int color) {
-        getFontRenderer().drawString(str, x,y, color);
+        getFontRenderer().drawString(str, x, y, color);
     }
     public static void drawStringWithShadow(String str, int x, int y, int color) {
-        //getFontRenderer().drawStringWithShadow(str, x,y, color);
-        getFontRenderer().func_175065_a(str, x,y, color, true); //? MCP 9.10
+        getFontRenderer().drawStringWithShadow(str, x, y, color);
     }
     public static int getStringWidth(String str) {
         return getFontRenderer().getStringWidth(str);
@@ -820,7 +806,7 @@ public class ZWrapper {
     public static String trimStringToWidth(String str, int width) {
         return getFontRenderer().trimStringToWidth(str, width);
     }
-    
+
     //-GameSettings-----------------------------------------------------------
     public static boolean isHideGUI() {
         return getGameSettings().hideGUI;
@@ -885,35 +871,32 @@ public class ZWrapper {
         return (List<ChatLine>)getValue(fChatLines, getChatGUI());
     }
     public static void printChatMessage(String str) {
-        printChatMessage(new ChatComponentText(str));
+        printChatMessage(new TextComponentString(str));
     }
-    public static void printChatMessage(IChatComponent message) {
+    public static void printChatMessage(ITextComponent message) {
         getChatGUI().printChatMessage(message);
     }
 
-    //-InventoryCrafting------------------------------------------------------
-    private static Field fCBTable = getField(InventoryCrafting.class, "ic_stackList");
-    public static InventoryCrafting newCraftingGrid(int width, int height, ItemStack search[]) {
-        InventoryCrafting grid = new InventoryCrafting((Container)null, width, height); 
-        setValue(fCBTable, grid, search);
-        return grid;
-    }
     public static boolean isRecipeMatch(IRecipe recipe, InventoryCrafting grid) {
         return recipe.matches(grid, getWorld());
     }
 
     //-InventoryPlayer--------------------------------------------------------
+    public static ItemStack[] toISArray(List l) {
+        ItemStack[] buf = new ItemStack[l.size()];
+        return (ItemStack[]) l.toArray(buf);
+    }
     public static InventoryPlayer getInventory(EntityPlayer ent) {
         return ent.inventory;
     }
     public static ItemStack[] getStacks(InventoryPlayer inv) {
-        return inv.mainInventory;
+        return toISArray(inv.mainInventory);
     }
     public static ItemStack[] getStacks(EntityPlayer ent) {
         return getStacks(getInventory(ent));
     }
     public static ItemStack[] getArmors(InventoryPlayer inv) {
-        return inv.armorInventory;
+        return toISArray(inv.armorInventory);
     }
     public static ItemStack[] getArmors(EntityPlayer ent) {
         return getArmors(getInventory(ent));
@@ -979,7 +962,7 @@ public class ZWrapper {
         //item.setMaxDamage(val);
     }
     public static boolean hasSubTypes(Item item) {
-        return item == null ? false : item.getHasSubtypes();
+        return item != null && item.getHasSubtypes();
     }
     @Deprecated
     public static boolean getItemHasSubTypes(Item item) {
@@ -1028,15 +1011,25 @@ public class ZWrapper {
     public static int getStackMeta(int idmeta) {
         return getMeta(idmeta);
     }
+
+    private static Field fStackSize = getField(ItemStack.class, "is_stackSize");
     public static int getStackSize(ItemStack stack) {
-        return stack.stackSize;
+        try {
+            //noinspection ConstantConditions
+            return (Integer)getValue(fStackSize, stack);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            exit(0);
+            return 0;
+        }
     }
+
     public static void setStackSize(ItemStack stack, int size) {
-        stack.stackSize = size;
+        setValue(fStackSize, stack, size);
     }
     public static boolean isStackMatch(int stack, int match) {
-        return getStackId(stack)   == getStackId(match) 
-           && (getStackMeta(stack) == getStackMeta(match) 
+        return getStackId(stack)   == getStackId(match)
+           && (getStackMeta(stack) == getStackMeta(match)
             || getStackMeta(match) == ID_ANY);
     }
     public static boolean isStackMatch(ItemStack stack, int match) {
@@ -1046,11 +1039,16 @@ public class ZWrapper {
         return isStackMatch(getIdMeta(stack), getIdMeta(match));
     }
     public static ItemStack getGridItem(int nr) {
-        return getMenu() instanceof GuiCrafting 
-          ? ((ContainerWorkbench)((ContainerWorkbench)((GuiContainer)((GuiContainer)getMenu())).inventorySlots)).craftMatrix.getStackInSlot(nr)
-          : (getMenu() instanceof GuiInventory 
-              ? ((ContainerPlayer)((ContainerPlayer)((GuiContainer)((GuiContainer)getMenu())).inventorySlots)).craftMatrix.getStackInSlot(nr) 
-              : null);
+        GuiContainer menu = (GuiContainer)getMenu();
+        Container slots = menu.inventorySlots;
+
+        if (menu instanceof GuiCrafting) {
+            return ((ContainerWorkbench)slots).craftMatrix.getStackInSlot(nr);
+        } else if (menu instanceof GuiInventory) {
+            return ((ContainerPlayer)slots).craftMatrix.getStackInSlot(nr);
+        }
+
+        return null;
     }
 
     //-Material---------------------------------------------------------------
@@ -1081,16 +1079,16 @@ public class ZWrapper {
     }
 
     public static String getLaunchedVersion() {
-        return getMinecraft().func_175600_c(); // MCP 9.10
+        return getMinecraft().getVersion();
     }
 
     // note: used to be getMap()
     public static WorldClient getWorld() {
-        return getMinecraft().theWorld;
+        return getMinecraft().world;
     }
 
     public static EntityPlayerSP getPlayer() {
-        return getMinecraft().thePlayer;
+        return getMinecraft().player;
     }
 
     public static GameSettings getGameSettings() {
@@ -1117,7 +1115,7 @@ public class ZWrapper {
     public static boolean isMultiplayer() {
         return !getMinecraft().isSingleplayer();
     }
-    
+
     public static int getScreenWidth() {
         return getMinecraft().displayWidth;
     }
@@ -1125,7 +1123,7 @@ public class ZWrapper {
         return getMinecraft().displayHeight;
     }
     public static ScaledResolution getScaledResolution() {
-        return new ScaledResolution(getMinecraft(), getScreenWidth(), getScreenHeight());
+        return new ScaledResolution(getMinecraft());
     }
     //note: used to be getScrWidthS()
     public static int getScaledWidth() {
@@ -1159,64 +1157,60 @@ public class ZWrapper {
 
     public static Entity getView() {
         //return getMinecraft().renderViewEntity; // < 1.8
-        return getMinecraft().func_175606_aa(); // 1.8 MCP 9.10
+        return getMinecraft().getRenderViewEntity(); // 1.8 MCP 9.10
     }
 
     public static void setView(Entity ent) {
         //minecraft.renderViewEntity = ent; // < 1.8
-        getMinecraft().func_175607_a(ent); // 1.8 MCP 9.10
+        //getMinecraft().func_175607_a(ent); // 1.8 MCP 9.10
+        getMinecraft().setRenderViewEntity(ent);
     }
 
     public static String getPath() {
-        String res = ""; 
         try {
-            res = getDataDir().getCanonicalPath(); 
-        } catch(Exception whatever) {
-            res = "";
+            return getDataDir().getCanonicalPath();
+        } catch (Exception e) {
+            return "";
         }
-        return res;
     }
 
-    //-MovingObjectPosition---------------------------------------------------
-    public static MovingObjectPosition getMOP() {
-        return new MovingObjectPosition(
-            MovingObjectPosition.MovingObjectType.MISS,
-            new Vec3(0,0,0), null, null);
+    //-RayTraceResult---------------------------------------------------------
+    public static RayTraceResult getMOP() {
+        return new RayTraceResult(RayTraceResult.Type.MISS, new Vec3d(0,0,0), null, null);
     }
-    public static Entity getEntity(MovingObjectPosition mop) {
+    public static Entity getEntity(RayTraceResult mop) {
+        return mop == null ? null : mop.entityHit;
+    }
+    public static BlockFace getBlockFace(RayTraceResult mop) {
         if (mop == null) return null;
-        return mop.entityHit;
+        return getSide(mop) == -1 ? null : new BlockFace(getPos(mop), getFacing(mop));
     }
-    public static BlockFace getBlockFace(MovingObjectPosition mop) {
-        if (mop == null) return null;
-        return getSide(mop) == -1 ? null : new BlockFace(getPos(mop),getFacing(mop));
+    public static BlockPos getPos(RayTraceResult mop) {
+        return mop.getBlockPos();
     }
-    public static BlockPos getPos(MovingObjectPosition mop) {
-        return mop.func_178782_a(); // 1.8 MCP 9.10
-    }
-    public static int getX(MovingObjectPosition mop) {
+    public static int getX(RayTraceResult mop) {
         //return mop.blockX; // < 1.8
         return getX(getPos(mop));
     }
-    public static int getY(MovingObjectPosition mop) {
+    public static int getY(RayTraceResult mop) {
         return getY(getPos(mop));
     }
-    public static int getZ(MovingObjectPosition mop) {
+    public static int getZ(RayTraceResult mop) {
         return getZ(getPos(mop));
     }
-    public static EnumFacing getFacing(MovingObjectPosition mop) {
-        return mop.field_178784_b; // 1.8 MCP 9.10
+    public static EnumFacing getFacing(RayTraceResult mop) {
+        return mop.sideHit;
     }
-    public static int getSide(MovingObjectPosition mop) {
+    public static int getSide(RayTraceResult mop) {
         //return mop.sideHit; // < 1.8
         return getFacing(getFacing(mop));
     }
 
     //-NetHandlerPlayCLient---------------------------------------------------
     //-NetClientHandler-------------------------------------------------------
-    public static NetHandlerPlayClient getSendQueue() { return getMinecraft().getNetHandler(); }
-    public static void queuePacket(NetHandlerPlayClient queue, Packet packet) { queue.addToSendQueue(packet); }
-    public static void queuePacket(Packet packet) { queuePacket(getSendQueue(), packet); }
+    public static NetHandlerPlayClient getSendQueue() { return getMinecraft().getConnection(); }
+    public static void queuePacket(NetHandlerPlayClient queue, Packet<?> packet) { queue.sendPacket(packet); }
+    public static void queuePacket(Packet<?> packet) { queuePacket(getSendQueue(), packet); }
 
     //-PlayerControllerMP-----------------------------------------------------
     public static void syncCurrentItem(PlayerControllerMP controller) {
@@ -1232,16 +1226,9 @@ public class ZWrapper {
     }
     public static void renderItemGUI(int x, int y, ItemStack stack) {
         //getRenderItem().renderItemIntoGUI(getFontRenderer(), getTextureManager(), stack, x, y); < 1.8
-        getRenderItem().func_175030_a(getFontRenderer(), stack, x, y); //? MCP 9.10
+        //getRenderItem().func_175030_a(getFontRenderer(), stack, x, y); //? MCP 9.10
+        getRenderItem().renderItemIntoGUI(stack, x, y);
     }
-
-    //-ShapedRecipes----------------------------------------------------------
-    private static Field fRWidth = getField(ShapedRecipes.class, "sr_recipeWidth"), fRHeight = getField(ShapedRecipes.class, "sr_recipeHeight"), fRMap = getField(ShapedRecipes.class, "sr_recipeItems"), fRResA = getField(ShapedRecipes.class, "sr_recipeOutput");
-    public static ShapedRecipes newRecipeNormal(int id, int count, int width, int height, ItemStack ingredients[]) { return new ShapedRecipes(width, height, ingredients, getStack(id, count)); }
-
-    //-ShapelessRecipes-------------------------------------------------------
-    private static Field fRList = getField(ShapelessRecipes.class, "lr_recipeItems"), fRResB = getField(ShapelessRecipes.class, "lr_recipeOutput");
-    public static ShapelessRecipes newRecipeShapeless(int id, int count, List ingredients) { return new ShapelessRecipes(getStack(id, count), ingredients); }
 
     //-TextureManager---------------------------------------------------------
     public static TextureManager getTextureManager() {
@@ -1276,7 +1263,8 @@ public class ZWrapper {
     }
     public static TileEntity getTileEntityFromCopy(NBTTagCompound nbt) {
         if (nbt == null) return null;
-        return TileEntity.createAndLoadEntity(nbt);
+        //return TileEntity.createAndLoadEntity(nbt);
+        return TileEntity.create(getWorld(), nbt);
     }
     public static void setTileEntityFromCopy(TileEntity ent, NBTTagCompound nbt) {
         ent.readFromNBT(nbt);
@@ -1284,8 +1272,12 @@ public class ZWrapper {
     public static void setTileEntityFromCopy(World world, int x, int y, int z, NBTTagCompound nbt) {
         setPos(nbt, x,y,z);
         TileEntity tent = getTileEntityAt(world, x,y,z);
-        if (tent == null) setTileEntityAt(world, tent = getTileEntityFromCopy(nbt), x,y,z);
-        else setTileEntityFromCopy(tent, nbt);
+        if (tent == null) {
+            setTileEntityAt(world, getTileEntityFromCopy(nbt), x,y,z);
+        }
+        else {
+            setTileEntityFromCopy(tent, nbt);
+        }
         //setPos(tent, x,y,z);
     }
     /*
@@ -1305,8 +1297,11 @@ public class ZWrapper {
     public static ItemStack[] getChestItems(Object tent) { return (ItemStack[])getValue(fChestItems, tent); }
 
     //-TileEntityDispenser----------------------------------------------------
-    private static Field fDispItems = getField(TileEntityDispenser.class, "ted_dispenserContents");
-    public static ItemStack[] getDispItems(Object tent) { return (ItemStack[])getValue(fDispItems, tent); }
+    private static Field fDispItems = getField(TileEntityDispenser.class, "ted_stacks");
+    public static ItemStack[] getDispItems(TileEntityDispenser tent) {
+        NonNullList<ItemStack> items = (NonNullList<ItemStack>)getValue(fDispItems, tent);
+        return toISArray(items);
+    }
 
     //-TileEntityFurnace------------------------------------------------------
     private static Field fFurnaceItems = getField(TileEntityFurnace.class, "tef_furnaceItemStacks");
@@ -1315,7 +1310,7 @@ public class ZWrapper {
     //-TileEntitySign---------------------------------------------------------
     public static String[] getSignText(TileEntitySign tent) {
         //return tent.signText; // < 1.8
-        IChatComponent[] components = tent.signText;
+        ITextComponent[] components = tent.signText;
         String[] text = new String[components.length];
         for (int i = 0; i < text.length; ++i)
             text[i] = components[i].getUnformattedText();
@@ -1327,21 +1322,21 @@ public class ZWrapper {
         return getSignText((TileEntitySign)tent);
         return null;
     }
-    
+
     //-Vec3-------------------------------------------------------------------
-    public static double getX(Vec3 pos) { return pos.xCoord; }
-    public static double getY(Vec3 pos) { return pos.yCoord; }
-    public static double getZ(Vec3 pos) { return pos.zCoord; }
-    
+    public static double getX(Vec3d pos) { return pos.xCoord; }
+    public static double getY(Vec3d pos) { return pos.yCoord; }
+    public static double getZ(Vec3d pos) { return pos.zCoord; }
+
     //-Vec3i/BlockPos---------------------------------------------------------
     public static int getX(Vec3i pos) { return pos.getX(); }
     public static int getY(Vec3i pos) { return pos.getY(); }
     public static int getZ(Vec3i pos) { return pos.getZ(); }
-    
+
     //-World-- ---------------------------------------------------------------
-    public static List getEntities() {
+    public static List<Entity> getEntities() {
         //return getWorld().loadedEntityList.clone();
-        return new ArrayList(getWorld().getLoadedEntityList());
+        return new ArrayList<Entity>(getWorld().getLoadedEntityList());
     }
     public static Chunk getChunkFromBlockCoords(World world, BlockPos pos) {
         return world.getChunkFromBlockCoords(pos);
@@ -1361,7 +1356,7 @@ public class ZWrapper {
     public static IBlockState getStateAt(World world, BlockPos pos) {
         return world.getBlockState(pos);
     }
-    public static final int UPDATE_NONE = 0, NOTIFY_SERVER = 1, 
+    public static final int UPDATE_NONE = 0, NOTIFY_SERVER = 1,
         MARK_SERVER = 2, NOTIFY_MARK_SERVER = 3, MARK_BOTH = 6, NOTIFY_MARK_ALL = 7;
     public static void setStateAt(World world, IBlockState state, int flags, int x, int y, int z) {
         setStateAt(world, state, flags, new BlockPos(x,y,z));
@@ -1449,21 +1444,23 @@ public class ZWrapper {
         world.setTileEntity(pos, tent);
     }
     public static void notifyBlock(World world, BlockPos pos) {
-        world.notifyBlockOfStateChange(pos, getBlockAt(world, pos));
+//        world.notifyBlockOfStateChange(pos, getBlockAt(world, pos));
+        world.func_190522_c(pos, getBlockAt(world, pos)); // ??? TODO
     }
     public static void notifyBlock(World world, int x, int y, int z) {
         //world.notifyBlockOfNeighborChange(x,y,z, getIdAt(world,x,y,z)); // < 1.8
         notifyBlock(world, new BlockPos(x,y,z));
     }
     public static void notifyNeighbors(World world, BlockPos pos) {
-        world.notifyNeighborsOfStateChange(pos, getBlockAt(world, pos));
+        world.notifyNeighborsOfStateChange(pos, getBlockAt(world, pos), false);
     }
     public static void notifyNeighbors(World world, int x, int y, int z) {
         //world.notifyBlocksOfNeighborChange(x,y,z, getIdAt(world,x,y,z)); // < 1.8
         notifyNeighbors(world, new BlockPos(x,y,z));
     }
     public static void markForUpdate(World world, BlockPos pos) {
-        world.markBlockForUpdate(pos);
+        //world.markBlockForUpdate(pos);
+        world.markBlockRangeForRenderUpdate(pos, pos);
     }
     public static void markForUpdate(World world, int x, int y, int z) {
         //world.markBlockForUpdate(x,y,z); // < 1.8
@@ -1492,11 +1489,11 @@ public class ZWrapper {
             notifyAndMark(world, new BlockPos(x,y,z));
         }
     }
-    
+
     public static void spawnLightning(int x, int y, int z) {
-        getWorld().spawnEntityInWorld(new EntityLightningBolt(getWorld(), x, y, z));
+        getWorld().spawnEntityInWorld(new EntityLightningBolt(getWorld(), x, y, z, false));
     }
-    
+
     // light functions taken from the F3 debug screen (GuiOverlayDebug)
     public static int getBlockLightLevel(BlockPos pos) {
         return getChunkFromBlockCoords(pos).getLightFor(EnumSkyBlock.BLOCK, pos);
@@ -1513,19 +1510,24 @@ public class ZWrapper {
         return getSkyLightLevel(new BlockPos(x,y,z));
     }
     public static int getRealLightLevel(BlockPos pos) {
-        return getChunkFromBlockCoords(pos).setLight(pos,0); // MCP 9.10
+        //return getChunkFromBlockCoords(pos).setLight(pos,0); // MCP 9.10
+        getChunkFromBlockCoords(pos).getLightFor(EnumSkyBlock.BLOCK, pos);
+        return getChunkFromBlockCoords(pos).getLightFor(EnumSkyBlock.BLOCK, pos);
     }
     public static int getRealLightLevel(int x, int y, int z) {
         //return getChunkFromBlockCoords(x,z).getBlockLightValue(x & 15, y, z & 15, 0); // < 1.8
         return getRealLightLevel(new BlockPos(x,y,z));
     }
-    public static List getCollidingBlockAABBs(World world, AxisAlignedBB aabb) {
+    public static List<AxisAlignedBB> getCollidingBlockAABBs(World world, AxisAlignedBB aabb) {
         //return world.getCollidingBlockBounds(aabb); // < 1.8
-        return world.func_147461_a(aabb); // MCP 9.10
+        //return world.func_147461_a(aabb); // MCP 9.10
+        return world.getCollisionBoxes(null, aabb);
     }
     public static boolean canMonsterSpawnAt(int x, int y, int z) {
         //return SpawnerAnimals.canCreatureTypeSpawnAtLocation(EnumCreatureType.MONSTER, getWorld(), x,y,z); // < 1.8
-        return SpawnerAnimals.func_180267_a(EntityLiving.SpawnPlacementType.ON_GROUND, getWorld(), new BlockPos(x,y,z)); // 1.8
+        //return SpawnerAnimals.func_180267_a(EntityLiving.SpawnPlacementType.ON_GROUND, getWorld(), new BlockPos(x,y,z)); // 1.8
+        EntityLiving.SpawnPlacementType type = EntityLiving.SpawnPlacementType.ON_GROUND;
+        return WorldEntitySpawner.canCreatureTypeSpawnAtLocation(type, getWorld(), new BlockPos(x,y,z));
     }
     public static long getTime(World world) { return world.getWorldTime(); }
     public static long getTime() { return getTime(getWorld()); }
@@ -1556,7 +1558,7 @@ public class ZWrapper {
     public static boolean getIsHell() {
         return getIdAt(getWorld(), fix(getPlayer().posX),127,fix(getPlayer().posZ))==7;
     } // hackish, there is certainly a better way - but the hell with it.
-    
+
 
     /* HELPERS */
 
@@ -1571,16 +1573,16 @@ public class ZWrapper {
         return (base & ID_BASE) | (((meta < 0 || meta == ID_ANY)
             ? ID_ANY : meta & ID_ONE) << 16);
     }
-    
+
     public static int getBase(int idmeta) {
         return idmeta & ID_BASE;
     }
-    
+
     public static int getMeta(int idmeta) {
         return (idmeta >> 16) & ID_META;
     }
 
-    
+
     /**
         Returns true if the key is down
     */

@@ -1,22 +1,23 @@
 package zombe.mod;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.client.entity.*;
-import net.minecraft.client.multiplayer.*;
-import net.minecraft.util.*;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.math.Vec3d;
+import org.lwjgl.input.Keyboard;
+import zombe.core.ZHandle;
+import zombe.core.ZMod;
+import zombe.core.ZWrapper;
+import zombe.core.content.DummyPlayer;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import zombe.core.content.DummyPlayer;
-import java.lang.*;
-import org.lwjgl.input.Keyboard;
 
 public final class Fly extends ZMod {
-    
+
     private static boolean modFlyAllowed = true, modNoclipAllowed = true;
     private static String tagFly, tagNoclip;
-    private static int keyOn, keyOff, keyToggle, keyNoclip, 
+    private static int keyOn, keyOff, keyToggle, keyNoclip,
         keySpeed, keyRun, keyUp, keyDown, keyFreeFly, keyForward, keyBackward;
     private static float optSpeedVertical, optSpeedForward, optSpeedMulNormal, optSpeedMulModifier, optRunSpeedMul, optRunSpeedVMul, optJump, optJumpHigh;
     private static boolean optNoclip, optFreeFly, optAirJump,
@@ -180,11 +181,11 @@ public final class Fly extends ZMod {
             }
             if (playerFly && wasKeyPressedThisTick(keyNoclip))
                 setNoclip(playerNoclip = !playerNoclip);
-            else if (flyPrev != playerFly) 
+            else if (flyPrev != playerFly)
                 setNoclip(playerFly && playerNoclip);
-            flySpeed = playerSpeed = optSpeedIsToggle    
+            flySpeed = playerSpeed = optSpeedIsToggle
                 && (wasKeyPressedThisTick(keySpeed) != playerSpeed);
-            flyRun   = playerRun   = optRunSpeedIsToggle    
+            flyRun   = playerRun   = optRunSpeedIsToggle
                 && (wasKeyPressedThisTick(keyRun)   != playerRun);
             flying = playerFly; noclip = playerNoclip;
         } else {
@@ -199,13 +200,13 @@ public final class Fly extends ZMod {
             if (flyPrev != dummyFly) {
                 setFlying(flyDummy, dummyFly);
             }
-            if (dummyFly && wasKeyPressedThisTick(keyNoclip)) 
+            if (dummyFly && wasKeyPressedThisTick(keyNoclip))
                 setNoclip(flyDummy, dummyNoclip = !dummyNoclip);
             else if (flyPrev != dummyFly)
                 setNoclip(flyDummy, dummyFly && dummyNoclip);
-            flySpeed = dummySpeed = optSpeedIsToggle    
+            flySpeed = dummySpeed = optSpeedIsToggle
                 && (wasKeyPressedThisTick(keySpeed) != dummySpeed);
-            flyRun   = dummyRun   = optRunSpeedIsToggle    
+            flyRun   = dummyRun   = optRunSpeedIsToggle
                 && (wasKeyPressedThisTick(keyRun)   != dummyRun);
             flying = dummyFly; noclip = dummyNoclip;
         } else {
@@ -220,7 +221,7 @@ public final class Fly extends ZMod {
         flyRun   = flyRun   || (!optRunSpeedIsToggle && isKeyDownThisTick(keyRun));
     }
 
-    @Override 
+    @Override
     protected String getTag() {
         if (!playerFly) return null;
         String txt = tagFly;
@@ -228,35 +229,36 @@ public final class Fly extends ZMod {
         return txt;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected Object handle(String name, Object arg) {
-        if (name == "ignorePlayerInsideOpaqueBlock")
-            return (Boolean) getNoclip();
-        if (name == "allowVanillaFly")
-            return (Boolean) allowVanillaFly();
-        if (name == "allowVanillaSprint")
-            return (Boolean) allowVanillaSprint();
-        if (name == "isFlying")
-            return (Boolean) isFlying(arg);
-        if (name == "isNoclip")
-            return (Boolean) isNoclip(arg);
-        if (name == "isPlayerOnGround")
-            return (Boolean) isPlayerOnGround();
-        if (name == "beforePlayerMove")
-            return beforeMove(getPlayer(), (Vec3) arg);
-        if (name == "afterPlayerMove")
-            afterMove(ZWrapper.getPlayer(), (Vec3) arg);
-        if (name == "beforeViewMove")
-            return beforeMove((EntityPlayer) getView(), (Vec3) arg);
-        if (name == "afterViewMove")
-            afterMove((EntityPlayer) getView(), (Vec3) arg);
-        if (name == "onPlayerJump")
+        if (name.equals("ignorePlayerInsideOpaqueBlock"))
+            return getNoclip();
+        if (name.equals("allowVanillaFly"))
+            return allowVanillaFly();
+        if (name.equals("allowVanillaSprint"))
+            return allowVanillaSprint();
+        if (name.equals("isFlying"))
+            return isFlying(arg);
+        if (name.equals("isNoclip"))
+            return isNoclip(arg);
+        if (name.equals("isPlayerOnGround"))
+            return isPlayerOnGround();
+        if (name.equals("beforePlayerMove"))
+            return beforeMove(getPlayer(), (Vec3d) arg);
+        if (name.equals("afterPlayerMove"))
+            afterMove(ZWrapper.getPlayer(), (Vec3d) arg);
+        if (name.equals("beforeViewMove"))
+            return beforeMove((EntityPlayer) getView(), (Vec3d) arg);
+        if (name.equals("afterViewMove"))
+            afterMove((EntityPlayer) getView(), (Vec3d) arg);
+        if (name.equals("onPlayerJump"))
             onPlayerJump((EntityPlayer) arg);
-        if (name == "onClientUpdate")
+        if (name.equals("onClientUpdate"))
             onClientUpdate((EntityPlayerSP) arg);
-        if (name == "onViewUpdate")
+        if (name.equals("onViewUpdate"))
             onViewUpdate((EntityPlayer) arg);
-        if (name == "onServerUpdate")
+        if (name.equals("onServerUpdate"))
             onServerUpdate((EntityPlayerMP) arg);
         return arg;
     }
@@ -267,30 +269,43 @@ public final class Fly extends ZMod {
     }
 
     private static boolean isNoclip(Object arg) {
-        return arg == flyPlayer && playerFly && playerNoclip && !isMultiplayer()
-            || arg == flyDummy  && dummyFly  && dummyNoclip
-            || arg instanceof EntityPlayerMP && isServerPlayer((EntityPlayerMP) arg) && playerFly && playerNoclip
-            || arg instanceof Boolean && flying && noclip
-                && (!isMultiplayer() || controlledEntity != flyPlayer);
+        if (arg == flyPlayer && playerFly && playerNoclip && !isMultiplayer()) {
+            return true;
+        }
+
+        if (arg == flyDummy && dummyFly && dummyNoclip) return true;
+
+        if (arg instanceof EntityPlayerMP) {
+            if (isServerPlayer((EntityPlayerMP) arg) && playerFly && playerNoclip) return true;
+        }
+        if (arg instanceof Boolean) {
+            if (flying && noclip && (!isMultiplayer() || controlledEntity != flyPlayer)) return true;
+        }
+        return false;
     }
 
     private static boolean allowVanillaFly() {
-        return !modFlyAllowed || optVanillaFly; 
+        return !modFlyAllowed || optVanillaFly;
     }
 
     private static boolean allowVanillaSprint() {
-        return !modFlyAllowed || optVanillaSprint; 
+        return !modFlyAllowed || optVanillaSprint;
     }
-    
+
     private static boolean isPlayerOnGround() {
-        return (playerClassActive && flyPlayer != null) ? playerOnGround : (flyPlayer != null) ? getOnGround(flyPlayer) : true;
+        if (playerClassActive && flyPlayer != null) {
+            return playerOnGround;
+        } else {
+            return flyPlayer == null || getOnGround(flyPlayer);
+        }
     }
-    
-    private static Vec3 getServerMotion() {
-        return (playerClassActive && flyPlayer != null)
-              ? new Vec3(motionX, motionY, motionZ)
-              : (flyPlayer != null) ? getMotion(flyPlayer)
-              : new Vec3(0,0,0);
+
+    private static Vec3d getServerMotion() {
+        if (playerClassActive && flyPlayer != null) {
+            return new Vec3d(motionX, motionY, motionZ);
+        } else {
+            return (flyPlayer != null) ? getMotion(flyPlayer) : new Vec3d(0,0,0);
+        }
     }
 
     private static void onClientUpdate(EntityPlayerSP ent) {
@@ -329,7 +344,7 @@ public final class Fly extends ZMod {
     private static float flySteps;
     private static double motionX, motionY, motionZ;
     // note: used to be flyHandle()
-    private static Vec3 beforeMove(EntityPlayer ent, Vec3 move) {
+    private static Vec3d beforeMove(EntityPlayer ent, Vec3d move) {
         if (isSleeping(ent) || ent.isRiding()) return move;
         double mx = motionX = getX(move),
                my = motionY = getY(move),
@@ -382,10 +397,10 @@ public final class Fly extends ZMod {
             }
         }
         setMotion(ent, mx,my,mz);
-        return new Vec3(mx,my,mz);
+        return new Vec3d(mx,my,mz);
     }
 
-    private static void afterMove(EntityPlayer ent, Vec3 move) {
+    private static void afterMove(EntityPlayer ent, Vec3d move) {
         if (isSleeping(ent) || ent.isRiding()) return;
         if (ent == flyPlayer) {
             playerClassActive = true;

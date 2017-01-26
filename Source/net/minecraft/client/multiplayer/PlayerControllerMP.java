@@ -49,7 +49,7 @@ public class PlayerControllerMP
     //-ZMod-------------------------------------------------------------------
     protected static boolean zmodmarker = true;
     //------------------------------------------------------------------------
- 
+
     /** The Minecraft instance. */
     private final Minecraft mc;
     private final NetHandlerPlayClient connection;
@@ -79,26 +79,26 @@ public class PlayerControllerMP
 
     /** Index of the current item held by the player in the inventory hotbar */
     private int currentPlayerItem;
-    
+
     //-ZMod-Cheat-------------------------------------------------------------
     public void syncCurrentItem() {
         syncCurrentPlayItem();
     }
-    
+
     public void switchToRealItem() {
-        int realItem = this.mc.thePlayer.inventory.currentItem;
+        int realItem = this.mc.player.inventory.currentItem;
         if (realItem != this.currentPlayerItem) {
-            this.netClientHandler.addToSendQueue(new C09PacketHeldItemChange(realItem));
+            this.connection.sendPacket(new CPacketHeldItemChange(realItem));
         }
     }
     public void switchToIdleItem() {
-        int realItem = this.mc.thePlayer.inventory.currentItem;
+        int realItem = this.mc.player.inventory.currentItem;
         if (realItem != this.currentPlayerItem) {
-            this.netClientHandler.addToSendQueue(new C09PacketHeldItemChange(this.currentPlayerItem));
+            this.connection.sendPacket(new CPacketHeldItemChange(this.currentPlayerItem));
         }
     }
     //------------------------------------------------------------------------
-    
+
     public PlayerControllerMP(Minecraft mcIn, NetHandlerPlayClient netHandler)
     {
         this.mc = mcIn;
@@ -265,7 +265,7 @@ public class PlayerControllerMP
             {
                 this.connection.sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.START_DESTROY_BLOCK, loc, face));
                 clickBlockCreative(this.mc, this, loc, face);
-                
+
                 //-ZMod-Dig-sync----------------------------------------------
 //                this.blockHitDelay = 5;
                 this.blockHitDelay = ZHandle.handle("getBlockHitDelay", 5);
@@ -277,7 +277,7 @@ public class PlayerControllerMP
                 //-ZMod-Cheat-------------------------------------------------
                 ZHandle.handle("beforeBlockDig");
                 //------------------------------------------------------------
- 
+
                 if (this.isHittingBlock)
                 {
                     this.connection.sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.ABORT_DESTROY_BLOCK, this.currentBlock, face));
@@ -304,7 +304,7 @@ public class PlayerControllerMP
                     this.curBlockDamageMP = 0.0F;
                     this.stepSoundTickCounter = 0.0F;
                     this.mc.world.sendBlockBreakProgress(this.mc.player.getEntityId(), this.currentBlock, (int)(this.curBlockDamageMP * 10.0F) - 1);
-                    
+
                     //-ZMod-Dig-sync----------------------------------------------
                     ZHandle.handle("onBlockDigged", new BlockFace(loc, face));
                     //------------------------------------------------------------
@@ -336,12 +336,12 @@ public class PlayerControllerMP
     public boolean onPlayerDamageBlock(BlockPos posBlock, EnumFacing directionFacing)
     {
         //-ZMod-Dig-check-----------------------------------------------------
-        if (!ZHandle.handle("checkReachDig", new BlockFace(p_180512_1_,p_180512_2_),true)) {
+        if (!ZHandle.handle("checkReachDig", new BlockFace(posBlock, directionFacing),true)) {
             this.resetBlockRemoving();
             return false;
         }
         //--------------------------------------------------------------------
-    
+
         this.syncCurrentPlayItem();
 
         if (this.blockHitDelay > 0)
@@ -358,7 +358,7 @@ public class PlayerControllerMP
             this.connection.sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.START_DESTROY_BLOCK, posBlock, directionFacing));
             clickBlockCreative(this.mc, this, posBlock, directionFacing);
             //-ZMod-Dig-sync--------------------------------------------------
-            ZHandle.handle("onBlockDigged", new BlockFace(p_180512_1_,p_180512_2_));
+            ZHandle.handle("onBlockDigged", new BlockFace(posBlock, directionFacing));
             //----------------------------------------------------------------
             return true;
         }
@@ -392,7 +392,7 @@ public class PlayerControllerMP
                     //-ZMod-Cheat---------------------------------------------
                     ZHandle.handle("beforeBlockDig");
                     //--------------------------------------------------------
- 
+
                     this.isHittingBlock = false;
                     this.connection.sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, posBlock, directionFacing));
                     this.onPlayerDestroyBlock(posBlock);
@@ -402,9 +402,9 @@ public class PlayerControllerMP
                     // this.blockHitDelay = 5;
                     this.blockHitDelay = ZHandle.handle("getBlockHitDelay", 5);
                     //----------------------------------------------------------------
-                    
+
                     //-ZMod-Dig-sync------------------------------------------
-                    ZHandle.handle("onBlockDigged", new BlockFace(p_180512_1_,p_180512_2_));
+                    ZHandle.handle("onBlockDigged", new BlockFace(posBlock, directionFacing));
                     //--------------------------------------------------------
                 }
 
@@ -464,7 +464,7 @@ public class PlayerControllerMP
         //-ZMod-Cheat---------------------------------------------------------
         if (!ZHandle.handle("allowItemSync", true)) return;
         //--------------------------------------------------------------------
- 
+
         int i = this.mc.player.inventory.currentItem;
 
         if (i != this.currentPlayerItem)
@@ -477,9 +477,9 @@ public class PlayerControllerMP
     public EnumActionResult processRightClickBlock(EntityPlayerSP player, WorldClient worldIn, BlockPos stack, EnumFacing pos, Vec3d facing, EnumHand vec)
     {
         //-ZMod-Dig-check-----------------------------------------------------
-        if (!ZHandle.handle("checkReachPlace", new BlockFace(stack, pos), true)) return false;
+        if (!ZHandle.handle("checkReachPlace", new BlockFace(stack, pos), true)) return EnumActionResult.FAIL;
         //--------------------------------------------------------------------
-        
+
         this.syncCurrentPlayItem();
         ItemStack itemstack = player.getHeldItem(vec);
         float f = (float)(facing.xCoord - (double)stack.getX());
@@ -516,7 +516,7 @@ public class PlayerControllerMP
             //-ZMod-----------------------------------------------------------
             ZHandle.handle("beforeBlockPlace");
             //----------------------------------------------------------------
- 
+
             this.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(stack, pos, vec, f, f1, f2));
 
             if (!flag && this.currentGameType != GameType.SPECTATOR)
@@ -558,7 +558,7 @@ public class PlayerControllerMP
                         EnumActionResult enumactionresult = itemstack.onItemUse(player, worldIn, stack, vec, pos, f, f1, f2);
                         itemstack.setItemDamage(i);
                         itemstack.func_190920_e(j);
-                        
+
                         //-ZMod-Cheat-projection--------------------------------------
                         ZHandle.handle("afterBlockPlace");
                         //------------------------------------------------------------
@@ -604,7 +604,7 @@ public class PlayerControllerMP
             {
                 int i = itemstack.func_190916_E();
                 ActionResult<ItemStack> actionresult = itemstack.useItemRightClick(worldIn, player, stack);
-                ItemStack itemstack1 = (ItemStack)actionresult.getResult();
+                ItemStack itemstack1 = actionresult.getResult();
 
                 if (itemstack1 != itemstack || itemstack1.func_190916_E() != i)
                 {
@@ -648,9 +648,9 @@ public class PlayerControllerMP
     public EnumActionResult interactWithEntity(EntityPlayer player, Entity target, EnumHand heldItem)
     {
         //-ZMod-?-----------------------------------------------------
-        if (!ZHandle.handle("checkReachUse",targetEntity,true)) return false;
+        if (!ZHandle.handle("checkReachUse", target ,true)) return EnumActionResult.FAIL;
         //------------------------------------------------------------
-        
+
         this.syncCurrentPlayItem();
         this.connection.sendPacket(new CPacketUseEntity(target, heldItem));
         return this.currentGameType == GameType.SPECTATOR ? EnumActionResult.PASS : player.func_190775_a(target, heldItem);

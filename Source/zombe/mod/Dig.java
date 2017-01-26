@@ -1,15 +1,13 @@
 package zombe.mod;
 
-import net.minecraft.client.entity.*;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.*;
-import net.minecraft.util.*;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.RayTraceResult;
+import zombe.core.ZMod;
+import zombe.core.ZWrapper;
+import zombe.core.util.BlockFace;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import zombe.core.util.*;
-import java.lang.*;
-import org.lwjgl.input.Keyboard;
 
 public final class Dig extends ZMod {
 
@@ -49,7 +47,7 @@ public final class Dig extends ZMod {
         addOption("optDigReachSetPlace", "Set max reach for placing blocks", false);
         addOption("optDigReachPlace", "Place reach (default 8)", 8f, 2f, 64f, true);
     }
-    
+
     @Override
     protected void updateConfig() {
         optCheckReach    = getOptionBool("optDigCheckReach");
@@ -68,51 +66,51 @@ public final class Dig extends ZMod {
 
     @Override
     protected Object handle(String name, Object arg) {
-        if (name == "onPlayerRayTrace")
+        if (name.equals("onPlayerRayTrace"))
             return onPlayerRaytrace(arg);
-        if (name == "onViewRayTrace")
+        if (name.equals("onViewRayTrace"))
             return onViewRaytrace(arg);
-        if (name == "getBlockHitDelay")
-            return (Integer) getBlockHitDelay((Integer) arg);
-        if (name == "getPlayerReach")
-            return (Float) getReach((Float) arg);
-        if (name == "getPlayerReachSq")
-            return (Float) getReachSq((Float) arg);
-        if (name == "getPlayerReachUse")
-            return (Float) getReachUse((Float) arg);
-        if (name == "getPlayerReachUseSq")
-            return (Float) getReachUseSq((Float) arg);
-        if (name == "getPlayerReachDig")
-            return (Float) getReachDig((Float) arg);
-        if (name == "getPlayerReachDigSq")
-            return (Float) getReachDigSq((Float) arg);
-        if (name == "getPlayerReachPlace")
-            return (Float) getReachPlace((Float) arg);
-        if (name == "getPlayerReachPlaceSq")
-            return (Float) getReachPlaceSq((Float) arg);
-        if (name == "checkReachUse")
-            return (Boolean) checkReachUse((Entity) arg);
-        if (name == "checkReachDig")
-            return (Boolean) checkReachDig((BlockFace) arg);
-        if (name == "checkReachPlace")
-            return (Boolean) checkReachPlace((BlockFace) arg);
+        if (name.equals("getBlockHitDelay"))
+            return getBlockHitDelay((Integer) arg);
+        if (name.equals("getPlayerReach"))
+            return getReach((Float) arg);
+        if (name.equals("getPlayerReachSq"))
+            return getReachSq((Float) arg);
+        if (name.equals("getPlayerReachUse"))
+            return getReachUse((Float) arg);
+        if (name.equals("getPlayerReachUseSq"))
+            return getReachUseSq((Float) arg);
+        if (name.equals("getPlayerReachDig"))
+            return getReachDig((Float) arg);
+        if (name.equals("getPlayerReachDigSq"))
+            return getReachDigSq((Float) arg);
+        if (name.equals("getPlayerReachPlace"))
+            return getReachPlace((Float) arg);
+        if (name.equals("getPlayerReachPlaceSq"))
+            return getReachPlaceSq((Float) arg);
+        if (name.equals("checkReachUse"))
+            return checkReachUse((Entity) arg);
+        if (name.equals("checkReachDig"))
+            return checkReachDig((BlockFace) arg);
+        if (name.equals("checkReachPlace"))
+            return checkReachPlace((BlockFace) arg);
         return arg;
     }
 
     private static Object onPlayerRaytrace(Object arg) {
-        if (arg instanceof MovingObjectPosition)
-            return onRaytrace(getPlayer(), (MovingObjectPosition) arg);
+        if (arg instanceof RayTraceResult)
+            return onRaytrace(getPlayer(), (RayTraceResult) arg);
         return arg;
     }
 
     private static Object onViewRaytrace(Object arg) {
-        if (arg instanceof MovingObjectPosition)
-            return onRaytrace(getView(), (MovingObjectPosition) arg);
+        if (arg instanceof RayTraceResult)
+            return onRaytrace(getView(), (RayTraceResult) arg);
         return arg;
     }
 
-    private static MovingObjectPosition onRaytrace(Entity src, 
-        MovingObjectPosition mop) {
+    private static RayTraceResult onRaytrace(Entity src,
+        RayTraceResult mop) {
         if (optCheckRaytrace) {
             BlockFace bf = getBlockFace(mop);
             Entity ent = getEntity(mop);

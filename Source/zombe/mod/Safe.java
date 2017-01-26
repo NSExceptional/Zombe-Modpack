@@ -1,17 +1,15 @@
 package zombe.mod;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.client.entity.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-
-import static zombe.core.ZWrapper.*;
-import zombe.core.*;
-import zombe.core.util.*;
-import java.lang.*;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.World;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
+import zombe.core.ZMod;
+import zombe.core.util.Color;
+
+import static zombe.core.ZWrapper.*;
 
 public final class Safe extends ZMod {
 
@@ -27,7 +25,7 @@ public final class Safe extends ZMod {
     private static boolean safeShow;
     private static boolean safeGhost;
     private static int safeCur, safeUpdate;
-    
+
     public Safe() {
         super("safe", "1.8", "9.0.0");
         addOption("tagSafe", "Mod tag", "safe");
@@ -111,7 +109,7 @@ public final class Safe extends ZMod {
         if (!safeShow || tagSafe.length()==0) return null;
         return tagSafe;
     }
-    
+
     private void reCheckSafe(int pX, int pY, int pZ) {
         safeCur = 0;
         for (int x = pX-optLookupRadius; x <= pX+optLookupRadius; ++x)
@@ -127,15 +125,15 @@ public final class Safe extends ZMod {
     }
 
     private static boolean emptySpaceHere(int pX, int pY, int pZ) {
-        double x = pX + 0.5, y = pY, z = pZ + 0.5;
+        double x = pX + 0.5, y = (double)pY, z = pZ + 0.5;
         //double r = 0.3, h = 1.8; // skeleton size
         //double r = 0.35, h = 0.5; // cave spider size
         double r = 0.3, h = 0.5; // hybrid size
         AxisAlignedBB aabb = new AxisAlignedBB(x - r, y, z - r, x + r, y + h, z + r);
         World world = getWorld();
-        return getCollidingBlockAABBs(world,aabb).isEmpty() && !world.isAnyLiquid(aabb);
+        return getCollidingBlockAABBs(world,aabb).isEmpty() && !world.containsAnyLiquid(aabb);
     }
-    
+
     private static boolean couldSpawnHere(int x, int y, int z) {
         try {
             return y >= 0

@@ -1,26 +1,27 @@
 package zombe.core;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import zombe.core.config.Config;
+import zombe.core.config.ConstraintFloat;
+import zombe.core.config.ConstraintInteger;
+import zombe.core.config.Option;
+import zombe.core.content.ConfigMenu;
+import zombe.core.gui.KeyBinder;
+import zombe.core.gui.Slider;
+import zombe.core.gui.TextField;
+import zombe.core.gui.Toggler;
+import zombe.core.util.Color;
+import zombe.core.util.KeyBind;
+import zombe.core.util.StringHelper;
+
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static zombe.core.ZWrapper.*;
-import zombe.core.config.*;
-import zombe.core.content.*;
-import zombe.core.gui.*;
-import zombe.core.util.*;
-import java.io.*;
-import java.util.*;
-import java.sql.Timestamp;
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.locks.*;
-import java.util.logging.*;
 
 /**
     Base class for mods
