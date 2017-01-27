@@ -12,6 +12,7 @@ Files                           | Purpose                    | Used by
 `Mod/version/zombe/mod/*.class` | zombe's modpack classes    | ZModpack's core, mods
 `Mod/config/*.txt`              | configuration files        | ZModpack, you
 `source/**/*.java`              | modpack's source code      | ZModpack's devs, MCP
+`Previous releases/*.zip`       | old versions of zmod prior to 1.11 | you
 
 ## Mod dependencies
 Mod     | Class dependencies
