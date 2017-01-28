@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+        maven {
+            name 'minecraftforge'
+            url 'http://files.minecraftforge.net/maven'
+        }
+        maven {
+            name = 'sponge'
+            url = 'http://repo.spongepowered.org/maven'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle.tweaker-client'
+apply plugin: 'org.spongepowered.mixin'
+
+version = '1.0'
+
+targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
+
+minecraft {
+    version = '1.11.2'
+    mappings = 'snapshot_20170126'
+    runDir = '../run'
+    tweakClass = 'zombe.launch.ZombeTweaker'
+}
+
+repositories {
+    maven {
+        name 'sponge'
+        url 'https://repo.spongepowered.org/maven'
+    }
+}
+
+dependencies {
+    compile ('org.spongepowered:mixin:0.6.6-SNAPSHOT'){transitive = false}
+}
+
+mixin {
+    add sourceSets.main, 'zombe.refmap.json'
+    defaultObfuscationEnv notch
+}
+afterEvaluate {
+    jar.manifest {
+        attributes 'TweakClass': 'zombe.launch.ZombeCascadedTweaker'
+    }
+
+}
