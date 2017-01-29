@@ -1,3 +1,6 @@
 .DS_Store
-.idea/*
+.idea/
 *.iml
+.gradle/
+build/
+classes/

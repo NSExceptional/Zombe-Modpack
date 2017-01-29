@@ -1,0 +1,116 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+        maven {
+            name 'minecraftforge'
+            url 'http://files.minecraftforge.net/maven'
+        }
+        maven {
+            name = 'sponge'
+            url = 'http://repo.spongepowered.org/maven'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.4-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle.tweaker-client'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+group = 'zombe'
+version = '10.0.0-mc1.11.2'
+archivesBaseName = 'Zombes-Modpack'
+
+targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
+
+minecraft {
+    version = '1.11.2'
+    mappings = 'snapshot_20170126'
+    runDir = '../run'
+    tweakClass = 'zombe.launch.ZombeTweaker'
+}
+
+repositories {
+    maven {
+        name 'sponge'
+        url 'https://repo.spongepowered.org/maven'
+    }
+}
+
+dependencies {
+    compile('org.spongepowered:mixin:0.6.6-SNAPSHOT') { transitive = false }
+}
+
+mixin {
+    add sourceSets.main, 'zombe.refmap.json'
+    defaultObfuscationEnv notch
+}
+afterEvaluate {
+    [shadowJar, jar]*.manifest {
+        attributes 'TweakClass': 'zombe.launch.ZombeLaunchTweaker'
+    }
+}
+artifacts.archives shadowJar
+reobf{
+    shadowJar {
+        mappingType = "NOTCH"
+    }
+}
+import net.minecraftforge.gradle.tasks.EtagDownloadTask
+
+task processJson(type: Copy) {
+
+    def mappings = [
+            version      : project.version,
+            project      : project.name,
+            timestamp    : new Date().format("yyyy'-'MM'-'dd'T'hh':'mm':'ssZZZZ"),
+            mcversion    : project.minecraft.version,
+            artifact     : "$project.group:$project.name:$version",
+            universal_jar: project.shadowJar.archivePath.name,
+            tweak_class  : project.minecraft.tweakClass
+    ]
+
+    from('install_profile.json') {
+        filter { line ->
+            def replaces = (line =~ /@(.+?)@/)
+            replaces.each {
+                def key = it[0]
+                def val = mappings[it[1]] ?: 'null'
+                line = line.replace(key, val)
+            }
+            line
+        }
+    }
+    from('.') {
+        include 'zombes-modpack-logo.png'
+        rename { 'zombes-modpack-installer-logo.png' }
+    }
+    into 'build/distributions/packaging/resources'
+    outputs.upToDateWhen { false }
+}
+task downloadInstaller(type: EtagDownloadTask) {
+    url = 'http://files.minecraftforge.net/maven/net/minecraftforge/installer/1.5/installer-1.5-shrunk.jar'
+    dieWithError = true
+    file = 'build/distributions/packaging/installer-fresh.jar'
+}
+task installer(type: Zip) {
+    from shadowJar
+    from processJson
+    from(zipTree(downloadInstaller.file)) {
+        exclude '*.json'
+        exclude '*.png'
+    }
+
+    baseName = project.name
+    classifier = 'installer'
+    extension = 'jar'
+    destinationDir = file('build/distributions')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    outputs.upToDateWhen { false }
+    dependsOn downloadInstaller, build, processJson
+}

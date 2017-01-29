@@ -1,0 +1,20 @@
+{
+  "minVersion": "0.6.4",
+  "package": "zombe.core.mixin",
+  "refmap": "zombe.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "IBlockFire",
+    "IEntityList",
+    "MixinEntityPlayer",
+    "MixinEntityPlayerMP",
+    "MixinEntityPlayerSP",
+    "MixinEntityRenderer",
+    "MixinMinecraft",
+    "MixinMovementInputFromOptions",
+    "MixinNetHandlerPlayServer",
+    "MixinPlayerControllerMP",
+    "MixinRenderGlobal",
+    "MixinWorldProvider"
+  ]
+}
