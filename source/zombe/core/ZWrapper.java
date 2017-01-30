@@ -208,6 +208,7 @@ public class ZWrapper {
     public static Block getBlock(String name) {
         return Block.getBlockFromName(name);
     }
+    @Deprecated
     public static Block getBlock(int id) {
         //return Block.blocksList[id]; // < 1.8
         return Block.getBlockById(id);
@@ -222,6 +223,7 @@ public class ZWrapper {
     public static int getId(IBlockState state) {
         return getId(getBlock(state));
     }
+    @Deprecated
     public static int getId(Block block) {
         return Block.getIdFromBlock(block);
     }
@@ -254,24 +256,29 @@ public class ZWrapper {
     public static int getBlockMeta(ItemStack stack) {
         return stack == null ? 0 : getItem(stack).getMetadata(getMeta(stack));
     }
+    @Deprecated
     public static IBlockState getState(int idmeta) {
         return Block.getStateById(idmeta);
     }
     public static IBlockState getState(ItemStack stack) {
         return getState(getBlock(stack), getMeta(stack));
     }
+    @Deprecated
     public static IBlockState getState(Block block, int meta) {
         return block == null ? null : block.getStateFromMeta(meta);
     }
+    @Deprecated
     public static IBlockState getState(int id, int meta) {
         return getState(getBlock(id), meta);
     }
     public static IBlockState getDefaultState(Block block) {
         return block == null ? null : block.getDefaultState();
     }
+    @Deprecated
     public static IBlockState getDefaultState(int id) {
         return getDefaultState(getBlock(id));
     }
+    @Deprecated
     public static Material getBlockMaterial(Block block) {
         //return block.blockMaterial; // < 1.8
         return block.getMaterial(null);
@@ -280,6 +287,7 @@ public class ZWrapper {
         return getBlockMaterial(getBlock(id));
     }
     public static Field fBlockHardness = getField(Block.class, "b_blockHardness");
+    @Deprecated
     public static float getBlockHardness(Block block) {
         //return (Float)getValue(fBlockHardness, block);
         return block.getBlockHardness(null, null, null);
@@ -301,16 +309,20 @@ public class ZWrapper {
     public static void setBlockSlip(Block block, float val) {
         block.slipperiness = val;
     }
+    @Deprecated
     public static boolean getBlockIsOpaque(Block block) {
         return block != null && block.isOpaqueCube(null);
     }
+    @Deprecated
     public static boolean getBlockIsOpaque(int id) {
         //return Block.opaqueCubeLookup[id]; // < 1.8
         return getBlockIsOpaque(getBlock(id));
     }
+    @Deprecated
     public static int getBlockOpacity(Block block) {
         return block == null ? 0 : block.getLightOpacity(null);
     }
+    @Deprecated
     public static int getBlockOpacity(int id) {
         //return Block.lightOpacity[id]; // < 1.8
         return getBlockOpacity(getBlock(id));
@@ -318,9 +330,11 @@ public class ZWrapper {
     public static void setBlockOpacity(int id, int val) {
         //Block.lightOpacity[id] = val; // < 1.8
     }
+    @Deprecated
     public static int getBlockLight(Block block) {
         return block == null ? 0 : block.getLightValue(null);
     }
+    @Deprecated
     public static int getBlockLight(int id) {
         //return Block.lightValue[id]; // < 1.8
         return getBlockLight(getBlock(id));
@@ -328,13 +342,16 @@ public class ZWrapper {
     public static void setBlockLight(int id, int val) {
         //Block.lightValue[id] = val; // < 1.8
     }
+    @Deprecated
     public static boolean getBlockIsFull(Block block) {
         //return block != null && block.renderAsNormalBlock(); // < 1.8 MCP 9.10
         return block != null && block.isFullCube(null);
     }
+    @Deprecated
     public static boolean getBlockIsFull(int id) {
         return getBlockIsFull(getBlock(id));
     }
+    @Deprecated
     public static boolean getBlockIsSpawn(int id) {
         return getBlock(id) != null && getBlockMaterial(id).isOpaque() && getBlockIsFull(id);
     }
@@ -507,6 +524,7 @@ public class ZWrapper {
 
     //-EntityList-------------------------------------------------------------
     // entity type ids, taken from EntityList
+    @Deprecated
     public static final int ITEM = 1, XPORB = 2, LEASHKNOT = 8, PAINTING = 9,
         ARROW = 10, SNOWBALL = 11, FIREBALL = 12, SMALLFIREBALL = 13,
         THROWNENDERPEARL = 14, EYEOFENDERSIGNAL = 15, THROWNPOTION = 16,
@@ -531,10 +549,12 @@ public class ZWrapper {
         PLAYER=3, // dummy id, not in the actual entity list
         ENTITY_MAX=201, MAXTYPE=201;
 
+    @Deprecated
     public static int getId(Entity ent) {
         if (ent instanceof EntityPlayer) return PLAYER;
         return ent.getEntityId();
     }
+    @Deprecated
     public static int getEntityId(String type) {
         if (type.equals("???"))    return 0;
         if (type.equals("Player")) return PLAYER;
@@ -548,6 +568,7 @@ public class ZWrapper {
         String type = EntityList.getEntityString(ent);
         return (type == null) ? "???" : type;
     }
+    @Deprecated
     public static String getEntityType(int id) {
         if (id == PLAYER) return "Player";
         String type = EntityList.getEntityStringFromID(id);
@@ -562,6 +583,7 @@ public class ZWrapper {
     // deprecated stuff
 
     // note: used to be typeName[]
+    @Deprecated
     private static final String entityNames[] = {
         // 0
         "???", "Item", "XPOrb", "Player", null,
@@ -720,12 +742,14 @@ public class ZWrapper {
     public static Vec3i getDirectionVec(EnumFacing facing) {
         return facing.getDirectionVec();
     }
+    @Deprecated
     public static Vec3i getDirectionVec(int facing) {
         return getDirectionVec(getFacing(facing));
     }
     public static String getName(EnumFacing facing) {
         return facing.getName();
     }
+    @Deprecated
     public static String getFacingName(int facing) {
         return getName(getFacing(facing));
     }
@@ -740,6 +764,7 @@ public class ZWrapper {
         }
         return "";
     }
+    @Deprecated
     public static String getFacingShortName(int facing) {
         return getShortName(getFacing(facing));
     }
@@ -937,12 +962,14 @@ public class ZWrapper {
     public static String getName(Item item) {
         return item.getUnlocalizedName();
     }
+    @Deprecated
     public static int getId(Item item) {
         return Item.getIdFromItem(item);
     }
     public static int getItemIdMeta(int base, int meta) {
         return getIdMeta(base, meta);
     }
+    @Deprecated
     public static int getItemId(int idmeta) {
         return getBase(idmeta);
     }
@@ -978,6 +1005,7 @@ public class ZWrapper {
         //return new ItemStack(id, count, meta); // < 1.8
         return item == null ? null : new ItemStack(item, count, meta);
     }
+    @Deprecated
     public static ItemStack getStack(int id, int count, int meta) {
         //return new ItemStack(id, count, meta); // < 1.8
         return getStack(getItem(id), count, meta);
@@ -985,9 +1013,11 @@ public class ZWrapper {
     public static ItemStack getStack(Item item, int count) {
         return getStack(item, count, 0);
     }
+    @Deprecated
     public static ItemStack getStack(int idmeta, int count) {
         return getStack(getStackId(idmeta), count, getStackMeta(idmeta));
     }
+    @Deprecated
     public static int getId(ItemStack stack) {
         //return items.itemID; // < 1.8
         return getId(getItem(stack));
@@ -1002,12 +1032,15 @@ public class ZWrapper {
     public static void setMeta(ItemStack stack, int meta) {
         stack.setItemDamage(meta);
     }
+    @Deprecated
     public static int getStackIdMeta(int base, int meta) {
         return getIdMeta(base,meta);
     }
+    @Deprecated
     public static int getStackId(int idmeta) {
         return getBase(idmeta);
     }
+    @Deprecated
     public static int getStackMeta(int idmeta) {
         return getMeta(idmeta);
     }
@@ -1027,6 +1060,7 @@ public class ZWrapper {
     public static void setStackSize(ItemStack stack, int size) {
         setValue(fStackSize, stack, size);
     }
+    @Deprecated
     public static boolean isStackMatch(int stack, int match) {
         return getStackId(stack)   == getStackId(match)
            && (getStackMeta(stack) == getStackMeta(match)
@@ -1375,25 +1409,31 @@ public class ZWrapper {
         return getBlock(getStateAt(world,pos));
     }
     // note: used to be getWorldId()
+    @Deprecated
     public static int getIdAt(World world, int x, int y, int z) {
         //return world.getBlockId(x,y,z); // < 1.8
         return getId(getStateAt(world,x,y,z));
     }
+    @Deprecated
     public static int getIdAt(World world, BlockPos pos) {
         return getId(getStateAt(world,pos));
     }
     // note: used to be getWorldMeta()
+    @Deprecated
     public static int getMetaAt(World world, int x, int y, int z) {
         //return world.getBlockMetadata(x,y,z); // < 1.8
         return getMeta(getStateAt(world, x,y,z));
     }
+    @Deprecated
     public static int getMetaAt(World world, BlockPos pos) {
         //return getChunkFromBlockCoords(world, pos).getBlockMetaData(pos); // alt
         return getMeta(getStateAt(world, pos));
     }
+    @Deprecated
     public static int getIdMetaAt(World world, int x, int y, int z) {
         return getBlockIdMeta(getStateAt(world, x,y,z));
     }
+    @Deprecated
     public static int getIdMetaAt(World world, BlockPos pos) {
         return getBlockIdMeta(getStateAt(world, pos));
     }
@@ -1413,26 +1453,32 @@ public class ZWrapper {
         //world.setBlock(x,y,z, id); // < 1.8
         setStateAt(world, getDefaultState(block), flags, pos);
     }
+    @Deprecated
     public static void setIdAt(World world, int id, int flags, int x, int y, int z) {
         //world.setBlock(x,y,z, id, meta, 1); // < 1.8
         setStateAt(world, getDefaultState(id), flags, x,y,z);
     }
+    @Deprecated
     public static void setIdAt(World world, int id, int flags, BlockPos pos) {
         //world.setBlock(x,y,z, id, meta, 0); // < 1.8
         setStateAt(world, getDefaultState(id), flags, pos);
     }
+    @Deprecated
     public static void setIdMetaAt(World world, int id, int meta, int flags, int x, int y, int z) {
         //world.setBlock(x,y,z, id, meta, 1); // < 1.8
         setStateAt(world, getState(id,meta), flags, x,y,z);
     }
+    @Deprecated
     public static void setIdMetaAt(World world, int id, int meta, int flags, BlockPos pos) {
         //world.setBlock(x,y,z, id, meta, 0); // < 1.8
         setStateAt(world, getState(id,meta), flags, pos);
     }
+    @Deprecated
     public static void setIdMetaAt(World world, int idmeta, int flags, int x, int y, int z) {
         //world.setBlock(x,y,z, id, meta, 1); // < 1.8
         setStateAt(world, getState(idmeta), flags, x,y,z);
     }
+    @Deprecated
     public static void setIdMetaAt(World world, int idmeta, int flags, BlockPos pos) {
         //world.setBlock(x,y,z, id, meta, 0); // < 1.8
         setStateAt(world, getState(idmeta), flags, pos);
