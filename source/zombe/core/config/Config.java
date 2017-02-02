@@ -1,28 +1,46 @@
 package zombe.core.config;
 
 
+import com.google.common.collect.ImmutableList;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.lang.*;
 import java.io.*;
-import java.util.*;
 import java.util.logging.*;
 import java.util.regex.*;
 
+/** In this class, preferences are stored as key-value pairs. A 'key' refers to a preference. */
 public final class Config {
     private static final Logger log = Logger.getLogger("zombe.core.config");
-    private static final Map<String,Option> options = new LinkedHashMap<String,Option>();
+    // TODO what is this?
+    private static final Map<String, Option> options = new LinkedHashMap<>();
 
-    public static void addOption(String name, Option option) {
-        if (options.containsKey(name)) throw new IllegalArgumentException();
-        if (option == null) throw new NullPointerException();
+    @Nonnull private File configFile;
+    // TODO what is this?
+    @Nonnull private final Properties properties;
+    // TODO what is this?
+    private final Config parentConfig;
+
+
+    /** Adds an option to `options` */
+    public static void addOption(@Nonnull String name, @Nonnull Option option) {
+        if (options.containsKey(name)) {
+            throw new IllegalArgumentException();
+        }
+
         options.put(name, option);
     }
 
-    public static Option getOption(String name) {
+    /** @return the Option associated with the given name */
+    @Nullable
+    public static Option getOption(@Nonnull String name) {
         return options.get(name);
     }
 
-    private static void printNotice(PrintWriter out) {
+    // TODO there's gotta be a better way to do this...
+    private static void printNotice(@Nonnull PrintWriter out) {
         out.println("#");
         out.println("# Comments: lines starting with '#' or '!' are comments.");
         out.println("#");
@@ -37,180 +55,225 @@ public final class Config {
         out.println();
     }
 
-    public static void saveDefault(File file) throws IOException, FileNotFoundException, UnsupportedEncodingException {
-        if (file == null) throw new NullPointerException();
-        log.info("creating default config file '"+file.toString()+"'");
-        if (!file.isFile()) file.createNewFile();
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(file, "UTF-8");
-            out.println("# Zombe's AUTO-GENERATED default config file");
+    /** Creates the default config file */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void saveDefault(@Nonnull File file) throws IOException {
+        if (!file.exists()) {
+            log.info("Creating default config file '" + file + "'");
+            file.createNewFile();
+        }
+
+        try (PrintWriter out = new PrintWriter(file, "UTF-8")) {
+            // Print auto-gen warning
+            out.println("# AUTO-GENERATED default config file for Zombe Mod");
             out.println("# CHANGES ARE NOT KEPT, modify config.txt instead!");
             printNotice(out);
 
-            String category = null;
-            for (Map.Entry<String,Option> opt : options.entrySet()) {
-                String cat = opt.getValue().getCategory();
-                if (cat != category) {
-                    if (category == null)
-                        out.println("# ==================== "+cat+" ====================");
-                    else out.println("# ==================== "+cat+" mod ====================");
-                    category = cat;
+            // TODO why is he doing if (!cat.equals(category))?
+            String previousCategory = null;
+            for (Map.Entry<String, Option> entry : options.entrySet()) {
+                String key = entry.getKey();
+                Option opt = entry.getValue();
+
+                if (!opt.category.equals(previousCategory)) {
+                    if (previousCategory == null) {
+                        out.println("# ==================== " + opt.category + " ====================");
+                    } else {
+                        out.println("# ==================== " + opt.category + " mod ====================");
+                    }
+                    previousCategory = opt.category;
                 }
-                out.println("# "+opt.getValue().getDescription());
-                out.println(opt.getKey()+" = "+opt.getValue().getConstraint().toString(opt.getValue().getDefaultValue()));
-                out.println();
+
+                out.println("# " + opt.description);
+                out.println(key + " = " + opt.defaultString() + "\n");
             }
-        } finally {
-            if (out != null) out.close();
+        } catch (FileNotFoundException e) {
+            log.info("Error writing default config: " + e.getCause());
+            e.printStackTrace();
         }
     }
 
-    private File configFile;
-    private final Properties properties;
-    private final Config parentConfig;
-
-    public Config(File file, Config parent) {
+    @Nonnull
+    public Config(@Nonnull File file, Config parent) {
         this.configFile = file;
         this.parentConfig = parent;
         this.properties = new Properties();
     }
 
-    public void setFile(File file) {
+    /** Sets this.configFile */
+    public void setFile(@Nonnull File file) {
         this.configFile = file;
     }
 
-    public void load() throws IOException, FileNotFoundException, UnsupportedEncodingException {
-        if (configFile == null) throw new NullPointerException();
-        if (!configFile.isFile()) {
-            log.info("skipped loading config file '"+configFile.toString()+"': file not found");
+    /** Populates `this.properties` from `this.configFile` */
+    @SuppressWarnings("DuplicateThrows")
+    public void load() throws FileNotFoundException, UnsupportedEncodingException, IOException {
+        if (!this.configFile.isFile()) {
+            log.info("skipped loading config file '" + this.configFile + "': file not found");
             return;
         }
-        log.info("loading config file '"+configFile.toString()+"'");
-        FileInputStream fs = null;
-        InputStreamReader reader = null;
-        try {
-            fs = new FileInputStream(configFile);
-            reader = new InputStreamReader(fs, "UTF-8");
-            properties.load(reader);
-        } finally {
-            if (reader != null) reader.close();
-            else if (fs != null) fs.close();
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(this.configFile), "UTF-8")) {
+            log.info("loading config file '" + this.configFile + "'");
+            this.properties.load(reader);
+        } catch (Exception e) {
+            // TODO log
+            e.printStackTrace();
         }
     }
 
-    public boolean isDefault(String key) {
-        return isInherited(key) && (parentConfig == null || parentConfig.isDefault(key));
+    /** @return whether a given key's value came from a constrant's default value */
+    public boolean isDefault(@Nonnull String key) {
+        // Default because if it is inherited for everything and
+        // the top level config has no parent, then the key
+        // must have come from some constraint's default value
+        return this.isInherited(key) && (this.parentConfig == null || this.parentConfig.isDefault(key));
     }
 
-    public boolean isInherited(String key) {
+    /** @return whether a given key's value would come from `this.parentConfig` */
+    public boolean isInherited(@Nonnull String key) {
         return !properties.containsKey(key);
     }
 
-    public Object getValue(String key) {
-        if (!options.containsKey(key)) return null;
-        Option opt = options.get(key);
-        TypeConstraint tc = opt.getConstraint();
-        String value = get(key);
-        if (value != null && tc.typeMatches(value))
-            return tc.fromString(value);
-        if (parentConfig == null)
-            return opt.getDefaultValue();
-        return parentConfig.getValue(key);
+    /** @return the value for the preference key */
+    @Nullable
+    public Object getValue(@Nonnull String key) {
+        if (!options.containsKey(key)) {
+            return null;
+        }
+
+        String value        = this.get(key);
+        Option option       = options.get(key);
+        OptionConstraint tc = option.constraint;
+
+        if (value != null && tc.canParse(value)) {
+            return tc.parsedOrDefault(value);
+        }
+
+        return this.parentConfig == null ? option.defaultValue : parentConfig.getValue(key);
     }
-    
-    public Collection getValues(String key) {
-        LinkedList list = new LinkedList();
-        if (!options.containsKey(key)) return list;
-        Option opt = options.get(key);
-        TypeConstraint tc = opt.getConstraint();
+
+    /** @return all option values for a given key in the config tree, with the default value last */
+    @Nonnull
+    public List<Object> getValues(@Nonnull String key) {
+        if (!options.containsKey(key)) {
+            return ImmutableList.of();
+        }
+
+        List<Object> list = new ArrayList<>();
+
         for (Config cfg = this; cfg != null; cfg = cfg.parentConfig) {
             String value = cfg.get(key);
-            if (value != null) list.add(value);
+            if (value != null) {
+                list.add(value);
+            }
         }
-        list.add(opt.getDefaultValue());
+        list.add(options.get(key).defaultValue);
+
         return list;
     }
 
-    public String getInherited(String key) {
-        String value = get(key);
-        if (value != null) return value;
-        if (parentConfig != null) return parentConfig.getInherited(key);
-        if (!options.containsKey(key)) return null;
-        Option opt = options.get(key);
-        TypeConstraint tc = opt.getConstraint();
-        return tc.toString(opt.getDefaultValue());
-    }
+    /** @return the first preference value in the config tree
+     *          for the given key, or uses the default value from `options` */
+    @Nullable
+    public String getInherited(@Nonnull String key) {
+        String value = this.get(key);
+        if (value != null) {
+            return value;
+        }
+        if (this.parentConfig != null) {
+            return this.parentConfig.getInherited(key);
+        }
 
-    public String getString(String key) {
-        String value = get(key);
-        if (value != null) return value;
-        if (parentConfig != null) return parentConfig.getString(key);
+        if (options.containsKey(key)) {
+            return options.get(key).defaultString();
+        }
+
         return null;
     }
 
-    public String get(String key) {
+    /** @return the first preference value in the config tree for the given key */
+    @Nullable
+    public String getStringInherited(@Nonnull String key) {
+        String value = this.get(key);
+        if (value != null) {
+            return value;
+        }
+        if (this.parentConfig != null) {
+            return this.parentConfig.getStringInherited(key);
+        }
+
+        return null;
+    }
+
+    /** @return the preverence value for the given key */
+    @Nullable
+    public String get(@Nonnull String key) {
         return properties.getProperty(key);
     }
 
-    public void set(String key, String value) {
-        if (key == null) throw new NullPointerException();
-        String old = get(key);
-        if (value == old) return;
-        if (value != null) properties.setProperty(key, value);
-        else properties.remove(key);
+    /** Sets a preference value for the given key */
+    public void set(@Nonnull String key, @Nullable String value) {
+        if (this.get(key) == null) {
+            properties.remove(key);
+        } else {
+            properties.setProperty(key, value);
+        }
+
         try {
-            update(key, old, value);
+            this.update(key, value);
         } catch (Exception e) {
             log.warning("could not save changes to option "+key);
         }
     }
 
-    private void update(String key, String oldValue, String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
-        if (configFile == null) throw new NullPointerException();
+    @SuppressWarnings("DuplicateThrows")
+    private void update(@Nonnull String key, @Nullable String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
+        // Create config file if necessary
         if (!configFile.isFile()) {
-            log.config("config file '"+configFile.toString()+"' not found, creating it");
+            log.config("config file '" + configFile + "' not found, creating it");
             configFile.createNewFile();
-            PrintWriter out = null;
-            try {
-                out = new PrintWriter(configFile, "UTF-8");
+
+            try (PrintWriter out = new PrintWriter(configFile, "UTF-8")) {
                 out.println("# Zombe's user config file");
                 out.println("# CHANGES ARE KEPT, you can modify it freely!");
                 out.println("# check default.txt for options and default values");
                 printNotice(out);
-            } finally {
-                if (out != null) out.close();
+            } catch (Exception e) {
+                // TODO log
+                e.printStackTrace();
             }
         }
 
-        FileInputStream fs = null;
-        InputStreamReader reader = null;
-        BufferedReader buffer = null;
-        PrintWriter out = null;
-        try {
-            fs = new FileInputStream(configFile);
-            reader = new InputStreamReader(fs, "UTF-8");
-            buffer = new BufferedReader(reader);
-
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), "UTF-8"))) {
             Option opt = getOption(key);
-            String cat = (opt == null) ? null : opt.getCategory();
-            String optComment = (opt == null) ? null : "# "+opt.getDescription()+" (default "+opt.getConstraint().toString(opt.getDefaultValue())+")";
+            String category = null, optComment = null;
+            Pattern commentRegex  = Pattern.compile("^#.*");
+            Pattern categoryRegex = null;
+            Pattern optionRegex   = Pattern.compile("^" + key + "\\s*=.*");
 
-            Pattern comPattern = Pattern.compile("^#.*");
-            Pattern catPattern = (cat == null) ? null : Pattern.compile("^#\\s*=+\\s*"+cat+"\\s+(?:mod\\s+[-.\\w\\s]+)?=+\\s*$");
-            Pattern optPattern = Pattern.compile("^"+key+"\\s*=.*");
+            if (opt != null) {
+                category = opt.category;
+                optComment = "# " + opt.description + " (default " + opt.defaultString() + ")";
+                categoryRegex = Pattern.compile("^#\\s*=+\\s*" + category + "\\s+(?:mod\\s+[-.\\w\\s]+)?=+\\s*$");
+            }
 
-            ArrayList<String> list = new ArrayList<String>();
+            // TODO what tf is going on here???
+            List<String> list = new ArrayList<>();
+            String lineS;
             int lineN = -1, lineC = -1, lineO = -1;
-            String lineS = null;
-            while ((lineS = buffer.readLine()) != null) {
-                if (lineC == -1 && opt != null && catPattern.matcher(lineS).matches()) lineC = lineN+1;
-                if (optPattern.matcher(lineS).matches()) {
+            while ((lineS = reader.readLine()) != null) {
+                if (lineC == -1 && opt != null && categoryRegex.matcher(lineS).matches()) {
+                    lineC = lineN + 1;
+                }
+
+                if (optionRegex.matcher(lineS).matches()) {
                     if (lineO == -1 && newValue != null) {
-                        lineO = lineN+1;
-                        lineS = key+" = "+newValue;
+                        lineO = lineN + 1;
+                        lineS = key + " = " + newValue;
                     } else {
-                        if (lineN >= 0 && comPattern.matcher(list.get(lineN)).matches() && lineN != lineC) {
+                        // This might be removing comments?
+                        if (lineN >= 0 && commentRegex.matcher(list.get(lineN)).matches() && lineN != lineC) {
                             list.remove(lineN); --lineN;
                             if (lineN >= 0 && list.get(lineN).trim().equals("")) {
                                 list.remove(lineN); --lineN;
@@ -219,40 +282,38 @@ public final class Config {
                         continue;
                     }
                 }
-                list.add(lineS); ++lineN;
-            }
-            buffer.close(); buffer = null; reader = null; fs = null;
 
+                list.add(lineS); lineN--;
+            }
+
+            // TODO what tf is going on here???
             if (newValue != null && lineO == -1) {
                 if (lineC == -1) {
                     if (lineN == -1 || !list.get(lineN).trim().equals("")) {
                         lineC = lineN;
-                        list.add(""); ++lineN;
+                        list.add(""); lineN++;
                     }
                     if (opt != null) {
-                        list.add("# ==================== "+cat+" ====================");
-                        ++lineN; lineC = lineN;
-                        list.add(""); ++lineN;
+                        list.add("# ==================== " + category + " ====================");
+                        lineN++; lineC = lineN;
+                        list.add("");
                     }
                 }
-                list.add(lineC+1, ""); ++lineN;
-                lineO = lineC+2;
+
+                list.add(lineC + 1, "");
+                lineO = lineC + 2;
                 if (opt != null) {
                     list.add(lineO, optComment);
-                    ++lineO; ++lineN;
+                    lineO++;
                 }
-                list.add(lineO, key+" = "+newValue); ++lineN;
+                list.add(lineO, key + " = " + newValue);
             }
-            
-            out = new PrintWriter(configFile, "UTF-8");
-            for (String line : list) {
-                out.println(line);
+
+            try (PrintWriter out = new PrintWriter(configFile, "UTF-8")) {
+                for (String line : list) {
+                    out.println(line);
+                }
             }
-        } finally {
-            if (buffer != null) buffer.close();
-            else if (reader != null) reader.close();
-            else if (fs != null) fs.close();
-            if (out != null) out.close();
         }
     }
 }

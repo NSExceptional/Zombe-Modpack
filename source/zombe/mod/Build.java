@@ -6,7 +6,6 @@ import net.minecraft.entity.player.*;
 import net.minecraft.entity.*;
 import net.minecraft.item.*;
 import net.minecraft.nbt.*;
-import net.minecraft.tileentity.*;
 import net.minecraft.world.*;
 
 import static zombe.core.ZWrapper.*;

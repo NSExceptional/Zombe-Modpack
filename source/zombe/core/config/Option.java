@@ -1,46 +1,36 @@
 package zombe.core.config;
 
-
-import java.util.*;
+import javax.annotation.Nonnull;
 import java.lang.*;
 
-public class Option {
+/** Represents a configurable setting for the mod. Does not contain the setting itself. */
+public class Option<T> {
+    public static final OptionConstraint BOOL = new ToggleConstraint();
+    public static final OptionConstraint TEXT = new TextConstraint();
+    public static final OptionConstraint KEY  = new KeyBindConstraint();
 
-    public static final TypeConstraint BOOL = new ConstraintBoolean();
-    public static final TypeConstraint TEXT = new ConstraintText();
-    public static final TypeConstraint KEY = new ConstraintKey();
+    public final String category;
+    public final String description;
+    public final OptionConstraint<T> constraint;
+    public final T defaultValue;
 
-    private final String category;
-    private final String description;
-    private final TypeConstraint constraint;
-    private final Object defaultValue;
+    @Nonnull
+    public Option(@Nonnull String category,
+                  @Nonnull String description,
+                  @Nonnull OptionConstraint<T> constraint,
+                  @Nonnull T defaultValue) {
+        if (!constraint.valueIsValid(defaultValue)) {
+            throw new IllegalArgumentException();
+        }
 
-    public Option(String category, String description, TypeConstraint constraint, Object defaultValue) {
-        if (category == null || description == null || constraint == null || defaultValue == null) throw new NullPointerException();
-        if (!constraint.good(defaultValue)) throw new IllegalArgumentException();
-        this.category = category;
-        this.description = description;
-        this.constraint = constraint;
+        this.category     = category;
+        this.description  = description;
+        this.constraint   = constraint;
         this.defaultValue = defaultValue;
     }
 
-    public String getCategory() {
-        return this.category;
-    }
-
-    public String getDescription() {
-        return this.description;
-    }
-
-    public TypeConstraint getConstraint() {
-        return this.constraint;
-    }
-
-    public Object getDefaultValue() {
-        return this.defaultValue;
-    }
-    
-    public String getDefaultString() {
-        return getConstraint().toString(getDefaultValue());
+    /** @return the default value as converted to a string by the constraint */
+    public String defaultString() {
+        return this.constraint.toString(this.defaultValue);
     }
 }

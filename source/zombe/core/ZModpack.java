@@ -248,7 +248,7 @@ public final class ZModpack extends ZMod {
         if (!initialized) return;
         Option opt = Config.getOption(option);
         if (opt != null) {
-            String cat = opt.getCategory();
+            String cat = opt.category;
             ZMod mod = ZMod.getMod(cat);
             if (mod != null) mod.notifyOptionChange(option);
         }

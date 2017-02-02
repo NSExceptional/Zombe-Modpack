@@ -14,9 +14,9 @@ import org.lwjgl.input.Keyboard;
 
 public final class ConfigMenu extends GuiScreen {
 
-    private static final ArrayList<Widget> menuCategories = new ArrayList<Widget>();
-    private static final Map<String,ArrayList<Widget>> menuElements = new LinkedHashMap<String,ArrayList<Widget>>();
-    private static final Map<String,ArrayList<Widget>> menuDefaults = new LinkedHashMap<String,ArrayList<Widget>>();
+    private static final List<Widget> menuCategories = new ArrayList<>();
+    private static final Map<String, ArrayList<Widget>> menuElements = new LinkedHashMap<>();
+    private static final Map<String, ArrayList<Widget>> menuDefaults = new LinkedHashMap<>();
     private static final Widget menuCloseButton = new Button("close","X");
     private static Widget menuCurrentCategory = null;
     private static Widget menuCurrentInteraction = null;
@@ -175,7 +175,7 @@ public final class ConfigMenu extends GuiScreen {
         widget.setDefaultText(INHERITED_TEXT);
         if (widget instanceof Label) widget = new Label(null);
         else {
-            Object def = Config.getOption(widget.getName()).getDefaultValue();
+            Object def = Config.getOption(widget.getName()).defaultValue;
             widget = new Button(widget.getName(), def);
         }
         menuDefaults.get(category).add(widget);
@@ -188,7 +188,7 @@ public final class ConfigMenu extends GuiScreen {
         Option option = Config.getOption(name);
         if (option == null) return;
         Object value = menuCurrentInteraction.getValue();
-        currentConfig.set(name, option.getConstraint().toString(value));
+        currentConfig.set(name, option.constraint.toString(value));
         ZModpack.optionChange(name);
         menuCurrentInteraction = null;
     }
@@ -341,7 +341,7 @@ public final class ConfigMenu extends GuiScreen {
 
                 if (element instanceof Label
                  || element.hasFocus() && element instanceof TextField) {
-                    element.setPosition(column2X, contentY + LINE_HEIGHT*line, 
+                    element.setPosition(column2X, contentY + LINE_HEIGHT*line,
                                         content2W, widgetH);
                 } else {
                     element.setPosition(elementX, contentY + LINE_HEIGHT*line,
@@ -392,7 +392,7 @@ public final class ConfigMenu extends GuiScreen {
                 if (element == null || widget == null) continue;
                 if (!(element instanceof Label
                    || element.hasFocus() && element instanceof TextField)) {
-                    String desc = currentConfig.getOption(element.getName()).getDescription();
+                    String desc = currentConfig.getOption(element.getName()).description;
                     if (desc != null) GuiHelper.showTextRight(
                         GuiHelper.trimStringToWidth(desc, captionW),
                         captionX, contentY + LINE_HEIGHT*line+(widgetH-8)/2,

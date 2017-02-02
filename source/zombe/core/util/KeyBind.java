@@ -1,6 +1,7 @@
 package zombe.core.util;
 
 public class KeyBind {
+    public static KeyBind NONE = new KeyBind(KeyHelper.KEY_NONE);
 
     public final int code;
     public final String name;
@@ -12,7 +13,7 @@ public class KeyBind {
 
     public KeyBind(String name) {
         this.name = name;
-        this.code = KeyHelper.getKeyId(name);
+        this.code = KeyHelper.getKeyID(name);
     }
 
     public String toString() {

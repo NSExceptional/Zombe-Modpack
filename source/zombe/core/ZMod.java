@@ -5,8 +5,8 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import zombe.core.config.Config;
-import zombe.core.config.ConstraintFloat;
-import zombe.core.config.ConstraintInteger;
+import zombe.core.config.FloatConstraint;
+import zombe.core.config.IntegerConstraint;
 import zombe.core.config.Option;
 import zombe.core.content.ConfigMenu;
 import zombe.core.gui.KeyBinder;
@@ -220,7 +220,7 @@ public abstract class ZMod {
         Declares an integer option
     */
     protected final void addOption(String name, String description, int defaultValue, int min, int max) {
-        Config.addOption(name, new Option(this.getName(), description, new ConstraintInteger(min, max), new Integer(defaultValue)));
+        Config.addOption(name, new Option(this.getName(), description, new IntegerConstraint(min, max), new Integer(defaultValue)));
         ConfigMenu.addConfigElement(this.getName(), new Slider(name, Slider.Scale.DISCRETE, min, max));
     }
 
@@ -228,7 +228,7 @@ public abstract class ZMod {
         Declares a float option
     */
     protected final void addOption(String name, String description, float defaultValue, float min, float max, boolean logscale) {
-        Config.addOption(name, new Option(this.getName(), description, new ConstraintFloat(min, max), new Float(defaultValue)));
+        Config.addOption(name, new Option(this.getName(), description, new FloatConstraint(min, max), new Float(defaultValue)));
         ConfigMenu.addConfigElement(this.getName(), new Slider(name, logscale ? Slider.Scale.LOG : Slider.Scale.LINEAR, min, max));
     }
     protected final void addOption(String name, String description, float defaultValue, float min, float max) {
