@@ -18,19 +18,19 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 public final class Build extends ZMod {
-    
+
     private static String tagBuild;
     private static int keyToggle, keyA, keyB, keyMark, keyCopy, keyPaste, keySet, keyFill, keyRemove, keyFeet, keyHead, keyPick, keyDeselect;
     private static float optLockQuantityRatio;
     private static boolean optBuild, optExtension, optLockQuantity;
-    
+
     private static boolean building, buildBufferHere;
-    private static int buildSX, buildSY, buildSZ, 
+    private static int buildSX, buildSY, buildSZ,
                        buildEX, buildEY, buildEZ,
-                       buildX1, buildY1, buildZ1, 
+                       buildX1, buildY1, buildZ1,
                        buildX2, buildY2, buildZ2,
                        buildMark = 0;
-    private static int bufferSX, bufferSY, bufferSZ, 
+    private static int bufferSX, bufferSY, bufferSZ,
                        bufferEX, bufferEY, bufferEZ,
                        bufferWX, bufferWY, bufferWZ;
     private static int buildHandSlot, buildHandSize;
@@ -49,10 +49,10 @@ public final class Build extends ZMod {
         BUILD_ACTION_ITEMSET = 4,
         BUILD_MODIFIER_FILL = 64,
         BUILD_MODIFIER_REMOVE = 128;
-    
+
     public Build() {
         super("build", "1.8", "9.0.2");
-        
+
         addOption("tagBuild", "Mod tag", "builder");
         addOption("keyBuildToggle", "Toggle builder mode", Keyboard.KEY_B);
         addOption("optBuild", "Builder mode is enabled by default", false);
@@ -100,7 +100,7 @@ public final class Build extends ZMod {
         clientActions = new LinkedList<int[]>();
         serverActions = new LinkedList<int[]>();
     }
-    
+
     @Override
     protected void quit() {
         synchronized(this) {
@@ -117,7 +117,7 @@ public final class Build extends ZMod {
     protected void updateConfig() {
         synchronized(this) {
         tagBuild         = getOptionString("tagBuild");
-        
+
         keyToggle        = getOptionKey("keyBuildToggle");
         keyA             = getOptionKey("keyBuildA");
         keyB             = getOptionKey("keyBuildB");
@@ -135,7 +135,7 @@ public final class Build extends ZMod {
         keyHead          = getOptionKey("keyBuildHead");
         keyFeet          = getOptionKey("keyBuildFeet");
         keyDeselect      = getOptionKey("keyBuildDeselect");
-        
+
         String sets[] = new String[] {
             getOptionString("optBuildA1"),
             getOptionString("optBuildA2"),
@@ -318,7 +318,7 @@ public final class Build extends ZMod {
         }
         } //synchronized
     }
-    
+
     private static void buildAction(World world, EntityPlayer player, int[] data) {
         final int action = data[0] & BUILD_ACTION_BITS;
 
@@ -328,7 +328,7 @@ public final class Build extends ZMod {
                 if (idmeta == 0 || idmeta == -1) {
                     getStacks(player)[slot] = null;
                 } else {
-                    getStacks(player)[slot] = getStack(idmeta, 
+                    getStacks(player)[slot] = getStack(idmeta,
                         getItemMax(getItem(getBase(idmeta))));
                 }
             }
@@ -338,10 +338,10 @@ public final class Build extends ZMod {
 
         final boolean fill = (data[0] & BUILD_MODIFIER_FILL) != 0;
         final boolean remove = (data[0] & BUILD_MODIFIER_REMOVE) != 0;
-        
+
         int sx = data[1], sy = data[2], sz = data[3];
         int ex = data[4], ey = data[5], ez = data[6];
-        
+
         if (action == BUILD_ACTION_UPDATE) {
             markForUpdate(world, sx,sy,sz, ex,ey,ez);
         } else if (action == BUILD_ACTION_COPY) {
@@ -366,12 +366,12 @@ public final class Build extends ZMod {
             int id = getBlockId(idmeta);
             boolean sub = hasSubTypes(getItem(getBlock(id)));
             //int meta = data[8];
-            
+
             if (fill) {
                 for (int x = sx; x <= ex; ++x)
                 for (int y = sy; y <= ey; ++y)
                 for (int z = sz; z <= ez; ++z)
-                if (getIdAt(world, x,y,z) == 0) 
+                if (getIdAt(world, x,y,z) == 0)
                     setIdMetaAt(world, idmeta, UPDATE_NONE, x,y,z);
             } else if (remove) {
                 for (int x = sx; x <= ex; ++x)
@@ -407,8 +407,8 @@ public final class Build extends ZMod {
                 for (int y = sy; y <= ey; ++y)
                 for (int z = sz; z <= ez; ++z)
                 if (getIdAt(world, x,y,z) == 0) {
-                    int cx = (x-sx) % bufferWX, 
-                        cy = (y-sy) % bufferWY, 
+                    int cx = (x-sx) % bufferWX,
+                        cy = (y-sy) % bufferWY,
                         cz = (z-sz) % bufferWZ;
                     int at = (cx*bufferWY + cy)*bufferWZ + cz;
                     setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x,y,z);
@@ -421,20 +421,20 @@ public final class Build extends ZMod {
                 for (int x = sx; x <= ex; ++x)
                 for (int y = sy; y <= ey; ++y)
                 for (int z = sz; z <= ez; ++z) {
-                    int cx = (x-sx) % bufferWX, 
-                        cy = (y-sy) % bufferWY, 
+                    int cx = (x-sx) % bufferWX,
+                        cy = (y-sy) % bufferWY,
                         cz = (z-sz) % bufferWZ;
                     int at = (cx*bufferWY + cy)*bufferWZ + cz;
                     int idmeta = buildBuffer[at], got = getIdMetaAt(world, x,y,z);
-                    if (idmeta== got || (idmeta==8 && got==9) || (idmeta==10 && got==11)) 
+                    if (idmeta== got || (idmeta==8 && got==9) || (idmeta==10 && got==11))
                         setIdAt(world, 0, UPDATE_NONE, x,y,z);
                 }
             } else { // replace
                 for (int x = sx; x <= ex; ++x)
                 for (int y = sy; y <= ey; ++y)
                 for (int z = sz; z <= ez; ++z) {
-                    int cx = (x-sx) % bufferWX, 
-                        cy = (y-sy) % bufferWY, 
+                    int cx = (x-sx) % bufferWX,
+                        cy = (y-sy) % bufferWY,
                         cz = (z-sz) % bufferWZ;
                     int at = (cx*bufferWY + cy)*bufferWZ + cz;
                     setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x,y,z);
@@ -449,7 +449,7 @@ public final class Build extends ZMod {
             //                  sx,sy,sz, ex,ey,ez });
         }
     }
-    
+
     @Override
     protected void onServerTick(EntityPlayerMP ent) {
         synchronized(this) {
@@ -470,13 +470,13 @@ public final class Build extends ZMod {
             if (building && optLockQuantity) {
                 ItemStack[] stacks = getStacks(ent);
                 int cur = getCurrentSlot(ent);
-                if (cur != buildHandSlot || 
+                if (cur != buildHandSlot ||
                     (stacks[cur] != null && stacks[cur] != buildHand)) {
                     buildHandSlot = cur;
                     buildHand     = stacks[cur];
                     buildHandSize = buildHand != null
                                   ? getStackSize(buildHand) : 0;
-                } else if (buildHand != null && 
+                } else if (buildHand != null &&
                     (stacks[cur] == null || stacks[cur] == buildHand)) {
                     int size = buildHandSize;
                     if (optLockQuantityRatio > 0) {
@@ -489,7 +489,7 @@ public final class Build extends ZMod {
             }
         } //synchronized
     }
-    
+
     @Override
     protected void onWorldDraw(float delta, float x, float y, float z) {
         float sx, sy, sz, ex, ey, ez;
@@ -532,7 +532,7 @@ public final class Build extends ZMod {
                 GL11.glColor3ub((byte)64,(byte)255,(byte)64);
             else if (buildMark == 1)
                 GL11.glColor3ub((byte)192,(byte)32,(byte)255);
-            else 
+            else
                 GL11.glColor3ub((byte)255,(byte)64,(byte)64);
             GuiHelper.drawLineBox(sx,sy,sz, ex,ey,ez);
         }
@@ -549,7 +549,7 @@ public final class Build extends ZMod {
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
-    
+
     @Override
     protected String getTag() {
         if (!building || tagBuild.length()==0) return null;

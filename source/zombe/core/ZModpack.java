@@ -40,93 +40,93 @@ import org.lwjgl.opengl.GL11;
     folder (by default).
 */
 public final class ZModpack extends ZMod {
-    
+
     private static final String zombesVersion = "10.0.0";
     private static final String targetVersion = "1.11";
-    
+
     /**
         Returns the modpack's version
     */
     public static String getZombesVersion() {
         return zombesVersion;
     }
-    
+
     /**
         Returns the Minecraft version this modpack is made for
     */
     public static String getTargetVersion() {
         return targetVersion;
     }
-    
+
     private static boolean initialized = false;
-    
+
     private static boolean initializedDirs = false;
-    
+
     private static File dataDir;
     private static File modsDir;
     private static File zombeDir;
     private static File versionDir;
-    
+
     private static boolean initializedLogs = false;
-    
+
     private static final Logger logger = Logger.getLogger("zombe.core");
     private static Handler logfileHandler;
-    
+
     private static boolean initializedCfgs = false;
-    
+
     private static Config defaultConfig;
     private static Config globalConfig;
     private static Config serverConfig;
-    
+
     private static boolean initializedPack = false;
-    
+
     private static ZModpack   zombesModpack;
-    
+
     private static boolean initializedMods = false;
-    
+
     private static ZModLoader zombesModLoader;
     private static Collection<ZMod> zombesMods;
-    
+
     /* ZMODPACK INSTANCE */
-    
+
     private static boolean optDisableAllMods = true;
     private static int keyShowOptions = Keyboard.KEY_NONE;
     private static int keyClearDisplayedError = Keyboard.KEY_NONE;
-    
+
     private static String messagesTL, messagesTR, messagesBL, messagesBR;
-    
+
     private static boolean allowCheats = false;
     private static boolean allowFlying = false;
     private static boolean allowNoclip = false;
-    
+
     /* Constructs a ZModpack as a dummy mod */
     private ZModpack() {
         super("zmodpack");
         registerHandler("allowCheats");
         registerHandler("allowFlying");
         registerHandler("allowNoclip");
-        
+
         addOption("disableAllMods", "Disable all mods", false);
         addOption("showOptions", "Show options screen key", Keyboard.KEY_F7);
         addOption("clearDisplayedError", "Remove the error message on screen", Keyboard.KEY_F9);
-        
+
         addOption("messagesTopLeft", "Messages displayed in top-left corner", "tags; view; error");
         addOption("messagesTopRight", "Messages displayed in top-right corner", "info; radar");
         addOption("messagesBottomLeft", "Messages displayed in bottom-left corner", "");
         addOption("messagesBottomRight", "Messages displayed in bottom-right corner", "");
     }
-    
+
     @Override
     protected void updateConfig() {
         keyShowOptions = getOptionKey("showOptions");
         ConfigMenu.setKey(keyShowOptions);
         keyClearDisplayedError = getOptionKey("clearDisplayedError");
-        
+
         messagesTL = getOptionString("messagesTopLeft");
         messagesTR = getOptionString("messagesTopRight");
         messagesBL = getOptionString("messagesBottomLeft");
         messagesBR = getOptionString("messagesBottomRight");
-        
+
         boolean disableAllMods = getOptionBool("disableAllMods");
         if (disableAllMods == optDisableAllMods) return;
         optDisableAllMods = disableAllMods;
@@ -134,7 +134,7 @@ public final class ZModpack extends ZMod {
             mod.checkEnabledChange();
         }
     }
-    
+
     @Override
     protected Object handle(String name, Object arg) {
         if (name == "allowCheats") return (Boolean) allowCheats;
@@ -142,14 +142,14 @@ public final class ZModpack extends ZMod {
         if (name == "allowNoclip") return (Boolean) allowNoclip;
         return arg;
     }
-    
-    
+
+
     /**
         Initializes this modpack
     */
     static void initialize(Minecraft mc) {
         if (initialized) return;
-        
+
         if (!initializedDirs) {
             try {
                 File data = ZWrapper.getDataDir();
@@ -167,7 +167,7 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         if (!initializedLogs) {
             try {
                 logfileHandler = new FileHandler(new File(zombeDir, "log.txt").getCanonicalPath(), false);
@@ -180,7 +180,7 @@ public final class ZModpack extends ZMod {
                 modlogger.setLevel(Level.FINEST);
                 modlogger.setUseParentHandlers(false);
                 initializedLogs = true;
-                
+
                 logger.config("=========== logging ==========="
                 +"\n"+ "ZModpack: version " +zombesVersion+ " for MC " +targetVersion
                 +"\n"+ "Log started at: " + new Timestamp(new Date().getTime())
@@ -189,7 +189,7 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         if (!initializedCfgs) {
             logger.config("*** configuration ***");
             try {
@@ -204,7 +204,7 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         if (!initializedPack) {
             logger.config("*** initialization ***");
             try {
@@ -215,7 +215,7 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         if (!initializedMods) {
             try {
                 zombesModLoader = new ZModLoader(new URL[] {
@@ -234,13 +234,13 @@ public final class ZModpack extends ZMod {
                 throw new RuntimeException(e);
             }
         }
-        
+
         initialized = true;
     }
-    
-    
+
+
     // CENTRAL EVENTS
-    
+
     /**
         Called if a config option changed
     */
@@ -253,7 +253,7 @@ public final class ZModpack extends ZMod {
             if (mod != null) mod.notifyOptionChange(option);
         }
     }
-    
+
     /**
         Called if the world changed
     */
@@ -265,7 +265,7 @@ public final class ZModpack extends ZMod {
                 err("in mod \""+mod.getName()+"\": world change failed",e);
             }
     }
-    
+
     //=Event=ClientTick=======================================================
     private static PlayerControllerMP PC = null;
     private static String chatLast = null;
@@ -277,16 +277,16 @@ public final class ZModpack extends ZMod {
     static void clientTick(EntityPlayerSP player) {
         // notify mods
         if (!initialized) return;
-        
+
         try {
             // check state
             if (getPlayer() == null) return;
             if (getWorld() == null) return;
             if (getRenderer() == null) return;
-            
+
             // keyboard state update
             Keys.newTick();
-            
+
             // check world change
             if (PC != getPlayerController()) {
                 PC = getPlayerController();
@@ -296,7 +296,7 @@ public final class ZModpack extends ZMod {
                 chatWelcomed = !isMultiplayer();
                 worldChange();
             }
-            
+
             List<ChatLine> chat = getChatLines();
             if (!chatWelcomed && chat != null) { for (int line = 0; line < chat.size(); ++line) {
                 String msg = ZWrapper.getChatText(chat, line);
@@ -318,12 +318,12 @@ public final class ZModpack extends ZMod {
             }
             if (chat.size()>0) chatLast = getChatText(chat, 0);
             }
-            
+
             // update logging
             if (!isInMenu() && wasKeyPressedThisTick(keyClearDisplayedError)) {
                 setMessage("error", null);
             }
-            
+
             // notify mods
             for (ZMod mod : zombesMods)
                 try {
@@ -332,9 +332,9 @@ public final class ZModpack extends ZMod {
                     err("in mod \""+mod.getName()+"\": update failed",e);
                 }
         } catch(Exception error) { err("error: update-handle failed", error); }
-        
+
     }
-    
+
     //=Event=ServerTick=======================================================
     /**
         Called at each new server tick
@@ -348,7 +348,7 @@ public final class ZModpack extends ZMod {
                 err("in mod \""+mod.getName()+"\": server tick failed",e);
             }
     }
-    
+
     //=Event=WorldDraw========================================================
     /**
         Called on world draw
@@ -356,7 +356,7 @@ public final class ZModpack extends ZMod {
     */
     static void worldDraw(float delta) {
         if (!initialized) return;
-        
+
         if (getView() == null || getWorld() == null
             || getRenderer() == null) return;
         try {
@@ -365,21 +365,21 @@ public final class ZModpack extends ZMod {
             //seconds = ((float)(curTick - prevTick)) * 0.000000001f;
             //if (seconds > 1f) seconds = 0f;
             //prevTick = curTick;
-            
+
             // keyboard state update
             Keys.newFrame();
-            
+
             // update player position
             Entity view = getView();
             Vec3d pos = getPositionDelta(view, delta);
             float x = (float) getX(pos), y = (float) getY(pos), z = (float) getZ(pos);
-            
+
             // draw in 3d
             boolean gltex2d = GL11.glGetBoolean(GL11.GL_TEXTURE_2D);
             boolean gldepth = GL11.glGetBoolean(GL11.GL_DEPTH_TEST);
             boolean glblend = GL11.glGetBoolean(GL11.GL_BLEND);
             boolean glfog   = GL11.glGetBoolean(GL11.GL_FOG);
-            
+
             // notify mods
             for (ZMod mod : zombesMods)
                 try {
@@ -387,7 +387,7 @@ public final class ZModpack extends ZMod {
                 } catch (Exception e) {
                     err("in mod \""+mod.getName()+"\": world draw failed", e);
                 }
-            
+
             // cleaning
             if (glfog)   GL11.glEnable( GL11.GL_FOG);
             else         GL11.glDisable(GL11.GL_FOG);
@@ -399,7 +399,7 @@ public final class ZModpack extends ZMod {
             else         GL11.glDisable(GL11.GL_TEXTURE_2D);
         } catch(Exception error) { err("error: draw-handle failed", error); }
     }
-    
+
     private static boolean ML_loaded = false;
     private static Method  ML_OnTick = null;
     private static boolean wasInConfigMenu = false;
@@ -409,14 +409,14 @@ public final class ZModpack extends ZMod {
     */
     static void guiDraw(float delta) {
         if (!initialized) return;
-        
+
         // show options
         checkConfigMenu();
         if (!isInMenu() && !wasInConfigMenu && wasKeyPressedThisFrame(keyShowOptions)) {
             openConfigMenu();
         }
         wasInConfigMenu = isConfigMenuOpened();
-        
+
         // text overlay
         if (!isHideGUI() && !isInOptions()) {
             // set state
@@ -427,7 +427,7 @@ public final class ZModpack extends ZMod {
             GL11.glPushMatrix(); GL11.glLoadIdentity();
             GL11.glTranslatef(0.0F, 0.0F, -2000F);
             GL11.glDisable(GL11.GL_LIGHTING);
-            
+
             // draw messages
             if (!isShowDebug() && (!isInMenu()
                                    || getMenu() instanceof GuiContainer
@@ -437,7 +437,7 @@ public final class ZModpack extends ZMod {
                 printMessages(messagesTR,-2, 2);
                 printMessages(messagesBL, 2,-2);
                 printMessages(messagesBR,-2,-2);
-                
+
                 /*
                  printMessage("tags",  2,2);
                  printMessage("view",  2,14);
@@ -446,7 +446,7 @@ public final class ZModpack extends ZMod {
                  printMessage("radar",-2,2);
                  */
             }
-            
+
             // notify mods
             if (!isInMenu() || getMenu() instanceof GuiChat || getMenu() instanceof GuiContainer)
                 for (ZMod mod : zombesMods)
@@ -455,13 +455,13 @@ public final class ZModpack extends ZMod {
                     } catch (Exception e) {
                         err("in mod \""+mod.getName()+"\": gui draw failed", e);
                     }
-            
+
             // restore state
             GL11.glPopMatrix();
             GL11.glMatrixMode(GL11.GL_PROJECTION); GL11.glPopMatrix();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
         }
-        
+
         // modLoader compatibility
         if (!ML_loaded) try {
             ML_loaded = true;
@@ -469,7 +469,7 @@ public final class ZModpack extends ZMod {
         } catch(Exception whatever) { ML_OnTick = null; }
         if (ML_OnTick != null) getResult(ML_OnTick, null, delta, getMinecraft());
     }
-    
+
     private static void printMessages(String messages, int x, int y) {
         List<String> lines = new ArrayList<String>();
         for (String part : messages.split(";")) {
@@ -496,7 +496,7 @@ public final class ZModpack extends ZMod {
             }
         }
     }
-    
+
     private static void printMessage(String name, int x, int y) {
         String message = getMessages().get(name);
         if (message == null) return;
@@ -513,8 +513,8 @@ public final class ZModpack extends ZMod {
             }
         }
     }
-    
-    
+
+
     /**
         Gets the list of mod tags
         note: used to be pingTextHandle()
@@ -531,59 +531,59 @@ public final class ZModpack extends ZMod {
             } catch (Exception e) {}
         return tags;
     }
-    
+
     /* APIs FOR MODS */
-    
+
     static Config getCurrentConfig() {
         return (serverConfig != null) ? serverConfig : globalConfig;
     }
-    
+
     /**
         Returns an option's value
     */
     static Object getOptionValue(String name) {
         return getCurrentConfig().getValue(name);
     }
-    
+
     static Collection getOptionValues(String name) {
         return getCurrentConfig().getValues(name);
     }
-    
-    
+
+
     /* GLOBAL SWITCHES */
-    
+
     /**
         Returns true if mods are allowed to be active
     */
     static boolean areModsEnabled() {
         return !optDisableAllMods;
     }
-    
-    
+
+
     /* CONFIG MENU */
-    
+
     private static ConfigMenu configMenu = null;
-    
+
     private static void openConfigMenu() {
         if (!isConfigMenuOpened())
             setMenu(configMenu = new ConfigMenu(serverConfig != null ? serverConfig : globalConfig));
     }
-    
+
     private static void closeConfigMenu() {
         if (isInOptions()) ZWrapper.setMenu(null);
         configMenu = null;
     }
-    
+
     private static boolean isConfigMenuOpened() {
         return configMenu != null;
     }
-    
+
     private static void checkConfigMenu() {
         if (isConfigMenuOpened() && !isInOptions()) configMenu = null;
     }
-    
+
     /* NAMES.TXT */
-    
+
     private static void parseNames(File file) {
         if (!file.isFile()) {
             logger.info("skipped loading config file '"+file.toString()+"': file not found");
@@ -615,7 +615,7 @@ public final class ZModpack extends ZMod {
             parseNameLine(lines[line], line);
         }
     }
-    
+
     private static void parseNameLine(String src, int line) {
         String got[] = src.replaceAll("\\A[\\t ]*","").replaceAll("[\\t ]*(|//.*)\\z","").split("[ \\t]+");
         if ((got.length & 1) != 0) {
@@ -626,5 +626,5 @@ public final class ZModpack extends ZMod {
             else getNameMap().put(got[at], id);
         }
     }
-    
+
 }

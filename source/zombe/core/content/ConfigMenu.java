@@ -29,11 +29,11 @@ public final class ConfigMenu extends GuiScreen {
 
     private static final int BUTTON_SCROLL_UP = 4, BUTTON_SCROLL_DN = 5, SCROLL_STEP = 3;
 
-    private static final int LINE_HEIGHT = 11, LINE_SPACING = 1, 
-        PADDING = 5, SPACING = 3, MARGIN_TOP = LINE_HEIGHT+SPACING, 
+    private static final int LINE_HEIGHT = 11, LINE_SPACING = 1,
+        PADDING = 5, SPACING = 3, MARGIN_TOP = LINE_HEIGHT+SPACING,
         SCROLLBAR_WIDTH = 8, X_WIDTH = 8;
 
-    private static int scaledW = 1, scaledH = 1, displayableLines = 1, 
+    private static int scaledW = 1, scaledH = 1, displayableLines = 1,
         contentY, contentH, column1W, column1X, column2W, column2X,
         widgetW, widgetH, content1W, content2W, scrollbar1X, scrollbar2X,
         captionW, captionX, elementX, defaultX;
@@ -60,7 +60,7 @@ public final class ConfigMenu extends GuiScreen {
     public void updateScreen() {
         updateMenu();
     }
-    
+
     @Override
     protected void keyTyped(char c, int key) throws IOException {
         if (Widget.getFocused() == null) {
@@ -153,7 +153,7 @@ public final class ConfigMenu extends GuiScreen {
     public static void closeMenu() {
         ZWrapper.setMenu(null);
     }
-    
+
     private static void requireCategory(String category) {
         if (!menuElements.containsKey(category)) {
             menuCategories.add(new Button(category, category));
@@ -267,11 +267,11 @@ public final class ConfigMenu extends GuiScreen {
         elementX  = column2X + captionW + SPACING;
         defaultX  = elementX + widgetW  + SPACING;
 
-        menuCloseButton.setPosition(scaledW-PADDING-X_WIDTH, PADDING, 
+        menuCloseButton.setPosition(scaledW-PADDING-X_WIDTH, PADDING,
                                     X_WIDTH, widgetH);
-        menuCategoriesScrollBar.setPosition(scrollbar1X, contentY, 
+        menuCategoriesScrollBar.setPosition(scrollbar1X, contentY,
                                             SCROLLBAR_WIDTH, contentH);
-        menuElementsScrollBar.setPosition(scrollbar2X, contentY, 
+        menuElementsScrollBar.setPosition(scrollbar2X, contentY,
                                           SCROLLBAR_WIDTH, contentH);
 
         return true;
@@ -294,7 +294,7 @@ public final class ConfigMenu extends GuiScreen {
 
         Widget.clearClicked();
         Widget.clearHovered();
-        
+
         menuCloseButton.checkState();
         if (menuCloseButton.isActivated()) {
             closeMenu();
@@ -338,7 +338,7 @@ public final class ConfigMenu extends GuiScreen {
                     element.setActivated(true);
                     element.setValue(value);
                 }
-                
+
                 if (element instanceof Label
                  || element.hasFocus() && element instanceof TextField) {
                     element.setPosition(column2X, contentY + LINE_HEIGHT*line, 
@@ -390,12 +390,12 @@ public final class ConfigMenu extends GuiScreen {
                 Widget element = elements.get(index);
                 Widget widget = defaults.get(index);
                 if (element == null || widget == null) continue;
-                if (!(element instanceof Label 
+                if (!(element instanceof Label
                    || element.hasFocus() && element instanceof TextField)) {
                     String desc = currentConfig.getOption(element.getName()).getDescription();
                     if (desc != null) GuiHelper.showTextRight(
-                        GuiHelper.trimStringToWidth(desc, captionW), 
-                        captionX, contentY + LINE_HEIGHT*line+(widgetH-8)/2, 
+                        GuiHelper.trimStringToWidth(desc, captionW),
+                        captionX, contentY + LINE_HEIGHT*line+(widgetH-8)/2,
                         captionW, 0xffffff);
                 }
                 widget.draw();

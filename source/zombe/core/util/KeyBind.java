@@ -3,7 +3,6 @@ package zombe.core.util;
 public class KeyBind {
 
     public final int code;
-
     public final String name;
 
     public KeyBind(int code) {
@@ -19,5 +18,4 @@ public class KeyBind {
     public String toString() {
         return name;
     }
-
 }
