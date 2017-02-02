@@ -1,6 +1,8 @@
 package zombe.core.content;
 
-import net.minecraft.block.Block;
+import static zombe.core.ZWrapper.*;
+
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
@@ -93,9 +95,9 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     private boolean isMostlyEmpty(BlockPos p) {
-        Block block = getBlockAt(getWorld(this),p);
-        return !block.isNormalCube(block.getDefaultState())
-            && !getBlockAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube(null);
+        IBlockState block = getStateAt(getWorld(this),p);
+        return !block.isNormalCube()
+            && !getStateAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube();
     }
 
     /**
