@@ -188,7 +188,7 @@ public abstract class EntityPlayer extends EntityLivingBase
     /** The player's unique game profile */
     private final GameProfile gameProfile;
     private boolean hasReducedDebug;
-    private ItemStack itemStackMainHand = ItemStack.field_190927_a;
+    private ItemStack itemStackMainHand = ItemStack.EMPTY;
     private final CooldownTracker cooldownTracker = this.createCooldownTracker();
     @Nullable
 
@@ -339,7 +339,7 @@ public abstract class EntityPlayer extends EntityLivingBase
                 this.resetCooldown();
             }
 
-            this.itemStackMainHand = itemstack.func_190926_b() ? ItemStack.field_190927_a : itemstack.copy();
+            this.itemStackMainHand = itemstack.func_190926_b() ? ItemStack.EMPTY : itemstack.copy();
         }
 
         this.cooldownTracker.tick();
@@ -1124,14 +1124,14 @@ public abstract class EntityPlayer extends EntityLivingBase
 
                 if (enumhand == EnumHand.MAIN_HAND)
                 {
-                    this.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.field_190927_a);
+                    this.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
                 else
                 {
-                    this.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemStack.field_190927_a);
+                    this.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemStack.EMPTY);
                 }
 
-                this.activeItemStack = ItemStack.field_190927_a;
+                this.activeItemStack = ItemStack.EMPTY;
                 this.playSound(SoundEvents.ITEM_SHIELD_BREAK, 0.8F, 0.8F + this.world.rand.nextFloat() * 0.4F);
             }
         }
@@ -1238,7 +1238,7 @@ public abstract class EntityPlayer extends EntityLivingBase
         else
         {
             ItemStack itemstack = this.getHeldItem(p_190775_2_);
-            ItemStack itemstack1 = itemstack.func_190926_b() ? ItemStack.field_190927_a : itemstack.copy();
+            ItemStack itemstack1 = itemstack.func_190926_b() ? ItemStack.EMPTY : itemstack.copy();
 
             if (p_190775_1_.processInitialInteract(this, p_190775_2_))
             {
@@ -1262,7 +1262,7 @@ public abstract class EntityPlayer extends EntityLivingBase
                     {
                         if (itemstack.func_190926_b() && !this.capabilities.isCreativeMode)
                         {
-                            this.setHeldItem(p_190775_2_, ItemStack.field_190927_a);
+                            this.setHeldItem(p_190775_2_, ItemStack.EMPTY);
                         }
 
                         return EnumActionResult.SUCCESS;
@@ -1468,7 +1468,7 @@ public abstract class EntityPlayer extends EntityLivingBase
 
                             if (itemstack1.func_190926_b())
                             {
-                                this.setHeldItem(EnumHand.MAIN_HAND, ItemStack.field_190927_a);
+                                this.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY);
                             }
                         }
 
@@ -2304,7 +2304,7 @@ public abstract class EntityPlayer extends EntityLivingBase
 
     public ItemStack getItemStackFromSlot(EntityEquipmentSlot slotIn)
     {
-        return slotIn == EntityEquipmentSlot.MAINHAND ? this.inventory.getCurrentItem() : (slotIn == EntityEquipmentSlot.OFFHAND ? (ItemStack)this.inventory.offHandInventory.get(0) : (slotIn.getSlotType() == EntityEquipmentSlot.Type.ARMOR ? (ItemStack)this.inventory.armorInventory.get(slotIn.getIndex()) : ItemStack.field_190927_a));
+        return slotIn == EntityEquipmentSlot.MAINHAND ? this.inventory.getCurrentItem() : (slotIn == EntityEquipmentSlot.OFFHAND ? (ItemStack)this.inventory.offHandInventory.get(0) : (slotIn.getSlotType() == EntityEquipmentSlot.Type.ARMOR ? (ItemStack)this.inventory.armorInventory.get(slotIn.getIndex()) : ItemStack.EMPTY));
     }
 
     public void setItemStackToSlot(EntityEquipmentSlot slotIn, ItemStack stack)

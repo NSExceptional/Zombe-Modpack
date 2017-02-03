@@ -393,7 +393,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
         else if (packetIn.getType() == 76)
         {
-            entity = new EntityFireworkRocket(this.clientWorldController, d0, d1, d2, ItemStack.field_190927_a);
+            entity = new EntityFireworkRocket(this.clientWorldController, d0, d1, d2, ItemStack.EMPTY);
         }
         else if (packetIn.getType() == 63)
         {
@@ -430,7 +430,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient
         }
         else if (packetIn.getType() == 73)
         {
-            entity = new EntityPotion(this.clientWorldController, d0, d1, d2, ItemStack.field_190927_a);
+            entity = new EntityPotion(this.clientWorldController, d0, d1, d2, ItemStack.EMPTY);
             packetIn.setData(0);
         }
         else if (packetIn.getType() == 75)

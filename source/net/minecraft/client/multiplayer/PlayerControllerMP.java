@@ -56,7 +56,7 @@ public class PlayerControllerMP
     private BlockPos currentBlock = new BlockPos(-1, -1, -1);
 
     /** The Item currently being used to destroy a block */
-    private ItemStack currentItemHittingBlock = ItemStack.field_190927_a;
+    private ItemStack currentItemHittingBlock = ItemStack.EMPTY;
 
     /** Current block damage (MP) */
     private float curBlockDamageMP;
@@ -217,7 +217,7 @@ public class PlayerControllerMP
 
                         if (itemstack1.func_190926_b())
                         {
-                            this.mc.player.setHeldItem(EnumHand.MAIN_HAND, ItemStack.field_190927_a);
+                            this.mc.player.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY);
                         }
                     }
                 }

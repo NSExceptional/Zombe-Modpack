@@ -1192,7 +1192,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
                     for (int j = 0; j < this.playerEntity.openContainer.inventorySlots.size(); ++j)
                     {
                         ItemStack itemstack = ((Slot)this.playerEntity.openContainer.inventorySlots.get(j)).getStack();
-                        ItemStack itemstack1 = itemstack.func_190926_b() ? ItemStack.field_190927_a : itemstack;
+                        ItemStack itemstack1 = itemstack.func_190926_b() ? ItemStack.EMPTY : itemstack;
                         nonnulllist1.add(itemstack1);
                     }
 
@@ -1257,7 +1257,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable
             {
                 if (itemstack.func_190926_b())
                 {
-                    this.playerEntity.inventoryContainer.putStackInSlot(packetIn.getSlotId(), ItemStack.field_190927_a);
+                    this.playerEntity.inventoryContainer.putStackInSlot(packetIn.getSlotId(), ItemStack.EMPTY);
                 }
                 else
                 {

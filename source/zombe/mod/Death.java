@@ -74,10 +74,10 @@ public final class Death extends ZMod {
         if (!optDropInv) {
             InventoryPlayer inv = ent.inventory;
             for (int i = 0; i < deathInv.length; ++i) {
-                inv.mainInventory.set(i, ItemStack.field_190927_a);
+                inv.mainInventory.set(i, ItemStack.EMPTY);
             }
             for (int i = 0; i < deathArmor.length; ++i) {
-                inv.armorInventory.set(i, ItemStack.field_190927_a);
+                inv.armorInventory.set(i, ItemStack.EMPTY);
             }
         }
         if (!optLoseExp) {
@@ -115,12 +115,12 @@ public final class Death extends ZMod {
             InventoryPlayer inv = ent.inventory;
             for (int i = 0; i < deathInv.length; ++i) {
                 ItemStack is = deathInv[i];
-                is = (is == null) ? ItemStack.field_190927_a : is.copy();
+                is = (is == null) ? ItemStack.EMPTY : is.copy();
                 inv.mainInventory.set(i, is);
             }
             for (int i = 0; i < deathArmor.length; ++i) {
                 ItemStack is = deathArmor[i];
-                is = (is == null) ? ItemStack.field_190927_a : is.copy();
+                is = (is == null) ? ItemStack.EMPTY : is.copy();
                 inv.armorInventory.set(i, is);
             }
         }
