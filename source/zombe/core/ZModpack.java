@@ -4,7 +4,6 @@ import net.minecraft.client.*;
 import net.minecraft.client.entity.*;
 import net.minecraft.client.gui.ChatLine;
 import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.gui.GuiNewChat;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.multiplayer.*;
 import net.minecraft.entity.*;
@@ -119,7 +118,7 @@ public final class ZModpack extends ZMod {
     @Override
     protected void updateConfig() {
         keyShowOptions = getOptionKey("showOptions");
-        ConfigMenu.setKey(keyShowOptions);
+        ConfigurationScreen.setKey(keyShowOptions);
         keyClearDisplayedError = getOptionKey("clearDisplayedError");
 
         messagesTL = getOptionString("messagesTopLeft");
@@ -562,11 +561,11 @@ public final class ZModpack extends ZMod {
 
     /* CONFIG MENU */
 
-    private static ConfigMenu configMenu = null;
+    private static ConfigurationScreen configMenu = null;
 
     private static void openConfigMenu() {
         if (!isConfigMenuOpened())
-            setMenu(configMenu = new ConfigMenu(serverConfig != null ? serverConfig : globalConfig));
+            setMenu(configMenu = new ConfigurationScreen(serverConfig != null ? serverConfig : globalConfig));
     }
 
     private static void closeConfigMenu() {

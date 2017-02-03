@@ -53,7 +53,7 @@ import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.storage.WorldInfo;
-import zombe.core.content.ConfigMenu;
+import zombe.core.content.ConfigurationScreen;
 import zombe.core.content.RecipeComparator;
 import zombe.core.gui.Keys;
 import zombe.core.util.BlockFace;
@@ -1143,7 +1143,7 @@ public class ZWrapper {
     }
     // note: used to be getIsOptions()
     public static boolean isInOptions() {
-        return getMenu() instanceof ConfigMenu;
+        return getMenu() instanceof ConfigurationScreen;
     }
     // note: used to be getIsMultiplayer()
     public static boolean isMultiplayer() {

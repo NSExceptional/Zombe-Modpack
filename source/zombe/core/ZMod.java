@@ -8,7 +8,7 @@ import zombe.core.config.Config;
 import zombe.core.config.FloatConstraint;
 import zombe.core.config.IntegerConstraint;
 import zombe.core.config.Option;
-import zombe.core.content.ConfigMenu;
+import zombe.core.content.ConfigurationScreen;
 import zombe.core.gui.KeyBinder;
 import zombe.core.gui.Slider;
 import zombe.core.gui.TextField;
@@ -186,7 +186,7 @@ public abstract class ZMod {
         Adds a text line in the config menu
     */
     protected final void addOption(String text) {
-        ConfigMenu.addConfigElement(this.getName(), text);
+        ConfigurationScreen.addConfigElement(this.getName(), text);
     }
 
     /**
@@ -194,7 +194,7 @@ public abstract class ZMod {
     */
     protected final void addOption(String name, String description, String defaultValue) {
         Config.addOption(name, new Option(this.getName(), description, Option.TEXT, defaultValue));
-        ConfigMenu.addConfigElement(this.getName(), new TextField(name));
+        ConfigurationScreen.addConfigElement(this.getName(), new TextField(name));
     }
 
     /**
@@ -202,7 +202,7 @@ public abstract class ZMod {
     */
     protected final void addOption(String name, String description, boolean defaultValue) {
         Config.addOption(name, new Option(this.getName(), description, Option.BOOL, new Boolean(defaultValue)));
-        ConfigMenu.addConfigElement(this.getName(), new Toggler(name));
+        ConfigurationScreen.addConfigElement(this.getName(), new Toggler(name));
     }
 
     /**
@@ -210,7 +210,7 @@ public abstract class ZMod {
     */
     protected final void addOption(String name, String description, KeyBind defaultValue) {
         Config.addOption(name, new Option(this.getName(), description, Option.KEY, defaultValue));
-        ConfigMenu.addConfigElement(this.getName(), new KeyBinder(name));
+        ConfigurationScreen.addConfigElement(this.getName(), new KeyBinder(name));
     }
     protected final void addOption(String name, String description, int defaultValue) {
         addOption(name, description, new KeyBind(defaultValue));
@@ -221,7 +221,7 @@ public abstract class ZMod {
     */
     protected final void addOption(String name, String description, int defaultValue, int min, int max) {
         Config.addOption(name, new Option(this.getName(), description, new IntegerConstraint(min, max), new Integer(defaultValue)));
-        ConfigMenu.addConfigElement(this.getName(), new Slider(name, Slider.Scale.DISCRETE, min, max));
+        ConfigurationScreen.addConfigElement(this.getName(), new Slider(name, Slider.Scale.DISCRETE, min, max));
     }
 
     /**
@@ -229,7 +229,7 @@ public abstract class ZMod {
     */
     protected final void addOption(String name, String description, float defaultValue, float min, float max, boolean logscale) {
         Config.addOption(name, new Option(this.getName(), description, new FloatConstraint(min, max), new Float(defaultValue)));
-        ConfigMenu.addConfigElement(this.getName(), new Slider(name, logscale ? Slider.Scale.LOG : Slider.Scale.LINEAR, min, max));
+        ConfigurationScreen.addConfigElement(this.getName(), new Slider(name, logscale ? Slider.Scale.LOG : Slider.Scale.LINEAR, min, max));
     }
     protected final void addOption(String name, String description, float defaultValue, float min, float max) {
         addOption(name, description, defaultValue, min, max, false);
