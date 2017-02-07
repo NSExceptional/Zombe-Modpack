@@ -4,20 +4,17 @@ package zombe.core.content;
 import com.google.common.base.Function;
 import javafx.util.Pair;
 import net.minecraft.client.gui.GuiScreen;
-
+import org.lwjgl.input.Keyboard;
 import zombe.core.*;
-import zombe.core.config.*;
+import zombe.core.config.Config;
+import zombe.core.config.Option;
 import zombe.core.gui.*;
 import zombe.core.util.*;
 
-import java.lang.*;
-import java.util.*;
-import java.io.*;
-
-import org.lwjgl.input.Keyboard;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.*;
 
 /** Class for the mod's main configuration screen */
 public final class ConfigurationScreen extends GuiScreen {
@@ -26,134 +23,27 @@ public final class ConfigurationScreen extends GuiScreen {
     private static final Map<String, ArrayList<Widget>> menuElements = new LinkedHashMap<>();
     private static final Map<String, ArrayList<Widget>> menuDefaults = new LinkedHashMap<>();
     private static final Widget menuCloseButton = new Button("close", "X");
-    private static Widget menuCurrentCategory = null;
-    private static Widget menuCurrentInteraction = null;
-    private static ScrollBar menuCategoriesScrollBar = new ScrollBar(null, Slider.Scale.DISCRETE, Slider.Axis.VERTICAL);
-    private static ScrollBar menuElementsScrollBar = new ScrollBar(null, Slider.Scale.DISCRETE, Slider.Axis.VERTICAL);
+    private static final String INHERITED_TEXT = "\u00a73inherited";
+    private static final int BUTTON_SCROLL_UP = 4, BUTTON_SCROLL_DN = 5, SCROLL_STEP = 3;
+    private static final int LINE_HEIGHT = 11, LINE_SPACING = 1, PADDING = 5, SPACING = 3, MARGIN_TOP = LINE_HEIGHT + SPACING, SCROLLBAR_WIDTH = 8, X_WIDTH = 8;
+    @Nullable private static Widget menuCurrentCategory = null;
+    @Nullable private static Widget menuCurrentInteraction = null;
+    @Nullable private static ScrollBar menuCategoriesScrollBar = new ScrollBar(null, Slider.Axis.VERTICAL);
+    @Nullable private static ScrollBar menuElementsScrollBar = new ScrollBar(null, Slider.Axis.VERTICAL);
     private static int menuCategoriesScroll = 0, menuElementsScroll = 0;
     private static int menuKey = 0;
-
-    private static final String INHERITED_TEXT = "\u00a73inherited";
-
-    private static final int BUTTON_SCROLL_UP = 4, BUTTON_SCROLL_DN = 5, SCROLL_STEP = 3;
-
-    private static final int LINE_HEIGHT = 11, LINE_SPACING = 1,
-            PADDING = 5, SPACING = 3, MARGIN_TOP = LINE_HEIGHT + SPACING,
-            SCROLLBAR_WIDTH = 8, X_WIDTH = 8;
-
-    private static int scaledW = 1, scaledH = 1, displayableLines = 1,
-            contentY, contentH, column1W, column1X, column2W, column2X,
-            widgetW, widgetH, content1W, content2W, scrollbar1X, scrollbar2X,
-            captionW, captionX, elementX, defaultX;
+    private static int scaledW = 1, scaledH = 1, displayableLines = 1, contentY, contentH, column1W, column1X, column2W, column2X, widgetW, widgetH, content1W, content2W, scrollbar1X, scrollbar2X, captionW, captionX, elementX, defaultX;
 
     private static Config currentConfig;
 
     boolean justOpened = true;
 
-    public ConfigurationScreen(@Nonnull Config config) {
-        this.allowUserInput = true;
-
-        ConfigurationScreen.currentConfig = config;
-        ConfigurationScreen.menuCurrentInteraction = null;
-        ConfigurationScreen.updateValues();
-        ConfigurationScreen.menuCloseButton.setColor(new Color(0xcc3300));
-    }
-
-    @Override
-    public void drawScreen(int par1, int par2, float par3) {
-        drawMenu();
-        this.justOpened = false;
-    }
-
-    @Override
-    public void updateScreen() {
-        updateMenu();
-    }
-
-    @Override
-    protected void keyTyped(char c, int key) throws IOException {
-        if (Widget.getFocused() == null) {
-            if (key == Keyboard.KEY_ESCAPE || !this.justOpened && key == menuKey && key != Keyboard.KEY_NONE) {
-                super.keyTyped(c, Keyboard.KEY_ESCAPE);
-            } else if (key == Keyboard.KEY_DELETE) {
-                Widget widget = Widget.getHovered();
-                if (ConfigurationScreen.isElement(widget)) {
-                    widget.setActivated(true);
-                    widget.setValue(null);
-                }
-            }
-        } else {
-            Widget.getFocused().keyTyped(c, key);
-        }
-    }
-
-    @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        if (Widget.getFocused() != null) {
-            Widget.getFocused().mouseClicked(mouseX, mouseY, mouseButton);
-        } else {
-            Widget widget = getWidgetUnder(mouseX, mouseY);
-            if (widget != null) {
-                widget.mouseClicked(mouseX, mouseY, mouseButton);
-            }
-        }
-    }
-
-    @Override
-    protected void mouseReleased(int mouseX, int mouseY, int mouseButton) {
-        // scrolling
-        if (Widget.getFocused() == null && Widget.getClicked() == null && Widget.getHovered() == null) {
-            if (contentY <= mouseY && mouseY < contentY + contentH) {
-                if (column1X <= mouseX && mouseX < column1X + column1W) {
-                    // TODO
-                }
-                if (column2X <= mouseX && mouseX < column2X + column2W) {
-                    // TODO
-                }
-            }
-        }
-
-        if (Widget.getFocused() != null) {
-            Widget.getFocused().mouseReleased(mouseX, mouseY, mouseButton);
-        } else {
-            Widget widget = menuCurrentInteraction;
-            if (widget != null) {
-                widget.mouseReleased(mouseX, mouseY, mouseButton);
-            } else if ((widget = Widget.getClicked()) != null) {
-                widget.mouseReleased(mouseX, mouseY, mouseButton);
-            }
-        }
-    }
-
-    @Override
-    protected void mouseClickMove(int mouseX, int mouseY, int mouseButton, long timeSinceLastClick) {
-        if (Widget.getFocused() != null) {
-            Widget.getFocused().mouseClickMove(mouseX, mouseY, mouseButton);
-        } else {
-            Widget widget = menuCurrentInteraction;
-            if (widget != null) {
-                widget.mouseClickMove(mouseX, mouseY, mouseButton);
-            } else if ((widget = Widget.getClicked()) != null) {
-                widget.mouseClickMove(mouseX, mouseY, mouseButton);
-            }
-        }
-    }
-
-    @Override
-    public void onGuiClosed() {
-        ConfigurationScreen.finishedInteracting();
-        ConfigurationScreen.menuCloseButton.setActivated(false);
-        ConfigurationScreen.menuCategoriesScrollBar.deactivate();
-        ConfigurationScreen.menuElementsScrollBar.deactivate();
-        Widget.setFocused(null);
-        Widget.clearClicked();
-        Widget.clearHovered();
-        Keyboard.enableRepeatEvents(false);
-    }
-
-    @Override
-    public boolean doesGuiPauseGame() {
-        return false;
+    public ConfigurationScreen(Config config) {
+        currentConfig = config;
+        //this.allowUserInput = true;
+        menuCurrentInteraction = null;
+        updateValues();
+        menuCloseButton.setColor(new Color(0xcc3300));
     }
 
     public static void setKey(int key) {
@@ -211,7 +101,7 @@ public final class ConfigurationScreen extends GuiScreen {
     }
 
     // TODO when is this method called? What's an "interaction"?
-    private static void checkInteraction(Widget widget) {
+    private static void checkInteraction(@Nonnull Widget widget) {
         if (widget == menuCurrentInteraction && !widget.hasFocus() && !Keys.isKeyDownThisFrame(KeyHelper.MOUSE)) {
             finishedInteracting();
         } else if (menuCurrentInteraction == null && widget.isActivated()) {
@@ -220,13 +110,16 @@ public final class ConfigurationScreen extends GuiScreen {
     }
 
     /** @return the widget under the given mouse coordinates */
+    @Nullable
     private static Widget getWidgetUnder(final int mouseX, final int mouseY) {
         if (menuCategoriesScrollBar.contains(mouseX, mouseY)) {
             return menuCategoriesScrollBar;
         }
 
         Function<Pair<List<Widget>, Integer>, Widget> findContaining = new Function<Pair<List<Widget>, Integer>, Widget>() {
-            @Override @Nullable public Widget apply(Pair<List<Widget>, Integer> args) {
+            @Override
+            @Nullable
+            public Widget apply(@Nonnull Pair<List<Widget>, Integer> args) {
                 List<Widget> widgets = args.getKey();
                 Integer delta = args.getValue();
 
@@ -299,8 +192,8 @@ public final class ConfigurationScreen extends GuiScreen {
         return defaults.contains(widget);
     }
 
-    /** @return whether the screen's size needs to be updated */
-    private static boolean needsUpdateSize() {
+    /** @return whether the screen's size needed to be updated */
+    private static boolean updateSizeIfNeeded() {
         int newW = Keys.getScaledW(), newH = Keys.getScaledH();
         if (scaledW == newW && scaledH == newH) {
             return false;
@@ -326,12 +219,9 @@ public final class ConfigurationScreen extends GuiScreen {
         elementX = column2X + captionW + SPACING;
         defaultX = elementX + widgetW + SPACING;
 
-        menuCloseButton.setPosition(scaledW - PADDING - X_WIDTH, PADDING,
-                X_WIDTH, widgetH);
-        menuCategoriesScrollBar.setPosition(scrollbar1X, contentY,
-                SCROLLBAR_WIDTH, contentH);
-        menuElementsScrollBar.setPosition(scrollbar2X, contentY,
-                SCROLLBAR_WIDTH, contentH);
+        menuCloseButton.setPosition(scaledW - PADDING - X_WIDTH, PADDING, X_WIDTH, widgetH);
+        menuCategoriesScrollBar.setPosition(scrollbar1X, contentY, SCROLLBAR_WIDTH, contentH);
+        menuElementsScrollBar.setPosition(scrollbar2X, contentY, SCROLLBAR_WIDTH, contentH);
 
         return true;
     }
@@ -355,6 +245,8 @@ public final class ConfigurationScreen extends GuiScreen {
     }
 
     public static void updateMenu() {
+        updateSizeIfNeeded();
+
         Widget.clearClicked();
         Widget.clearHovered();
 
@@ -366,7 +258,9 @@ public final class ConfigurationScreen extends GuiScreen {
 
         menuCategoriesScrollBar.setLengths(menuCategories.size(), displayableLines);
         menuCategoriesScrollBar.checkState();
-        menuElementsScroll = (Integer) menuCategoriesScrollBar.getValue();
+
+        // TODO will menuCategoriesScrollBar.hasValue() always be true here?
+        menuElementsScroll = menuCategoriesScrollBar.getValue();
         for (int line = 0; line < menuCategories.size() && line < displayableLines; line++) {
             int index = line + menuElementsScroll;
             Widget widget = menuCategories.get(index);
@@ -390,7 +284,9 @@ public final class ConfigurationScreen extends GuiScreen {
             ArrayList<Widget> defaults = menuDefaults.get(menuCurrentCategory.getName());
             menuElementsScrollBar.setLengths(elements.size(), displayableLines);
             menuElementsScrollBar.checkState();
-            menuElementsScroll = (Integer) menuElementsScrollBar.getValue();
+
+            // TODO will menuCategoriesScrollBar.hasValue() always be true here?
+            menuElementsScroll = menuElementsScrollBar.getValue();
             for (int line = 0; line < elements.size() && line < displayableLines; line++) {
                 int index = line + menuElementsScroll;
                 Widget widget = defaults.get(index);
@@ -398,8 +294,7 @@ public final class ConfigurationScreen extends GuiScreen {
                 if (widget == null || element == null) {
                     continue;
                 }
-                widget.setPosition(defaultX, contentY + LINE_HEIGHT * line,
-                        widgetW, widgetH);
+                widget.setPosition(defaultX, contentY + LINE_HEIGHT * line, widgetW, widgetH);
                 widget.checkState();
                 if (widget.isActivated()) {
                     widget.setActivated(false);
@@ -408,13 +303,10 @@ public final class ConfigurationScreen extends GuiScreen {
                     element.setValue(value);
                 }
 
-                if (element instanceof Label
-                        || element.hasFocus() && element instanceof TextField) {
-                    element.setPosition(column2X, contentY + LINE_HEIGHT * line,
-                            content2W, widgetH);
+                if (element instanceof Label || element.hasFocus() && element instanceof TextField) {
+                    element.setPosition(column2X, contentY + LINE_HEIGHT * line, content2W, widgetH);
                 } else {
-                    element.setPosition(elementX, contentY + LINE_HEIGHT * line,
-                            widgetW, widgetH);
+                    element.setPosition(elementX, contentY + LINE_HEIGHT * line, widgetW, widgetH);
                 }
                 element.checkState();
                 checkInteraction(element);
@@ -470,13 +362,10 @@ public final class ConfigurationScreen extends GuiScreen {
                 }
 
                 if (!(element instanceof Label || element.hasFocus() && element instanceof TextField)) {
+                    //noinspection ConstantConditions
                     String desc = Config.getOption(element.getName()).description;
                     if (desc != null) {
-                        GuiHelper.showTextRight(
-                                GuiHelper.trimStringToWidth(desc, captionW),
-                                captionX, contentY + LINE_HEIGHT * line + (widgetH - 8) / 2,
-                                captionW, 0xffffff
-                        );
+                        GuiHelper.showTextRight(GuiHelper.trimStringToWidth(desc, captionW), captionX, contentY + LINE_HEIGHT * line + (widgetH - 8) / 2, captionW, 0xffffff);
                     }
                 }
 
@@ -484,6 +373,103 @@ public final class ConfigurationScreen extends GuiScreen {
                 element.draw();
             }
         }
+    }
+
+    @Override
+    public void drawScreen(int par1, int par2, float par3) {
+        drawMenu();
+        this.justOpened = false;
+    }
+
+    @Override
+    protected void keyTyped(char c, int key) throws IOException {
+        if (Widget.getFocused() == null) {
+            if (key == Keyboard.KEY_ESCAPE || !this.justOpened && key == menuKey && key != Keyboard.KEY_NONE) {
+                super.keyTyped(c, Keyboard.KEY_ESCAPE);
+            } else if (key == Keyboard.KEY_DELETE) {
+                Widget widget = Widget.getHovered();
+                if (isElement(widget)) {
+                    widget.setActivated(true);
+                    widget.setValue(null);
+                }
+            }
+        } else {
+            Widget.getFocused().keyTyped(c, key);
+        }
+    }
+
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        if (Widget.getFocused() != null) {
+            Widget.getFocused().mouseClicked(mouseX, mouseY, mouseButton);
+        } else {
+            Widget widget = getWidgetUnder(mouseX, mouseY);
+            if (widget != null) {
+                widget.mouseClicked(mouseX, mouseY, mouseButton);
+            }
+        }
+    }
+
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int mouseButton) {
+        // scrolling
+        if (Widget.getFocused() == null && Widget.getClicked() == null && Widget.getHovered() == null) {
+            if (contentY <= mouseY && mouseY < contentY + contentH) {
+                if (column1X <= mouseX && mouseX < column1X + column1W) {
+                    // TODO
+                }
+                if (column2X <= mouseX && mouseX < column2X + column2W) {
+                    // TODO
+                }
+            }
+        }
+
+        if (Widget.getFocused() != null) {
+            Widget.getFocused().mouseReleased(mouseX, mouseY, mouseButton);
+        } else {
+            Widget widget = menuCurrentInteraction;
+            if (widget != null) {
+                widget.mouseReleased(mouseX, mouseY, mouseButton);
+            } else if ((widget = Widget.getClicked()) != null) {
+                widget.mouseReleased(mouseX, mouseY, mouseButton);
+            }
+        }
+    }
+
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int mouseButton, long timeSinceLastClick) {
+        if (Widget.getFocused() != null) {
+            Widget.getFocused().mouseClickMove(mouseX, mouseY, mouseButton);
+        } else {
+            Widget widget = menuCurrentInteraction;
+            if (widget != null) {
+                widget.mouseClickMove(mouseX, mouseY, mouseButton);
+            } else if ((widget = Widget.getClicked()) != null) {
+                widget.mouseClickMove(mouseX, mouseY, mouseButton);
+            }
+        }
+    }
+
+    @Override
+    public void updateScreen() {
+        updateMenu();
+    }
+
+    @Override
+    public void onGuiClosed() {
+        finishedInteracting();
+        menuCloseButton.setActivated(false);
+        menuCategoriesScrollBar.deactivate();
+        menuElementsScrollBar.deactivate();
+        Widget.setFocused(null);
+        Widget.clearClicked();
+        Widget.clearHovered();
+        Keyboard.enableRepeatEvents(false);
+    }
+
+    @Override
+    public boolean doesGuiPauseGame() {
+        return false;
     }
 
 }

@@ -1,5 +1,6 @@
 package zombe.mod;
 
+
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -10,6 +11,7 @@ import org.lwjgl.input.Keyboard;
 import zombe.core.ZMod;
 import zombe.core.ZWrapper;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 import static zombe.core.ZWrapper.*;
@@ -26,14 +28,14 @@ public final class Radar extends ZMod {
     public Radar() {
         super("radar", "1.8", "9.0.2");
 
-        addOption("keyRadar", "Toggle radar", Keyboard.KEY_F4);
-        addOption("optRadar", "Radar enabled by default", true);
-        addOption("optRadarShowCompass", "Show players compass on radar", true);
-        addOption("optRadarShowDirection", "Show players direction on radar", false);
-        addOption("optRadarRangeNear", "Player 'near' range", 50f, 2f, 200f, true);
-        addOption("optRadarRangeMax", "Player 'far' range", 500f, 10f, 1000f, true);
-        addOption("optRadarPrefixNear", "'near' color prefix", "b");
-        addOption("optRadarPrefixFar", "'far' color prefix", "9");
+        this.addOption("keyRadar", "Toggle radar", Keyboard.KEY_F4);
+        this.addOption("optRadar", "Radar enabled by default", true);
+        this.addOption("optRadarShowCompass", "Show players compass on radar", true);
+        this.addOption("optRadarShowDirection", "Show players direction on radar", false);
+        this.addOption("optRadarRangeNear", "Player 'near' range", 50f, 2f, 200f, true);
+        this.addOption("optRadarRangeMax", "Player 'far' range", 500f, 10f, 1000f, true);
+        this.addOption("optRadarPrefixNear", "'near' color prefix", "b");
+        this.addOption("optRadarPrefixFar", "'far' color prefix", "9");
     }
 
     @Override
@@ -48,71 +50,65 @@ public final class Radar extends ZMod {
 
     @Override
     protected void updateConfig() {
-        keyToggle          = getOptionKey("keyRadar");
-        optRadar           = getOptionBool("optRadar");
-        optShowCompass     = getOptionBool("optRadarShowCompass");
-        optShowDirection   = getOptionBool("optRadarShowDirection");
-        optRangeNear       = getOptionFloat("optRadarRangeNear");
-        optRangeMax        = getOptionFloat("optRadarRangeMax");
-        optPrefixNear      = getOptionString("optRadarPrefixNear");
-        optPrefixFar       = getOptionString("optRadarPrefixFar");
+        keyToggle = getOptionKey("keyRadar");
+        optRadar = getOptionBool("optRadar");
+        optShowCompass = getOptionBool("optRadarShowCompass");
+        optShowDirection = getOptionBool("optRadarShowDirection");
+        optRangeNear = getOptionFloat("optRadarRangeNear");
+        optRangeMax = getOptionFloat("optRadarRangeMax");
+        optPrefixNear = getOptionString("optRadarPrefixNear");
+        optPrefixFar = getOptionString("optRadarPrefixFar");
     }
 
     @Override
-    protected void onClientTick(EntityPlayerSP player) {
+    protected void onClientTick(@Nonnull EntityPlayerSP player) {
         List list = getEntities();
-        if (!isInMenu() && wasKeyPressedThisTick(keyToggle))
+        if (!isInMenu() && wasKeyPressedThisTick(keyToggle)) {
             radarShow = !radarShow;
+        }
         setMessage("radar", null);
         Entity view = getView();
-        if (view == null) view = player;
+        if (view == null) {
+            view = player;
+        }
         double px = getX(player), py = getY(player), pz = getZ(player);
-        double vx = getX(view),   vy = getY(view),   vz = getZ(view);
+        double vx = getX(view), vy = getY(view), vz = getZ(view);
 
-        if (radarShow && (!isInMenu() || getMenu() instanceof GuiChat
-            || getMenu() instanceof GuiContainer)) {
+        if (radarShow && (!isInMenu() || getMenu() instanceof GuiChat || getMenu() instanceof GuiContainer)) {
             double mX, mY, mZ, distp, distv;
-            final double rangemax = optRangeMax*optRangeMax;
+            final double rangemax = optRangeMax * optRangeMax;
             String radar = "";
             Vec3d lookp = getLookVector(player, 1f);
             Vec3d lookv = getLookVector(view, 1f);
             for (Object obj : list) {
-                if (!(obj instanceof EntityPlayer)
-                 || obj == view && player == view)
+                if (!(obj instanceof EntityPlayer) || obj == view && player == view) {
                     continue;
-                EntityPlayer ent = (EntityPlayer)obj;
+                }
+                EntityPlayer ent = (EntityPlayer) obj;
                 mX = getX(ent) - px;
                 mY = getY(ent) - py;
                 mZ = getZ(ent) - pz;
-                distp = mX*mX + mY*mY + mZ*mZ;
+                distp = mX * mX + mY * mY + mZ * mZ;
                 String dirp = getFineFacingName(mX, mY, mZ);
-                String comp = getRelativeCompass(mX,mZ,getX(lookp),getZ(lookp));
+                String comp = getRelativeCompass(mX, mZ, getX(lookp), getZ(lookp));
                 mX = getX(ent) - vx;
                 mY = getY(ent) - vy;
                 mZ = getZ(ent) - vz;
-                distv = mX*mX + mY*mY + mZ*mZ;
-                if (distp > rangemax && distv > rangemax) continue;
+                distv = mX * mX + mY * mY + mZ * mZ;
+                if (distp > rangemax && distv > rangemax) {
+                    continue;
+                }
                 String dirv = getFineFacingName(mX, mY, mZ);
-                String comv = getRelativeCompass(mX,mZ,getX(lookv),getZ(lookv));
+                String comv = getRelativeCompass(mX, mZ, getX(lookv), getZ(lookv));
                 distp = Math.sqrt(distp);
                 distv = Math.sqrt(distv);
-                String partp = "\u00a7b" + ((int)distp) + "\u00a7fm"
-                             + (optShowCompass
-                             ? " [\u00a7b" + comp + "\u00a7f]" : "")
-                             + (optShowDirection
-                             ? " \u00a7b" + dirp : "");
-                String partv = (player == view) ? ""
-                             : " \u00a7f/ \u00a7b" + ((int)distv) + "\u00a7fm"
-                             + (optShowCompass
-                             ? " [\u00a7b" + comv + "\u00a7f]" : "")
-                             + (optShowDirection
-                             ? " \u00a7b" + dirv : "");
-                radar += "\u00a7" + (distp < optRangeNear
-                      ?  optPrefixNear : optPrefixFar)
-                      +  ZWrapper.getName(ent) + " \u00a7f("
-                      +  partp + partv + "\u00a7f)\n";
+                String partp = "\u00a7b" + ((int) distp) + "\u00a7fm" + (optShowCompass ? " [\u00a7b" + comp + "\u00a7f]" : "") + (optShowDirection ? " \u00a7b" + dirp : "");
+                String partv = (player == view) ? "" : " \u00a7f/ \u00a7b" + ((int) distv) + "\u00a7fm" + (optShowCompass ? " [\u00a7b" + comv + "\u00a7f]" : "") + (optShowDirection ? " \u00a7b" + dirv : "");
+                radar += "\u00a7" + (distp < optRangeNear ? optPrefixNear : optPrefixFar) + ZWrapper.getName(ent) + " \u00a7f(" + partp + partv + "\u00a7f)\n";
             }
-            if (radar.length() == 0) radar = "\u00a7fno players nearby";
+            if (radar.length() == 0) {
+                radar = "\u00a7fno players nearby";
+            }
             setMessage("radar", radar);
         }
     }

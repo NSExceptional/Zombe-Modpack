@@ -1,16 +1,20 @@
 package zombe.core.util;
 
-import java.lang.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.URL;
-import java.security.ProtectionDomain;
 import java.security.CodeSource;
 
 public final class ClassHelper {
 
-    public static URL getClassSourceURL(Class c) {
+    @Nullable
+    public static URL getClassSourceURL(@Nonnull Class c) {
         CodeSource cs = c.getProtectionDomain().getCodeSource();
-        if (cs == null) return null;
+        if (cs == null) {
+            return null;
+        }
+
         return cs.getLocation();
     }
-
 }

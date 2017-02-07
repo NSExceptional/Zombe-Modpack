@@ -1,36 +1,39 @@
 package zombe.core.gui;
 
-import zombe.core.ZWrapper;
+
 import zombe.core.util.Color;
-import zombe.core.util.GuiHelper;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class Label extends Widget {
 
     private static final Color DEFAULT_COLOR = new Color(0xff000000);
 
-    public Label(String value) {
+    public Label(@Nullable String value) {
         super(null, value);
-        setAlignment(-1);
+        this.setAlignment(-1);
     }
 
     public Label(String value, int alignment) {
         super(null, value);
-        setAlignment(alignment);
+        this.setAlignment(alignment);
     }
-    
+
     public Label(String name, String value) {
         super(name, value);
-        setAlignment(-1);
+        this.setAlignment(-1);
     }
 
-    @Override
-    protected void onActivation()  {
-        setActivated(false);
-    }
-
+    @Nonnull
     @Override
     public Color defaultColor() {
         return DEFAULT_COLOR;
+    }
+
+    @Override
+    protected void onActivation() {
+        this.setActivated(false);
     }
 
 }

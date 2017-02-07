@@ -1,6 +1,5 @@
 package zombe.core.content;
 
-import static zombe.core.ZWrapper.*;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -8,41 +7,116 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.MovementInput;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.*;
+import net.minecraft.util.math.*;
 import net.minecraft.util.text.ITextComponent;
 import zombe.core.ZHandle;
 import zombe.core.ZWrapper;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static zombe.core.ZWrapper.*;
 
 public final class DummyPlayer extends AbstractClientPlayer {
     public EntityPlayer playerBody;
-    public MovementInput movementInput;
+    @Nullable public MovementInput movementInput;
 
-    public DummyPlayer(EntityPlayer player) {
+    public DummyPlayer(@Nonnull EntityPlayer player) {
         super(getWorld(player), getProfile(player));
         this.playerBody = player;
         this.inventory = player.inventory;
         this.movementInput = new MovementInput();
-        placeAt(player);
+        this.placeAt(player);
     }
 
     @Override
-    public void moveEntity(MoverType t, double mx, double my, double mz) {
+    public void moveEntity(@Nonnull MoverType t, double mx, double my, double mz) {
         if (this == getView()) {
-            ZHandle.handle("beforeViewMove", new Vec3d(mx,my,mz));
-            Vec3d motion =  new Vec3d(this.motionX, this.motionY, this.motionZ);
+            ZHandle.handle("beforeViewMove", new Vec3d(mx, my, mz));
+            Vec3d motion = new Vec3d(this.motionX, this.motionY, this.motionZ);
             super.moveEntity(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
             ZHandle.handle("afterViewMove", motion);
         } else {
             super.moveEntity(t, mx, my, mz);
         }
+    }
+
+    /** Performs a ray trace for the distance specified and using the partial tick time. Args: distance, partialTickTime */
+    @Override
+    public RayTraceResult rayTrace(double blockReachDistance, float partialTicks) {
+        RayTraceResult trace = super.rayTrace(blockReachDistance, partialTicks);
+        return (RayTraceResult) ZHandle.handle("onPlayerRayTrace", trace);
+    }
+
+    /** Adds velocity to push the entity out of blocks at the specified x, y, z position */
+    @Override
+    protected boolean pushOutOfBlocks(double x, double y, double z) {
+        if (this.noClip) {
+            return false;
+        }
+
+        BlockPos var7 = new BlockPos(x, y, z);
+        double var8 = x - (double) getX(var7);
+        double var10 = z - (double) getZ(var7);
+
+        if (!this.isMostlyEmpty(var7)) {
+            byte var12 = -1;
+            double var13 = 9999.0D;
+
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.WEST)) && var8 < var13) {
+                var13 = var8;
+                var12 = 0;
+            }
+
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.EAST)) && 1.0D - var8 < var13) {
+                var13 = 1.0D - var8;
+                var12 = 1;
+            }
+
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.NORTH)) && var10 < var13) {
+                var13 = var10;
+                var12 = 4;
+            }
+
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.SOUTH)) && 1.0D - var10 < var13) {
+                // Never used...
+                //var13 = 1.0D - var10;
+                var12 = 5;
+            }
+
+            double var15 = 0.1;
+
+            if (var12 == 0) {
+                this.motionX = -var15;
+            }
+            if (var12 == 1) {
+                this.motionX = var15;
+            }
+            if (var12 == 4) {
+                this.motionZ = -var15;
+            }
+            if (var12 == 5) {
+                this.motionZ = var15;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void addChatMessage(@Nonnull ITextComponent message) {
+    }
+
+    @Override
+    public boolean canCommandSenderUseCommand(int par1, @Nullable String par2Str) {
+        return false;
+    }
+
+    @Nonnull
+    @Override
+    public BlockPos getPosition() {
+        return new BlockPos(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D);
     }
 
     @Override
@@ -57,9 +131,11 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void jump() {
-        super.jump();
-        if (this == getView()) ZHandle.handle("onPlayerJump", this);
+    public void updateEntityActionState() {
+        super.updateEntityActionState();
+        this.moveStrafing = this.movementInput.moveStrafe;
+        this.moveForward = this.movementInput.moveForward;
+        this.isJumping = this.movementInput.jump;
     }
 
     @Override
@@ -75,96 +151,51 @@ public final class DummyPlayer extends AbstractClientPlayer {
         super.onLivingUpdate();
     }
 
-    /**
-     * Gets the player's field of view multiplier. (ex. when flying)
-     */
-    public float getFOVMultiplier() {
-        return getFovModifier();
-    }
     @Override
-    public float getFovModifier() {
-        return 1.0F;
+    public boolean attackEntityFrom(@Nonnull DamageSource par1DamageSource, float par2) {
+        return false;
     }
 
-    /**
-      * Checks if this entity is inside of an opaque block
-     */
+    /** Checks if this entity is inside of an opaque block */
     @Override
     public boolean isEntityInsideOpaqueBlock() {
         return false;
     }
 
-    private boolean isMostlyEmpty(BlockPos p) {
-        IBlockState block = getStateAt(getWorld(this),p);
-        return !block.isNormalCube()
-            && !getStateAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube();
-    }
-
-    /**
-     * Adds velocity to push the entity out of blocks at the specified x, y, z position Args: x, y, z
-     */
     @Override
-    protected boolean pushOutOfBlocks(double x, double y, double z) {
-        if (this.noClip) return false;
-
-        BlockPos var7 = new BlockPos(x, y, z);
-        double var8 = x - (double)getX(var7);
-        double var10 = z - (double)getZ(var7);
-
-        if (!isMostlyEmpty(var7)) {
-            byte var12 = -1;
-            double var13 = 9999.0D;
-
-            if (isMostlyEmpty(var7.offset(EnumFacing.WEST)) && var8 < var13) {
-                var13 = var8;
-                var12 = 0;
-            }
-
-            if (isMostlyEmpty(var7.offset(EnumFacing.EAST)) && 1.0D - var8 < var13) {
-                var13 = 1.0D - var8;
-                var12 = 1;
-            }
-
-            if (isMostlyEmpty(var7.offset(EnumFacing.NORTH)) && var10 < var13) {
-                var13 = var10;
-                var12 = 4;
-            }
-
-            if (isMostlyEmpty(var7.offset(EnumFacing.SOUTH)) && 1.0D - var10 < var13) {
-                // Never used...
-                //var13 = 1.0D - var10;
-                var12 = 5;
-            }
-
-            double var15 = 0.1;
-
-            if (var12 == 0) this.motionX = -var15;
-            if (var12 == 1) this.motionX =  var15;
-            if (var12 == 4) this.motionZ = -var15;
-            if (var12 == 5) this.motionZ =  var15;
+    public void jump() {
+        super.jump();
+        if (this == getView()) {
+            ZHandle.handle("onPlayerJump", this);
         }
-
-        return false;
     }
 
-    /**
-     * Performs a ray trace for the distance specified and using the partial tick time. Args: distance, partialTickTime
-     */
-    @Override
-    public RayTraceResult rayTrace(double blockReachDistance, float partialTicks) {
-        RayTraceResult trace = super.rayTrace(blockReachDistance, partialTicks);
-        return (RayTraceResult) ZHandle.handle("onPlayerRayTrace", trace);
+    /** Gets the player's field of view multiplier. (ex. when flying) */
+    public float getFOVMultiplier() {
+        return this.getFovModifier();
+    }
+
+    private boolean isMostlyEmpty(@Nonnull BlockPos p) {
+        IBlockState block = getStateAt(getWorld(this), p);
+        return !block.isNormalCube() && !getStateAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube();
     }
 
     @Override
     public boolean isSpectator() {
-        if (ZHandle.handle("isNoclip",this,false)) ZWrapper.setNoclip(this,true);
+        if (ZHandle.handle("isNoclip", this, false)) {
+            ZWrapper.setNoclip(this, true);
+        }
         return super.isSpectator();
     }
 
-    public void placeAt(Entity ent) {
+    @Override
+    public float getFovModifier() {
+        return 1.0F;
+    }
+
+    public void placeAt(@Nonnull Entity ent) {
         //placeAt(ent.posX, getAABB(ent).minY + getYOffset(this) - this.ySize, ent.posZ);
-        placeAt(getX(ent), getY(ent), getZ(ent));
+        this.placeAt(getX(ent), getY(ent), getZ(ent));
         this.rotationYaw = ent.rotationYaw;
         this.rotationPitch = ent.rotationPitch;
         this.prevRotationYaw = ent.prevRotationYaw;
@@ -180,32 +211,16 @@ public final class DummyPlayer extends AbstractClientPlayer {
         this.motionZ = 0;
     }
 
+    @Nonnull
     @Override
-    public ItemStack getHeldItem(EnumHand hand) {
-        return playerBody.getHeldItem(hand);
-    }
-
-    @Override
-    public BlockPos getPosition() {
-        return new BlockPos(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D);
-    }
-
-    @Override
-    public void updateEntityActionState() {
-        super.updateEntityActionState();
-        this.moveStrafing = this.movementInput.moveStrafe;
-        this.moveForward = this.movementInput.moveForward;
-        this.isJumping = this.movementInput.jump;
+    public ItemStack getHeldItem(@Nonnull EnumHand hand) {
+        return this.playerBody.getHeldItem(hand);
     }
 
     @Override
     //public boolean isClientWorld() { return true; } // < 1.8 MCP 9.10
-    public boolean isServerWorld() { return true; }
-    @Override
-    public void addChatMessage(ITextComponent message) {}
-    @Override
-    public boolean canCommandSenderUseCommand(int par1, String par2Str) { return false; }
-    @Override
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) { return false; }
+    public boolean isServerWorld() {
+        return true;
+    }
 }
 

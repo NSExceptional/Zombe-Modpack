@@ -1,8 +1,9 @@
 package zombe.core.gui;
 
-import zombe.core.util.KeyHelper;
-import zombe.core.util.KeyBind;
+
 import org.lwjgl.input.Keyboard;
+import zombe.core.util.KeyBind;
+import zombe.core.util.KeyHelper;
 
 public class KeyBinder extends Widget {
 
@@ -11,14 +12,10 @@ public class KeyBinder extends Widget {
     }
 
     @Override
-    protected void onActivation()  {
-        setFocused(this);
-        setValue(new KeyBind(Keyboard.KEY_NONE));
-    }
-
-    @Override
     public void keyTyped(char c, int key) {
-        if (!hasFocus()) return;
+        if (!hasFocus()) {
+            return;
+        }
         if (key == Keyboard.KEY_ESCAPE) {
             setFocused(false);
         } else if (key != Keyboard.KEY_NONE) {
@@ -32,12 +29,28 @@ public class KeyBinder extends Widget {
         if (hasFocus()) {
             setValue(new KeyBind(KeyHelper.MOUSE | mouseButton));
             setFocused(false);
-        } else super.mouseClicked(mouseX,mouseY,mouseButton);
+        } else {
+            super.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+    }
+
+    @Override
+    protected void onActivation() {
+        setFocused(this);
+        setValue(new KeyBind(Keyboard.KEY_NONE));
+    }
+
+    @Override
+    public void draw() {
+        setBorder(hasFocus() ? 1 : 0);
+        super.draw();
     }
 
     @Override
     public String getText() {
-        if (hasFocus()) return "_";
+        if (hasFocus()) {
+            return "_";
+        }
         Object value = getValue();
         if (value instanceof Integer) {
             int val = (Integer) value;
@@ -48,12 +61,6 @@ public class KeyBinder extends Widget {
             return val.name;
         }
         return super.getText();
-    }
-
-    @Override
-    public void draw() {
-        setBorder(hasFocus() ? 1 : 0);
-        super.draw();
     }
 
 }

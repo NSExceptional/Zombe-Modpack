@@ -1,78 +1,89 @@
 package zombe.core;
 
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 
 /**
-    Public handle for the modpack's hooks.
-
-    Hooked Minecraft files shall not call ZModpack's methods directly:
-    instead, they shall call ZHandle wrapper methods.
-*/
+ * Public handle for the modpack's hooks.
+ *
+ * Hooked Minecraft files shall not call ZModpack's methods directly:
+ * instead, they shall call ZHandle wrapper methods.
+ */
 public class ZHandle {
 
     /* GENERIC GETTERS & EVENTS */
 
     /**
-        Handles an event and/or property request
-        @param name The name of the event or property
-        @param arg (Optional) Argument for the event or default value for the property
-        @returns the value requested, if any, or null. (default is arg)
-    */
-    public static Object handle(String name, Object arg) {
+     * Handles an event and/or property request
+     *
+     * @param name The name of the event or property
+     * @param arg  (Optional) Argument for the event or default value for the property
+     * @returns the value requested, if any, or null. (default is arg)
+     */
+    @Nullable
+    public static Object handle(@Nonnull String name, @Nullable Object arg) {
         Object ret = arg;
         ZMod mod = ZMod.getHandler(name);
-        if (mod != null && mod.isActive())
-        try {
-            ret = mod.handle(name, arg);
-        } catch (Exception e) {
-            ZMod.err("handle("+name+") error:", e);
+        if (mod != null && mod.isActive()) {
+            try {
+                ret = mod.handle(name, arg);
+            } catch (Exception e) {
+                ZMod.showOnscreenError("handle(" + name + ") error:", e);
+            }
         }
         Collection<ZMod> col = ZMod.getListeners(name);
-        if (col != null)
-        for (ZMod zmod : col)
-        if (zmod.isActive())
-        try {
-            zmod.handle(name, arg);
-        } catch (Exception e) {
-            ZMod.err("handle("+name+") error:", e);
+        if (col != null) {
+            for (ZMod zmod : col) {
+                if (zmod.isActive()) {
+                    try {
+                        zmod.handle(name, arg);
+                    } catch (Exception e) {
+                        ZMod.showOnscreenError("handle(" + name + ") error:", e);
+                    }
+                }
+            }
         }
+
         return ret;
     }
 
-    public static Object handle(String name) {
+    @Nullable
+    public static Object handle(@Nonnull String name) {
         return handle(name, null);
     }
 
-    public static boolean handle(String name, boolean arg) {
+    public static boolean handle(@Nonnull String name, boolean arg) {
         Object obj = handle(name, (Boolean) arg);
         return (obj instanceof Boolean) ? (Boolean) obj : arg;
     }
 
-    public static int handle(String name, int arg) {
+    public static int handle(@Nonnull String name, int arg) {
         Object obj = handle(name, (Integer) arg);
         return (obj instanceof Integer) ? (Integer) obj : arg;
     }
 
-    public static long handle(String name, long arg) {
+    public static long handle(@Nonnull String name, long arg) {
         Object obj = handle(name, (Long) arg);
         return (obj instanceof Long) ? (Long) obj : arg;
     }
 
-    public static float handle(String name, float arg) {
+    public static float handle(@Nonnull String name, float arg) {
         Object obj = handle(name, (Float) arg);
         return (obj instanceof Float) ? (Float) obj : arg;
     }
 
-    public static double handle(String name, double arg) {
+    public static double handle(@Nonnull String name, double arg) {
         Object obj = handle(name, (Double) arg);
         return (obj instanceof Double) ? (Double) obj : arg;
     }
 
-    public static boolean handle(String name, Object arg, boolean def) {
+    public static boolean handle(@Nonnull String name, Object arg, boolean def) {
         Object obj = handle(name, arg);
         return (obj instanceof Boolean) ? (Boolean) obj : def;
     }
@@ -142,7 +153,4 @@ public class ZHandle {
     }
 
     /* WorldProvider */
-
-
-
 }

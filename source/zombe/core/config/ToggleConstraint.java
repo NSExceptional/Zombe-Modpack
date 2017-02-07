@@ -1,18 +1,17 @@
 package zombe.core.config;
 
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /** Represents a two-state option, such as on/off, true/false, etc. */
 public class ToggleConstraint extends OptionConstraint<Boolean> {
-    private static final Set<String> enableValues   = new HashSet<String>(Arrays.asList("yes", "true", "1"));
+    private static final Set<String> enableValues = new HashSet<String>(Arrays.asList("yes", "true", "1"));
     private static final Set<String> disabledValues = new HashSet<String>(Arrays.asList("no", "false", "0"));
 
-    public ToggleConstraint() {}
+    public ToggleConstraint() {
+    }
 
     public boolean read(@Nonnull String string) throws BadValueException {
         return this.parse(string);
@@ -26,12 +25,6 @@ public class ToggleConstraint extends OptionConstraint<Boolean> {
     @Override
     public Boolean defaultValue() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public Boolean getMax() {
-        return true;
     }
 
     @Nonnull
@@ -63,6 +56,12 @@ public class ToggleConstraint extends OptionConstraint<Boolean> {
         }
 
         throw new IllegalArgumentException();
+    }
+
+    @Nonnull
+    @Override
+    public Boolean getMax() {
+        return true;
     }
 
     /** @return the object parsed into a boolean, or null if no assumptions could be made */

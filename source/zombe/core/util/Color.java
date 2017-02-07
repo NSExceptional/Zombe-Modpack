@@ -1,25 +1,21 @@
 package zombe.core.util;
 
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public final class Color {
     public final int rgba, rgbt;
     public final byte tb, ab, rb, gb, bb;
     public final float tf, af, rf, gf, bf;
-
-    public static float clamp(float f) {
-        return (f < 0f) ? 0f : (f > 1f) ? 1f : f;
-    }
-
-    public static Color parse(String value) {
-        return StringHelper.parseColor(value);
-    }
 
     public Color(int rgbt) {
         this.rgbt = rgbt;
         this.rgba = (rgbt & 0x00ffffff) | (0xff000000 - (rgbt & 0xff000000));
         this.tb = (byte) ((rgbt >>> 24) & 0xff);
         this.rb = (byte) ((rgbt >>> 16) & 0xff);
-        this.gb = (byte) ((rgbt >>>  8) & 0xff);
-        this.bb = (byte) ( rgbt         & 0xff);
+        this.gb = (byte) ((rgbt >>> 8) & 0xff);
+        this.bb = (byte) (rgbt & 0xff);
         this.ab = (byte) (0xff - (tb & 0xff));
         this.tf = (tb & 0xff) / 255f;
         //this.af = (ab & 0xff) / 255f;
@@ -35,10 +31,7 @@ public final class Color {
         this.rb = r;
         this.gb = g;
         this.bb = b;
-        this.rgbt = ((((int) tb) << 24) & 0xff000000) 
-                  | ((((int) rb) << 16) & 0x00ff0000)
-                  | ((((int) gb) <<  8) & 0x0000ff00)
-                  | ( ((int) bb)        & 0x000000ff);
+        this.rgbt = ((((int) tb) << 24) & 0xff000000) | ((((int) rb) << 16) & 0x00ff0000) | ((((int) gb) << 8) & 0x0000ff00) | (((int) bb) & 0x000000ff);
         this.rgba = (this.rgbt & 0x00ffffff) | (0xff000000 - (this.rgbt & 0xff000000));
         this.tf = (tb & 0xff) / 255f;
         this.af = (ab & 0xff) / 255f;
@@ -48,7 +41,7 @@ public final class Color {
     }
 
     public Color(byte r, byte g, byte b) {
-        this(r,g,b, (byte)255);
+        this(r, g, b, (byte) 255);
     }
 
     public Color(float r, float g, float b, float a) {
@@ -62,14 +55,20 @@ public final class Color {
         this.gb = (byte) (gf * 255.999999f);
         this.bb = (byte) (bf * 255.999999f);
         this.tb = (byte) (tf * 255.999999f);
-        this.rgbt = (((tb & 0xff) << 24) & 0xff000000) 
-                  | (((rb & 0xff) << 16) & 0x00ff0000)
-                  | (((gb & 0xff) <<  8) & 0x0000ff00)
-                  | ( (bb & 0xff)        & 0x000000ff);
+        this.rgbt = (((tb & 0xff) << 24) & 0xff000000) | (((rb & 0xff) << 16) & 0x00ff0000) | (((gb & 0xff) << 8) & 0x0000ff00) | ((bb & 0xff) & 0x000000ff);
         this.rgba = (this.rgbt & 0x00ffffff) | (0xff000000 - (this.rgbt & 0xff000000));
     }
 
     public Color(float r, float g, float b) {
-        this(r,g,b, 1f);
+        this(r, g, b, 1f);
+    }
+
+    public static float clamp(float f) {
+        return (f < 0f) ? 0f : (f > 1f) ? 1f : f;
+    }
+
+    @Nullable
+    public static Color parse(@Nonnull String value) {
+        return StringHelper.parseColor(value);
     }
 }

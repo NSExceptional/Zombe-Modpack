@@ -1,16 +1,11 @@
 package zombe.core.config;
 
+
 import javax.annotation.Nonnull;
-import java.lang.*;
 
 public class TextConstraint extends OptionConstraint<String> {
 
-    public TextConstraint() {}
-
-    @Nonnull
-    @Override
-    public String parse(@Nonnull String value) throws BadValueException {
-        return value;
+    public TextConstraint() {
     }
 
     @Nonnull
@@ -21,8 +16,8 @@ public class TextConstraint extends OptionConstraint<String> {
 
     @Nonnull
     @Override
-    public String getMax() {
-        return "";
+    public String parse(@Nonnull String value) throws BadValueException {
+        return value;
     }
 
     @Override
@@ -32,5 +27,11 @@ public class TextConstraint extends OptionConstraint<String> {
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    @Nonnull
+    @Override
+    public String getMax() {
+        return "";
     }
 }

@@ -1,5 +1,6 @@
 package zombe.core.gui;
 
+
 public class Toggler extends Button {
 
     public Toggler(String name) {
@@ -11,9 +12,12 @@ public class Toggler extends Button {
     }
 
     @Override
-    protected void onActivation()  {
-        if (getValue() == null) setValue((Boolean) true);
-        else if (getValue() instanceof Boolean) setValue(!(Boolean)getValue());
+    protected void onActivation() {
+        if (getValue() == null) {
+            setValue((Boolean) true);
+        } else if (getValue() instanceof Boolean) {
+            setValue(!(Boolean) getValue());
+        }
     }
 
 }

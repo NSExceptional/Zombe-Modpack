@@ -3,7 +3,6 @@ package zombe.core.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.*;
 
 public class IntegerConstraint extends IntervalConstraint<Integer> {
 

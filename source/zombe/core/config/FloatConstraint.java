@@ -1,7 +1,7 @@
 package zombe.core.config;
 
+
 import javax.annotation.Nonnull;
-import java.lang.*;
 
 public class FloatConstraint extends IntervalConstraint<Double> {
 

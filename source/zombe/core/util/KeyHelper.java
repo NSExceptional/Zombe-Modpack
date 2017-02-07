@@ -1,8 +1,9 @@
 package zombe.core.util;
 
-import java.lang.*;
+
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
+
+import javax.annotation.Nonnull;
 
 public final class KeyHelper {
 
@@ -11,6 +12,7 @@ public final class KeyHelper {
     public static final int MOUSE_SIZE = 32;
     public static final int KEY_NONE = Keyboard.KEY_NONE;
 
+    @Nonnull
     public static String getKeyName(int key) {
         if (key == Keyboard.KEY_NONE) {
             return "NONE";
@@ -20,10 +22,10 @@ public final class KeyHelper {
         }
 
         String res = Keyboard.getKeyName(key);
-        return res != null ? res : ""+key;
+        return res != null ? res : "" + key;
     }
 
-    public static int getKeyID(String name) {
+    public static int getKeyID(@Nonnull String name) {
         if (name.isEmpty() || name.equals("NONE")) {
             return Keyboard.KEY_NONE;
         }
@@ -49,8 +51,7 @@ public final class KeyHelper {
             }
 
             return Keyboard.getKeyIndex(name);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return -1;
         }
     }

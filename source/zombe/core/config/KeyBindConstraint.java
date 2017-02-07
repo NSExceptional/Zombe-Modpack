@@ -1,23 +1,14 @@
 package zombe.core.config;
 
-import java.lang.*;
-import zombe.core.util.KeyHelper;
+
 import zombe.core.util.KeyBind;
+import zombe.core.util.KeyHelper;
 
 import javax.annotation.Nonnull;
 
 public class KeyBindConstraint extends OptionConstraint<KeyBind> {
 
-    public KeyBindConstraint() {}
-
-    @Nonnull
-    @Override
-    public KeyBind parse(@Nonnull String string) throws BadValueException {
-        KeyBind key = new KeyBind(string);
-        if (key.code == -1) {
-            throw new NumberFormatException();
-        }
-        return key;
+    public KeyBindConstraint() {
     }
 
     @Nonnull
@@ -28,8 +19,12 @@ public class KeyBindConstraint extends OptionConstraint<KeyBind> {
 
     @Nonnull
     @Override
-    public KeyBind getMax() {
-        return KeyBind.NONE;
+    public KeyBind parse(@Nonnull String string) throws BadValueException {
+        KeyBind key = new KeyBind(string);
+        if (key.code == -1) {
+            throw new NumberFormatException();
+        }
+        return key;
     }
 
     @Override
@@ -42,5 +37,11 @@ public class KeyBindConstraint extends OptionConstraint<KeyBind> {
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    @Nonnull
+    @Override
+    public KeyBind getMax() {
+        return KeyBind.NONE;
     }
 }

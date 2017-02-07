@@ -1,63 +1,58 @@
 package zombe.core.loader;
 
-import java.lang.*;
-import java.lang.reflect.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
 
-public class ZModLoader {
-    
+import javax.annotation.Nonnull;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
+public class ZModLoader<T> {
+
     private final Logger log = Logger.getLogger("zombe.core.loader");
-    private final ClassScanner scanner;
+    private final ClassScanner<T> scanner;
 
-    public ZModLoader(URL[] urls) {
-        log.config("Initializing mod loader...");
-        ClassScanner scanner;
+    public ZModLoader(@Nonnull URL[] urls) {
+        this.log.config("Initializing mod loader...");
+        ClassScanner<T> scanner;
         try {
-            scanner = new ClassScanner(urls);
+            scanner = new ClassScanner<>(urls);
         } catch (Exception e) {
-            log.warning("Primary class scanner init failed:\n"+e+"\nDefaulting to secondary scanner...");
+            this.log.warning("Primary class scanner init failed:\n" + e + "\nDefaulting to secondary scanner...");
             try {
-                scanner = new ClassScanner(ZModLoader.class);
+                scanner = new ClassScanner<>(ZModLoader.class);
             } catch (Exception f) {
-                log.warning("Secondary class scanner init failed:\n"+f+"\nDefaulting to tertiary scanner...");
-                scanner = new ClassScanner();
+                this.log.warning("Secondary class scanner init failed:\n" + f + "\nDefaulting to tertiary scanner...");
+                scanner = new ClassScanner<>();
             }
         }
+
         this.scanner = scanner;
-        log.config("Mod loader initialized correctly.");
+        this.log.config("Mod loader initialized correctly.");
     }
 
-    public <T> List<T> loadMods(String path, Class<T> parent) {
-        if (parent == null) throw new NullPointerException();
-        List<Class> classes = scanner.scanForClasses(path, parent);
-        List<T> mods = new LinkedList<T>();
-        for (Class c : classes) {
-            Constructor constructor;
+    @Nonnull
+    public List<T> loadMods(@Nonnull String path, @Nonnull Class<T> parent) {
+        List<Class<T>> classes = this.scanner.scanForClasses(path, parent);
+        List<T> mods = new ArrayList<>();
+
+        for (Class<T> c : classes) {
             try {
-                constructor = c.getConstructor();
+                Constructor constructor = c.getConstructor();
+                Object instance = constructor.newInstance();
+                T mod = parent.cast(instance);
+                mods.add(mod);
+
+            } catch (NoSuchMethodException e) {
+                this.log.info("Mod candidate " + c.getName() + " load failed: missing constructor");
+            } catch (ClassCastException e) {
+                this.log.info("Mod candidate " + c.getName() + " load failed: bad cast:\n" + e);
             } catch (Exception e) {
-                log.info("Mod candidate "+c.getName()+" load failed: missing constructor");
-                continue;
+                this.log.info("Mod candidate " + c.getName() + " load failed: instanciation error:\n" + e);
             }
-            Object instance;
-            try {
-                instance = constructor.newInstance();
-            } catch (Exception e) {
-                log.info("Mod candidate "+c.getName()+" load failed: instanciation error:\n"+e);
-                continue;
-            }
-            T mod;
-            try {
-                mod = parent.cast(instance);
-            } catch (Exception e) {
-                log.info("Mod candidate "+c.getName()+" load failed: bad cast:\n"+e);
-                continue;
-            }
-            mods.add(mod);
         }
+
         return mods;
     }
-
 }

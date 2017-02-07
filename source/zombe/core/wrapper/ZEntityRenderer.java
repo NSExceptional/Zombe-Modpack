@@ -1,39 +1,20 @@
 package zombe.core.wrapper;
 
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.resources.IResourceManager;
 import zombe.core.ZHandle;
 
+import javax.annotation.Nonnull;
+
 public final class ZEntityRenderer extends EntityRenderer {
 
     private Minecraft mc;
 
-    public ZEntityRenderer(Minecraft minecraft, IResourceManager irm) {
+    public ZEntityRenderer(@Nonnull Minecraft minecraft, @Nonnull IResourceManager irm) {
         super(minecraft, irm);
-        mc = minecraft;
-    }
-
-    @Override
-    public void updateCameraAndRender(float partialTicks, long nanoTime) {
-        super.updateCameraAndRender(partialTicks, nanoTime);
-        ZHandle.onUpdateCameraAndRender(partialTicks);
-    }
-
-    @Override
-    public void renderWorld(float par1, long par2) {
-        // ZMod.beginRenderWorld(par1, par2);
-        super.renderWorld(par1, par2);
-        // ZMod.endRenderWorld(par1, par2);
-    }
-
-    @Override
-    protected void renderRainSnow(float par) {
-        ZHandle.beginRenderRainSnow(par);
-        //noinspection ConstantConditions
-        if (ZHandle.forwardRenderRainSnow())
-            super.renderRainSnow(par);
-        ZHandle.endRenderRainSnow(par);
+        this.mc = minecraft;
     }
 
     @Override
@@ -58,4 +39,19 @@ public final class ZEntityRenderer extends EntityRenderer {
         ZHandle.handle("afterGetMouseOver", par1);
     }
 
+    @Override
+    public void updateCameraAndRender(float partialTicks, long nanoTime) {
+        super.updateCameraAndRender(partialTicks, nanoTime);
+        ZHandle.onUpdateCameraAndRender(partialTicks);
+    }
+
+    @Override
+    protected void renderRainSnow(float par) {
+        ZHandle.beginRenderRainSnow(par);
+        //noinspection ConstantConditions
+        if (ZHandle.forwardRenderRainSnow()) {
+            super.renderRainSnow(par);
+        }
+        ZHandle.endRenderRainSnow(par);
+    }
 }

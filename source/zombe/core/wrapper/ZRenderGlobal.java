@@ -1,18 +1,21 @@
 package zombe.core.wrapper;
 
-import net.minecraft.client.*;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.culling.*;
-import net.minecraft.entity.*;
-import zombe.core.*;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.culling.ICamera;
+import net.minecraft.entity.Entity;
+import zombe.core.ZHandle;
+
+import javax.annotation.Nonnull;
 
 public class ZRenderGlobal extends RenderGlobal {
 
     private Minecraft mc;
 
-    public ZRenderGlobal(Minecraft minecraft) {
+    public ZRenderGlobal(@Nonnull Minecraft minecraft) {
         super(minecraft);
-        mc = minecraft;
+        this.mc = minecraft;
     }
 
     /*
@@ -28,17 +31,20 @@ public class ZRenderGlobal extends RenderGlobal {
     */
 
     @Override
+    public void setupTerrain(
+            @Nonnull Entity viewEntity, double partialTicks,
+            @Nonnull ICamera camera, int frameCount, boolean playerSpectator) {
+        this.sortAndRender();
+        super.setupTerrain(viewEntity, partialTicks, camera, frameCount, playerSpectator);
+    }
+
+    @Override
     public void renderClouds(float partialTicks, int pass) {
         //if (ZHandle.handle("beforeRenderClouds", (Float) partialTicks, true))
         super.renderClouds(partialTicks, pass);
         //ZHandle.handle("afterRenderClouds", partialTicks);
     }
 
-    @Override
-    public void setupTerrain(Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator) {
-        sortAndRender();
-        super.setupTerrain(viewEntity, partialTicks, camera, frameCount, playerSpectator);
-    }
     public void sortAndRender() {
         ZHandle.handle("onSortAndRender");
     }
@@ -50,5 +56,4 @@ public class ZRenderGlobal extends RenderGlobal {
         super.loadRenderers();
     }
     */
-
 }

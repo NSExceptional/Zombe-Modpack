@@ -1,10 +1,10 @@
 package zombe.core.gui;
 
 
-import zombe.core.ZWrapper;
-import zombe.core.util.Color;
-import zombe.core.util.KeyBind;
-import zombe.core.util.GuiHelper;
+import zombe.core.util.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class Widget {
 
@@ -14,51 +14,19 @@ public abstract class Widget {
     public static final Color BORDER_ACTIVATED = new Color(0x00ccff);
     public static final Color BORDER_HOVERED = new Color(0x999999);
 
-    private static Widget focusedWidget = null;
-    private static Widget clickedWidget = null;
-    private static Widget hoveredWidget = null;
-
-    public static Widget getFocused() {
-        return focusedWidget;
-    }
-
-    public static Widget getClicked() {
-        return clickedWidget;
-    }
-
-    public static Widget getHovered() {
-        return hoveredWidget;
-    }
-
-    public static void setFocused(Widget widget) {
-        focusedWidget = widget;
-    }
-
-    public static void clearClicked() {
-        clickedWidget = null;
-    }
-
-    public static void clearHovered() {
-        hoveredWidget = null;
-    }
-
-    private String name;
-
-    private Object value = null;
-
-    private String defaultText = null;
-
-    private Color color = null;
-
+    @Nullable private static Widget focusedWidget = null;
+    @Nullable private static Widget clickedWidget = null;
+    @Nullable private static Widget hoveredWidget = null;
+    @Nullable private String name;
+    @Nullable private Object value = null;
+    @Nullable private String defaultText = null;
+    @Nullable private Color color = null;
     private int posX, posY, width, height;
-
     private boolean activated, hovered, clicked;
-
     private int border = 0;
-
     private int alignment = 0;
 
-    public Widget(String name, Object value) {
+    public Widget(@Nullable String name, @Nullable Object value) {
         this.name = name;
         this.value = null;
         this.activated = false;
@@ -71,30 +39,94 @@ public abstract class Widget {
         this(name, null);
     }
 
+    @Nullable
+    public static Widget getFocused() {
+        return focusedWidget;
+    }
+
+    public static void setFocused(@Nullable Widget widget) {
+        focusedWidget = widget;
+    }
+
+    @Nullable
+    public static Widget getClicked() {
+        return clickedWidget;
+    }
+
+    @Nullable
+    public static Widget getHovered() {
+        return hoveredWidget;
+    }
+
+    public static void clearClicked() {
+        clickedWidget = null;
+    }
+
+    public static void clearHovered() {
+        hoveredWidget = null;
+    }
+
+    public void setFocused(boolean focus) {
+        if (this.hasFocus() == focus) {
+            return;
+        }
+
+        if (focus) {
+            setFocused(this);
+        } else {
+            setFocused(null);
+        }
+    }
+
+    @Nullable
     public final String getName() {
         return this.name;
     }
 
-    public final Object getValue() {
+    @Nullable
+    public Object getValue() {
         return this.value;
     }
 
+    public void setValue(@Nullable Object value) {
+        this.value = value;
+    }
+
+    @Nullable
     public String getDefaultText() {
         return this.defaultText;
     }
 
+    public void setDefaultText(String text) {
+        this.defaultText = text;
+    }
+
+    @Nullable
     public final Color getColor() {
         return this.color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     public final int getBorder() {
         return this.border;
     }
 
+    public void setBorder(int border) {
+        this.border = border;
+    }
+
     public final int getAlignment() {
         return this.alignment;
     }
 
+    public void setAlignment(int alignment) {
+        this.alignment = alignment;
+    }
+
+    @Nonnull
     public Color defaultColor() {
         return COLOR_DEFAULT;
     }
@@ -119,6 +151,10 @@ public abstract class Widget {
         return this.activated;
     }
 
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
     public boolean hasFocus() {
         return getFocused() == this;
     }
@@ -129,41 +165,6 @@ public abstract class Widget {
 
     public boolean isClicked() {
         return this.clicked;
-    }
-
-    public void setFocused(boolean focus) {
-        if (this.hasFocus() == focus) {
-            return;
-        }
-        if (focus) {
-            setFocused(this);
-        } else {
-            setFocused(null);
-        }
-    }
-
-    public void setActivated(boolean activated) {
-        this.activated = activated;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
-    public void setDefaultText(String text) {
-        this.defaultText = text;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    public void setBorder(int border) {
-        this.border = border;
-    }
-
-    public void setAlignment(int alignment) {
-        this.alignment = alignment;
     }
 
     public void setPosition(int x, int y, int w, int h) {
@@ -199,8 +200,7 @@ public abstract class Widget {
     }
 
     protected boolean checkClicked() {
-        return this.isHovered() && Keys.wasMousePressedThisFrame(0)
-                || Keys.isMouseDownThisFrame(0) && this.clicked && this.isActivated();
+        return this.isHovered() && Keys.wasMousePressedThisFrame(0) || Keys.isMouseDownThisFrame(0) && this.clicked && this.isActivated();
     }
 
     public void checkState() {
@@ -241,18 +241,19 @@ public abstract class Widget {
     protected void onDeactivation() {
     }
 
+    @Nonnull
     public Color getActualColor() {
         Color col = this.color == null ? this.defaultColor() : this.color;
-        if (col == null || !this.isHovered()) {
+        if (!this.isHovered()) {
             return col;
         }
+
         return new Color(col.rf + 0.125f, col.gf + 0.125f, col.bf + 0.125f, col.af);
     }
 
+    @Nonnull
     public Color getBorderColor() {
-        return this.hasFocus() ? BORDER_FOCUSED
-                : this.isActivated() ? BORDER_ACTIVATED
-                : this.isHovered() ? BORDER_HOVERED : BORDER_DEFAULT;
+        return this.hasFocus() ? BORDER_FOCUSED : this.isActivated() ? BORDER_ACTIVATED : this.isHovered() ? BORDER_HOVERED : BORDER_DEFAULT;
     }
 
     public void draw() {
@@ -260,10 +261,11 @@ public abstract class Widget {
         this.drawValue();
     }
 
-    public void drawColor(Color color, Color bord) {
+    public void drawColor(@Nullable Color color, @Nullable Color bord) {
         if (color == null) {
             return;
         }
+
         if (this.border > 0 && bord != null) {
             GuiHelper.drawRect(this.posX, this.posY, this.width, this.height, bord.rgba);
             GuiHelper.drawRect(this.posX + this.border, this.posY + this.border, this.width - this.border * 2, this.height - +this.border * 2, color.rgba);
@@ -272,6 +274,7 @@ public abstract class Widget {
         }
     }
 
+    @Nullable
     public String getText() {
         if (this.value instanceof String) {
             return (String) this.value;
@@ -280,22 +283,25 @@ public abstract class Widget {
             return ((Boolean) this.value) ? "yes" : "no";
         }
         if (this.value instanceof Float) {
-            return String.valueOf((Float) this.value);
+            return String.valueOf(this.value);
         }
         if (this.value instanceof Integer) {
-            return String.valueOf((Integer) this.value);
+            return String.valueOf(this.value);
         }
         if (this.value instanceof KeyBind) {
             return ((KeyBind) this.value).name;
         }
+
         return null;
     }
 
+    @Nullable
     public String getActualText() {
         String text = this.getText();
         if (text == null) {
             return this.getDefaultText();
         }
+
         return text;
     }
 
@@ -303,10 +309,11 @@ public abstract class Widget {
         this.drawText(this.getActualText());
     }
 
-    public void drawText(String text) {
+    public void drawText(@Nullable String text) {
         if (text == null) {
             return;
         }
+
         int space = this.width - this.border * 2;
         text = GuiHelper.trimStringToWidth(text, this.getAlignment() > 0 ? -space : space);
         GuiHelper.showTextAlign(text, this.posX + this.border, this.posY + (this.height - 8) / 2, space, this.getAlignment(), 0xffffff);

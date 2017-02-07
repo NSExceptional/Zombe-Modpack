@@ -3,16 +3,12 @@ package zombe.core.config;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.*;
 
 /** Represents a configuration option type and provides methods to query option values from files */
 public abstract class OptionConstraint<T> {
 
-    @Nonnull public abstract T defaultValue();
-    @Nonnull public abstract T getMax();
-    @Nonnull public T getMin() {
-        return this.defaultValue();
-    }
+    @Nonnull
+    public abstract T defaultValue();
 
     /** @return the string parsed into a usable value */
     @Nonnull
@@ -31,6 +27,7 @@ public abstract class OptionConstraint<T> {
     }
 
     /** @return the string parsed into a usable value, or the constraint's default value */
+    @Nonnull
     public T parsedOrDefault(@Nonnull String string) {
         T ret = this.tryParse(string);
         return ret == null ? this.defaultValue() : this.fix(ret);

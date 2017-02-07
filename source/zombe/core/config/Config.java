@@ -5,24 +5,29 @@ import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
-import java.lang.*;
 import java.io.*;
-import java.util.logging.*;
-import java.util.regex.*;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /** In this class, preferences are stored as key-value pairs. A 'key' refers to a preference. */
 public final class Config {
     private static final Logger log = Logger.getLogger("zombe.core.config");
     // TODO what is this?
     private static final Map<String, Option> options = new LinkedHashMap<>();
-
-    @Nonnull private File configFile;
     // TODO what is this?
     @Nonnull private final Properties properties;
     // TODO what is this?
-    private final Config parentConfig;
+    @Nullable private final Config parentConfig;
+    @Nonnull private File configFile;
 
+
+    @Nonnull
+    public Config(@Nonnull File file, @Nullable Config parent) {
+        this.configFile = file;
+        this.parentConfig = parent;
+        this.properties = new Properties();
+    }
 
     /** Adds an option to `options` */
     public static void addOption(@Nonnull String name, @Nonnull Option option) {
@@ -93,13 +98,6 @@ public final class Config {
         }
     }
 
-    @Nonnull
-    public Config(@Nonnull File file, Config parent) {
-        this.configFile = file;
-        this.parentConfig = parent;
-        this.properties = new Properties();
-    }
-
     /** Sets this.configFile */
     public void setFile(@Nonnull File file) {
         this.configFile = file;
@@ -132,7 +130,7 @@ public final class Config {
 
     /** @return whether a given key's value would come from `this.parentConfig` */
     public boolean isInherited(@Nonnull String key) {
-        return !properties.containsKey(key);
+        return !this.properties.containsKey(key);
     }
 
     /** @return the value for the preference key */
@@ -142,15 +140,15 @@ public final class Config {
             return null;
         }
 
-        String value        = this.get(key);
-        Option option       = options.get(key);
+        String value = this.get(key);
+        Option option = options.get(key);
         OptionConstraint tc = option.constraint;
 
         if (value != null && tc.canParse(value)) {
             return tc.parsedOrDefault(value);
         }
 
-        return this.parentConfig == null ? option.defaultValue : parentConfig.getValue(key);
+        return this.parentConfig == null ? option.defaultValue : this.parentConfig.getValue(key);
     }
 
     /** @return all option values for a given key in the config tree, with the default value last */
@@ -173,8 +171,10 @@ public final class Config {
         return list;
     }
 
-    /** @return the first preference value in the config tree
-     *          for the given key, or uses the default value from `options` */
+    /**
+     * @return the first preference value in the config tree
+     * for the given key, or uses the default value from `options`
+     */
     @Nullable
     public String getInherited(@Nonnull String key) {
         String value = this.get(key);
@@ -209,32 +209,34 @@ public final class Config {
     /** @return the preverence value for the given key */
     @Nullable
     public String get(@Nonnull String key) {
-        return properties.getProperty(key);
+        return this.properties.getProperty(key);
     }
 
     /** Sets a preference value for the given key */
     public void set(@Nonnull String key, @Nullable String value) {
         if (this.get(key) == null) {
-            properties.remove(key);
+            this.properties.remove(key);
         } else {
-            properties.setProperty(key, value);
+            this.properties.setProperty(key, value);
         }
 
         try {
             this.update(key, value);
         } catch (Exception e) {
-            log.warning("could not save changes to option "+key);
+            log.warning("could not save changes to option " + key);
         }
     }
 
     @SuppressWarnings("DuplicateThrows")
-    private void update(@Nonnull String key, @Nullable String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
+    private void update(
+            @Nonnull String key,
+            @Nullable String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
         // Create config file if necessary
-        if (!configFile.isFile()) {
-            log.config("config file '" + configFile + "' not found, creating it");
-            configFile.createNewFile();
+        if (!this.configFile.isFile()) {
+            log.config("config file '" + this.configFile + "' not found, creating it");
+            this.configFile.createNewFile();
 
-            try (PrintWriter out = new PrintWriter(configFile, "UTF-8")) {
+            try (PrintWriter out = new PrintWriter(this.configFile, "UTF-8")) {
                 out.println("# Zombe's user config file");
                 out.println("# CHANGES ARE KEPT, you can modify it freely!");
                 out.println("# check default.txt for options and default values");
@@ -245,12 +247,12 @@ public final class Config {
             }
         }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(configFile), "UTF-8"))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.configFile), "UTF-8"))) {
             Option opt = getOption(key);
             String category = null, optComment = null;
-            Pattern commentRegex  = Pattern.compile("^#.*");
+            Pattern commentRegex = Pattern.compile("^#.*");
             Pattern categoryRegex = null;
-            Pattern optionRegex   = Pattern.compile("^" + key + "\\s*=.*");
+            Pattern optionRegex = Pattern.compile("^" + key + "\\s*=.*");
 
             if (opt != null) {
                 category = opt.category;
@@ -274,16 +276,19 @@ public final class Config {
                     } else {
                         // This might be removing comments?
                         if (lineN >= 0 && commentRegex.matcher(list.get(lineN)).matches() && lineN != lineC) {
-                            list.remove(lineN); --lineN;
+                            list.remove(lineN);
+                            --lineN;
                             if (lineN >= 0 && list.get(lineN).trim().equals("")) {
-                                list.remove(lineN); --lineN;
+                                list.remove(lineN);
+                                --lineN;
                             }
                         }
                         continue;
                     }
                 }
 
-                list.add(lineS); lineN--;
+                list.add(lineS);
+                lineN--;
             }
 
             // TODO what tf is going on here???
@@ -291,11 +296,13 @@ public final class Config {
                 if (lineC == -1) {
                     if (lineN == -1 || !list.get(lineN).trim().equals("")) {
                         lineC = lineN;
-                        list.add(""); lineN++;
+                        list.add("");
+                        lineN++;
                     }
                     if (opt != null) {
                         list.add("# ==================== " + category + " ====================");
-                        lineN++; lineC = lineN;
+                        lineN++;
+                        lineC = lineN;
                         list.add("");
                     }
                 }
@@ -309,7 +316,7 @@ public final class Config {
                 list.add(lineO, key + " = " + newValue);
             }
 
-            try (PrintWriter out = new PrintWriter(configFile, "UTF-8")) {
+            try (PrintWriter out = new PrintWriter(this.configFile, "UTF-8")) {
                 for (String line : list) {
                     out.println(line);
                 }
