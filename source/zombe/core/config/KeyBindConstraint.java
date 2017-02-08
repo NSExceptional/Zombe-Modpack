@@ -38,10 +38,4 @@ public class KeyBindConstraint extends OptionConstraint<KeyBind> {
             throw new IllegalArgumentException();
         }
     }
-
-    @Nonnull
-    @Override
-    public KeyBind getMax() {
-        return KeyBind.NONE;
-    }
 }

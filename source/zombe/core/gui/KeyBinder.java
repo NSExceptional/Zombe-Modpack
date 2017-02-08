@@ -13,22 +13,22 @@ public class KeyBinder extends Widget {
 
     @Override
     public void keyTyped(char c, int key) {
-        if (!hasFocus()) {
+        if (!this.hasFocus()) {
             return;
         }
         if (key == Keyboard.KEY_ESCAPE) {
-            setFocused(false);
+            this.setFocused(false);
         } else if (key != Keyboard.KEY_NONE) {
-            setValue(new KeyBind(key));
-            setFocused(false);
+            this.setValue(new KeyBind(key));
+            this.setFocused(false);
         }
     }
 
     @Override
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        if (hasFocus()) {
-            setValue(new KeyBind(KeyHelper.MOUSE | mouseButton));
-            setFocused(false);
+        if (this.hasFocus()) {
+            this.setValue(new KeyBind(KeyHelper.MOUSE | mouseButton));
+            this.setFocused(false);
         } else {
             super.mouseClicked(mouseX, mouseY, mouseButton);
         }
@@ -37,30 +37,31 @@ public class KeyBinder extends Widget {
     @Override
     protected void onActivation() {
         setFocused(this);
-        setValue(new KeyBind(Keyboard.KEY_NONE));
+        this.setValue(new KeyBind(Keyboard.KEY_NONE));
     }
 
     @Override
     public void draw() {
-        setBorder(hasFocus() ? 1 : 0);
+        this.setBorder(this.hasFocus() ? 1 : 0);
         super.draw();
     }
 
     @Override
     public String getText() {
-        if (hasFocus()) {
+        if (this.hasFocus()) {
             return "_";
         }
-        Object value = getValue();
+
+        Object value = this.getValue();
         if (value instanceof Integer) {
-            int val = (Integer) value;
-            return KeyHelper.getKeyName(val);
+            return KeyHelper.getKeyName((Integer) value);
         }
+
         if (value instanceof KeyBind) {
             KeyBind val = (KeyBind) value;
             return val.name;
         }
+
         return super.getText();
     }
-
 }

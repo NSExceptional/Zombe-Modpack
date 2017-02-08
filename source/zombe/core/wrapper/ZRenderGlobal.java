@@ -31,9 +31,11 @@ public class ZRenderGlobal extends RenderGlobal {
     */
 
     @Override
-    public void setupTerrain(
-            @Nonnull Entity viewEntity, double partialTicks,
-            @Nonnull ICamera camera, int frameCount, boolean playerSpectator) {
+    public void setupTerrain(@Nonnull Entity viewEntity,
+                             double partialTicks,
+                             @Nonnull ICamera camera,
+                             int frameCount,
+                             boolean playerSpectator) {
         this.sortAndRender();
         super.setupTerrain(viewEntity, partialTicks, camera, frameCount, playerSpectator);
     }

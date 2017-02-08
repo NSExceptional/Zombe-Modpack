@@ -365,7 +365,11 @@ public final class ConfigurationScreen extends GuiScreen {
                     //noinspection ConstantConditions
                     String desc = Config.getOption(element.getName()).description;
                     if (desc != null) {
-                        GuiHelper.showTextRight(GuiHelper.trimStringToWidth(desc, captionW), captionX, contentY + LINE_HEIGHT * line + (widgetH - 8) / 2, captionW, 0xffffff);
+                        GuiHelper.showTextRight(
+                                GuiHelper.trimStringToWidth(desc, captionW),
+                                captionX, contentY + LINE_HEIGHT * line + (widgetH - 8) / 2,
+                                captionW, 0xffffff
+                        );
                     }
                 }
 

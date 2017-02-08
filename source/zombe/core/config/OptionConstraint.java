@@ -7,8 +7,7 @@ import javax.annotation.Nullable;
 /** Represents a configuration option type and provides methods to query option values from files */
 public abstract class OptionConstraint<T> {
 
-    @Nonnull
-    public abstract T defaultValue();
+    @Nonnull public abstract T defaultValue();
 
     /** @return the string parsed into a usable value */
     @Nonnull

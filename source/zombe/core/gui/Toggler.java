@@ -13,11 +13,11 @@ public class Toggler extends Button {
 
     @Override
     protected void onActivation() {
-        if (getValue() == null) {
-            setValue((Boolean) true);
-        } else if (getValue() instanceof Boolean) {
-            setValue(!(Boolean) getValue());
+        Object value = this.getValue();
+        if (value == null) {
+            this.setValue(true);
+        } else if (value instanceof Boolean) {
+            this.setValue(!(Boolean) value);
         }
     }
-
 }

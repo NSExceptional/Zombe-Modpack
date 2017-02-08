@@ -257,18 +257,17 @@ public final class Dig extends ZMod {
 
     @Override
     protected void updateConfig() {
-        optCheckReach = getOptionBool("optDigCheckReach");
+        optCheckReach    = getOptionBool("optDigCheckReach");
         optCheckRaytrace = getOptionBool("optDigCheckRaytrace");
-        optSyncDigged = false; // broken as of 1.4.6, they removed the BlockDig Request-status (3)
-        optReachSet = getOptionBool("optDigReachSet");
-        optReach = getOptionFloat("optDigReach");
-        optReachSetUse = getOptionBool("optDigReachSetUse");
-        optReachUse = getOptionFloat("optDigReachUse");
-        optReachSetDig = getOptionBool("optDigReachSetDig");
-        optReachDig = getOptionFloat("optDigReachDig");
+        optSyncDigged    = false; // broken as of 1.4.6, they removed the BlockDig Request-status (3)
+        optReachSet      = getOptionBool("optDigReachSet");
+        optReach         = getOptionFloat("optDigReach");
+        optReachSetUse   = getOptionBool("optDigReachSetUse");
+        optReachUse      = getOptionFloat("optDigReachUse");
+        optReachSetDig   = getOptionBool("optDigReachSetDig");
+        optReachDig      = getOptionFloat("optDigReachDig");
         optReachSetPlace = getOptionBool("optDigReachSetPlace");
-        optReachPlace = getOptionFloat("optDigReachPlace");
+        optReachPlace    = getOptionFloat("optDigReachPlace");
         optBlockHitDelay = getOptionInt("optDigBlockHitDelay");
     }
-
 }

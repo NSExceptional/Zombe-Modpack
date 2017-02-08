@@ -27,7 +27,7 @@ public final class Ghost extends ZMod {
     @Nullable private static EntityLivingBase ghostView;
     @Nullable private static EntityLivingBase ghostPossession;
     @Nullable private static EntityPlayerSP ghostPlayer;
-    @Nullable private static DummyPlayer ghostProjection;
+    @Nullable private static DummyPlayer    ghostProjection;
     private static boolean ghostProjectionLock, ghostUnspoof;
     @Nullable private static MovementInput playerMovementInput;
 
@@ -252,7 +252,9 @@ public final class Ghost extends ZMod {
         ghostProjection = null;
         playerMovementInput = null;
         setMessage("view", null);
-    }    private static void beforeBlockDig() {
+    }
+
+    private static void beforeBlockDig() {
         if (isControllingProjection() && optProjectionSpoof) {
             if (!ghostUnspoof) {
                 getPlayerController().switchToRealItem();
@@ -520,5 +522,4 @@ public final class Ghost extends ZMod {
             sendMotionUpdates(ghostPlayer);
         }
     }
-
 }

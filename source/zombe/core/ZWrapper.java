@@ -1469,7 +1469,9 @@ public class ZWrapper {
 
     @Deprecated
     public static boolean isStackMatch(int stack, int match) {
-        return getStackId(stack) == getStackId(match) && (getStackMeta(stack) == getStackMeta(match) || getStackMeta(match) == ID_ANY);
+        return getStackId(stack)   == getStackId(match)
+           && (getStackMeta(stack) == getStackMeta(match)
+            || getStackMeta(match) == ID_ANY);
     }
 
     public static boolean isStackMatch(ItemStack stack, int match) {

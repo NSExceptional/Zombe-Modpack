@@ -7,8 +7,8 @@ import java.util.*;
 
 /** Represents a two-state option, such as on/off, true/false, etc. */
 public class ToggleConstraint extends OptionConstraint<Boolean> {
-    private static final Set<String> enableValues = new HashSet<String>(Arrays.asList("yes", "true", "1"));
-    private static final Set<String> disabledValues = new HashSet<String>(Arrays.asList("no", "false", "0"));
+    private static final Set<String> enableValues   = new HashSet<>(Arrays.asList("yes", "true", "1"));
+    private static final Set<String> disabledValues = new HashSet<>(Arrays.asList("no", "false", "0"));
 
     public ToggleConstraint() {
     }
@@ -56,12 +56,6 @@ public class ToggleConstraint extends OptionConstraint<Boolean> {
         }
 
         throw new IllegalArgumentException();
-    }
-
-    @Nonnull
-    @Override
-    public Boolean getMax() {
-        return true;
     }
 
     /** @return the object parsed into a boolean, or null if no assumptions could be made */

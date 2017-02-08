@@ -7,7 +7,6 @@ import org.lwjgl.input.Keyboard;
 import zombe.core.ZMod;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import static zombe.core.ZWrapper.*;
 
@@ -113,15 +112,15 @@ public final class Cloud extends ZMod {
     @Override
     protected void updateConfig() {
         tagVanilla = getOptionString("tagCloudVanilla");
-        tagNone = getOptionString("tagCloudNone");
-        tagOffset = getOptionString("tagCloudOffset");
+        tagNone    = getOptionString("tagCloudNone");
+        tagOffset  = getOptionString("tagCloudOffset");
 
-        keyToggle = getOptionKey("keyCloudToggle");
-        optShow = getOptionBool("optCloudShow");
+        keyToggle  = getOptionKey("keyCloudToggle");
+        optShow    = getOptionBool("optCloudShow");
         keyVanilla = getOptionKey("keyCloudVanilla");
-        keyUp = getOptionKey("keyCloudUp");
-        keyDown = getOptionKey("keyCloudDown");
-        optOffset = getOptionFloat("optCloudOffset");
+        keyUp      = getOptionKey("keyCloudUp");
+        keyDown    = getOptionKey("keyCloudDown");
+        optOffset  = getOptionFloat("optCloudOffset");
     }
 
     @Override
@@ -183,5 +182,4 @@ public final class Cloud extends ZMod {
         }
         return null;
     }
-
 }

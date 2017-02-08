@@ -2,11 +2,12 @@ package zombe.core.gui;
 
 
 import zombe.core.config.*;
-import zombe.core.util.Color;
 import zombe.core.util.GuiHelper;
+import zombe.core.util.Color;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.Math;
 
 /** Pls only use T as Double or Integer, thx */
 public class Slider<T extends Number & Comparable<T>> extends Widget {
@@ -93,7 +94,7 @@ public class Slider<T extends Number & Comparable<T>> extends Widget {
     @Override
     protected void onActivation() {
         setFocused(this);
-        int length = this.getCursorLength();
+        int length  = this.getCursorLength();
         this.offset = length / 2;
 
         if (this.hasValue()) {
@@ -268,7 +269,9 @@ public class Slider<T extends Number & Comparable<T>> extends Widget {
         double min = this.range.min.doubleValue();
         double max = this.range.max.doubleValue();
 
-        double ratio = (this.scale == Scale.LOG) ? Math.log(value / min) / Math.log(max / min) : (value - min) / (max - min);
+        double ratio = (this.scale == Scale.LOG)
+                ? Math.log(value / min) / Math.log(max / min)
+                : (value - min) / (max - min);
         return Double.isNaN(ratio) ? 0f : ratio;
     }
 
@@ -276,7 +279,9 @@ public class Slider<T extends Number & Comparable<T>> extends Widget {
         double min = this.range.min.doubleValue();
         double max = this.range.max.doubleValue();
 
-        double value = (this.scale == Scale.LOG) ? min * Math.pow(max / min, ratio) : min + ratio * (max - min);
+        double value = (this.scale == Scale.LOG)
+                ? min * Math.pow(max / min, ratio)
+                : min + ratio * (max - min);
         return Double.isNaN(value) ? min : value;
     }
 

@@ -18,11 +18,15 @@ import static zombe.core.ZWrapper.*;
 public final class Fly extends ZMod {
 
     private static final double TO_RADIANS = Math.PI / 180f;
+    
     private static boolean modFlyAllowed = true, modNoclipAllowed = true;
     private static String tagFly, tagNoclip;
     private static int keyOn, keyOff, keyToggle, keyNoclip, keySpeed, keyRun, keyUp, keyDown, keyFreeFly, keyForward, keyBackward;
     private static float optSpeedVertical, optSpeedForward, optSpeedMulNormal, optSpeedMulModifier, optRunSpeedMul, optRunSpeedVMul, optJump, optJumpHigh;
-    private static boolean optNoclip, optFreeFly, optAirJump, optVanillaFly, optVanillaSprint, optNoInertia, optSpeedIsToggle, optRunSpeedIsToggle, optFixMovedWrongly, optFixMovedTooQuickly;
+    private static boolean optNoclip, optFreeFly, optAirJump,
+        optVanillaFly, optVanillaSprint, optNoInertia,
+        optSpeedIsToggle, optRunSpeedIsToggle,
+        optFixMovedWrongly, optFixMovedTooQuickly;
     private static boolean playerFly, playerNoclip, playerSpeed, playerRun;
     private static boolean dummyFly, dummyNoclip, dummySpeed, dummyRun;
     private static boolean flying, noclip, flyRun, flySpeed, flyUp, flyDown, flyForward, flyFree;
@@ -81,6 +85,184 @@ public final class Fly extends ZMod {
         this.addOption("keyFlyRun", "Running speed modifier key", Keyboard.KEY_LSHIFT);
         this.addOption("optFlyRunSpeedIsToggle", "Run speed modifier is a toggle", false);
         this.addOption("optFlyVanillaSprint", "Allow vanilla MC sprint toggle", true);
+    }
+
+    @Override
+    protected void updateConfig() {
+        tagFly              = getOptionString("tagFly");
+        tagNoclip           = getOptionString("tagFlyNoClip");
+        keyOn               = getOptionKey("keyFlyOn");
+        keyOff              = getOptionKey("keyFlyOff");
+        keyToggle           = getOptionKey("keyFlyToggle");
+        keyUp               = getOptionKey("keyFlyUp");
+        keyDown             = getOptionKey("keyFlyDown");
+        keyForward          = 0;
+        //keyForward          = getOptionKey("keyFlyForward");
+        keyFreeFly          = getOptionKey("keyFlyFreeFly");
+        keySpeed            = getOptionKey("keyFlySpeed");
+        keyRun              = getOptionKey("keyFlyRun");
+        keyNoclip           = getOptionKey("keyFlyNoClip");
+        optAirJump          = getOptionBool("optFlyAirJump");
+        optNoInertia        = getOptionBool("optFlyNoInertia");
+        optFreeFly          = getOptionBool("optFlyFreeFly");
+        optSpeedIsToggle    = getOptionBool("optFlySpeedIsToggle");
+        optRunSpeedIsToggle = getOptionBool("optFlyRunSpeedIsToggle");
+        optNoclip           = getOptionBool("optFlyNoClip");
+        optVanillaFly       = getOptionBool("optFlyVanillaFly");
+        optVanillaSprint    = getOptionBool("optFlyVanillaSprint");
+        optJump             = getOptionFloat("optFlyJump");
+        optJumpHigh         = getOptionFloat("optFlyJumpHigh");
+        optSpeedVertical    = getOptionFloat("optFlySpeedVertical");
+        optSpeedForward  = 0;
+        //optSpeedForward     = getOptionFloat("optFlySpeedForward");
+        optSpeedMulNormal   = getOptionFloat("optFlySpeedMulNormal");
+        optSpeedMulModifier = getOptionFloat("optFlySpeedMulModifier");
+        optRunSpeedMul      = getOptionFloat("optFlyRunSpeedMul");
+        optRunSpeedVMul     = getOptionFloat("optFlyRunSpeedVMul");
+    }
+
+    @Override
+    protected void init() {
+        flyPlayer = null;
+        flyDummy  = null;
+        playerNoclip = optNoclip;
+        flyFree = optFreeFly;
+        motionX = motionY = motionZ = 0;
+    }
+
+    @Override
+    protected void quit() {
+        flyPlayer = null;
+        flyDummy  = null;
+    }
+
+    @Override
+    protected void onWorldChange() {
+        flyPlayer = null;
+        flyDummy  = null;
+        modFlyAllowed    = ZHandle.handle("allowFlying", true);
+        modNoclipAllowed = ZHandle.handle("allowNoclip", true);
+        playerNoclip = optNoclip && modNoclipAllowed;
+        setNoclip(modFlyAllowed && playerNoclip && playerFly);
+        flyFree = optFreeFly;
+        motionX = motionY = motionZ = 0;
+    }
+
+    @Override
+    protected void onClientTick(EntityPlayerSP player) {
+        modFlyAllowed    = ZHandle.handle("allowFlying", true);
+        modNoclipAllowed = ZHandle.handle("allowNoclip", true);
+        flyPlayer = player;
+        controlledEntity = (Entity) ZHandle.handle("getControlledEntity", player);
+        controllingPlayer = controlledEntity == player;
+        if (controlledEntity instanceof DummyPlayer) {
+            DummyPlayer controlledDummy = (DummyPlayer) controlledEntity;
+            if (controlledDummy != flyDummy) {
+                flyDummy    = controlledDummy;
+                dummyFly    = getFlying(flyDummy) && playerFly;
+                dummyNoclip = dummyFly && playerNoclip;
+            }
+        }
+        flyRun = flySpeed = false;
+        if (isInMenu()) {
+            flyUp = flyDown = flyForward = false;
+            return;
+        }
+        if (controllingPlayer) {
+            boolean flyPrev = playerFly;
+            if (wasKeyPressedThisTick(keyToggle)) playerFly = !playerFly;
+            else if (isKeyDownThisTick(keyOn))    playerFly = true;
+            else if (isKeyDownThisTick(keyOff))   playerFly = false;
+            if (!modFlyAllowed && playerFly) {
+                playerFly = false;
+                chatClient("\u00a74zombe's \u00a72fly\u00a74-mod is not allowed on this server.");
+            }
+            if (flyPrev != playerFly) {
+                setFlying(player, playerFly);
+                if (player.capabilities.allowFlying) player.sendPlayerAbilities();
+            }
+            if (playerFly && wasKeyPressedThisTick(keyNoclip))
+                setNoclip(playerNoclip = !playerNoclip);
+            else if (flyPrev != playerFly)
+                setNoclip(playerFly && playerNoclip);
+            flySpeed = playerSpeed = optSpeedIsToggle
+                && (wasKeyPressedThisTick(keySpeed) != playerSpeed);
+            flyRun   = playerRun   = optRunSpeedIsToggle
+                && (wasKeyPressedThisTick(keyRun)   != playerRun);
+            flying = playerFly; noclip = playerNoclip;
+        } else {
+            if (!optSpeedIsToggle)    playerSpeed = false;
+            if (!optRunSpeedIsToggle) playerRun   = false;
+        }
+        if (!controllingPlayer) {
+            boolean flyPrev = dummyFly;
+            if (wasKeyPressedThisTick(keyToggle)) dummyFly = !dummyFly;
+            else if (isKeyDownThisTick(keyOn))    dummyFly = true;
+            else if (isKeyDownThisTick(keyOff))   dummyFly = false;
+            if (flyPrev != dummyFly) {
+                setFlying(flyDummy, dummyFly);
+            }
+            if (dummyFly && wasKeyPressedThisTick(keyNoclip))
+                setNoclip(flyDummy, dummyNoclip = !dummyNoclip);
+            else if (flyPrev != dummyFly)
+                setNoclip(flyDummy, dummyFly && dummyNoclip);
+            flySpeed = dummySpeed = optSpeedIsToggle
+                && (wasKeyPressedThisTick(keySpeed) != dummySpeed);
+            flyRun   = dummyRun   = optRunSpeedIsToggle
+                && (wasKeyPressedThisTick(keyRun)   != dummyRun);
+            flying = dummyFly; noclip = dummyNoclip;
+        } else {
+            if (!optSpeedIsToggle)    dummySpeed = false;
+            if (!optRunSpeedIsToggle) dummyRun   = false;
+        }
+        if (wasKeyPressedThisTick(keyFreeFly)) flyFree = !flyFree;
+        flyUp      = isKeyDownThisTick(keyUp);
+        flyDown    = isKeyDownThisTick(keyDown);
+        flyForward = isKeyDownThisTick(keyForward);
+        flySpeed = flySpeed || (!optSpeedIsToggle && isKeyDownThisTick(keySpeed));
+        flyRun   = flyRun   || (!optRunSpeedIsToggle && isKeyDownThisTick(keyRun));
+    }
+
+    @Override
+    protected String getTag() {
+        if (!playerFly) return null;
+        String txt = tagFly;
+        if (playerNoclip && tagNoclip.length()>0) txt += " "+tagNoclip;
+        return txt;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    protected Object handle(@Nonnull String name, Object arg) {
+        if (name.equals("ignorePlayerInsideOpaqueBlock"))
+            return getNoclip();
+        if (name.equals("allowVanillaFly"))
+            return allowVanillaFly();
+        if (name.equals("allowVanillaSprint"))
+            return allowVanillaSprint();
+        if (name.equals("isFlying"))
+            return isFlying(arg);
+        if (name.equals("isNoclip"))
+            return isNoclip(arg);
+        if (name.equals("isPlayerOnGround"))
+            return isPlayerOnGround();
+        if (name.equals("beforePlayerMove"))
+            return beforeMove(getPlayer(), (Vec3d) arg);
+        if (name.equals("afterPlayerMove"))
+            afterMove(ZWrapper.getPlayer(), (Vec3d) arg);
+        if (name.equals("beforeViewMove"))
+            return beforeMove((EntityPlayer) getView(), (Vec3d) arg);
+        if (name.equals("afterViewMove"))
+            afterMove((EntityPlayer) getView(), (Vec3d) arg);
+        if (name.equals("onPlayerJump"))
+            onPlayerJump((EntityPlayer) arg);
+        if (name.equals("onClientUpdate"))
+            onClientUpdate((EntityPlayerSP) arg);
+        if (name.equals("onViewUpdate"))
+            onViewUpdate((EntityPlayer) arg);
+        if (name.equals("onServerUpdate"))
+            onServerUpdate((EntityPlayerMP) arg);
+        return arg;
     }
 
     private static boolean isFlying(Object arg) {
@@ -201,12 +383,8 @@ public final class Fly extends ZMod {
                     mx = my = mz = 0;
                 }
                 if (ent == controlledEntity) {
-                    if (flyUp) {
-                        my += optSpeedVertical;
-                    }
-                    if (flyDown) {
-                        my -= optSpeedVertical;
-                    }
+                    if (flyUp)   my += optSpeedVertical;
+                    if (flyDown) my -= optSpeedVertical;
                     if (flyFree) {
                         double siny = Math.sin(getYaw(ent) * TO_RADIANS);
                         double cosy = Math.cos(getYaw(ent) * TO_RADIANS);
@@ -262,15 +440,9 @@ public final class Fly extends ZMod {
             playerOnGround = getOnGround(ent);
 
             if (modFlyAllowed) {
-                if (getMotionX(ent) != 0) {
-                    setMotionX(ent, motionX);
-                }
-                if (getMotionY(ent) != 0) {
-                    setMotionY(ent, motionY);
-                }
-                if (getMotionZ(ent) != 0) {
-                    setMotionZ(ent, motionZ);
-                }
+                if (getMotionX(ent) != 0) setMotionX(ent, motionX);
+                if (getMotionY(ent) != 0) setMotionY(ent, motionY);
+                if (getMotionZ(ent) != 0) setMotionZ(ent, motionZ);
                 if (playerFly) {
                     flyPlayer.movementInput.sneak = false;
                     setFall(ent, 0f);
@@ -293,15 +465,9 @@ public final class Fly extends ZMod {
         }
         if (ent == flyDummy) {
             dummyOnGround = getOnGround(ent);
-            if (getMotionX(ent) != 0) {
-                setMotionX(ent, motionX);
-            }
-            if (getMotionY(ent) != 0) {
-                setMotionY(ent, motionY);
-            }
-            if (getMotionZ(ent) != 0) {
-                setMotionZ(ent, motionZ);
-            }
+            if (getMotionX(ent) != 0) setMotionX(ent, motionX);
+            if (getMotionY(ent) != 0) setMotionY(ent, motionY);
+            if (getMotionZ(ent) != 0) setMotionZ(ent, motionZ);
             if (dummyFly) {
                 flyDummy.movementInput.sneak = false;
                 setSteps(ent, flySteps);
@@ -372,47 +538,47 @@ public final class Fly extends ZMod {
     @Override
     protected void quit() {
         flyPlayer = null;
-        flyDummy = null;
+        flyDummy  = null;
     }
 
     @Override
     protected void updateConfig() {
-        tagFly = getOptionString("tagFly");
-        tagNoclip = getOptionString("tagFlyNoClip");
-        keyOn = getOptionKey("keyFlyOn");
-        keyOff = getOptionKey("keyFlyOff");
-        keyToggle = getOptionKey("keyFlyToggle");
-        keyUp = getOptionKey("keyFlyUp");
-        keyDown = getOptionKey("keyFlyDown");
-        keyForward = 0;
+        tagFly              = getOptionString("tagFly");
+        tagNoclip           = getOptionString("tagFlyNoClip");
+        keyOn               = getOptionKey("keyFlyOn");
+        keyOff              = getOptionKey("keyFlyOff");
+        keyToggle           = getOptionKey("keyFlyToggle");
+        keyUp               = getOptionKey("keyFlyUp");
+        keyDown             = getOptionKey("keyFlyDown");
+        keyForward          = 0;
         //keyForward          = getOptionKey("keyFlyForward");
-        keyFreeFly = getOptionKey("keyFlyFreeFly");
-        keySpeed = getOptionKey("keyFlySpeed");
-        keyRun = getOptionKey("keyFlyRun");
-        keyNoclip = getOptionKey("keyFlyNoClip");
-        optAirJump = getOptionBool("optFlyAirJump");
-        optNoInertia = getOptionBool("optFlyNoInertia");
-        optFreeFly = getOptionBool("optFlyFreeFly");
-        optSpeedIsToggle = getOptionBool("optFlySpeedIsToggle");
+        keyFreeFly          = getOptionKey("keyFlyFreeFly");
+        keySpeed            = getOptionKey("keyFlySpeed");
+        keyRun              = getOptionKey("keyFlyRun");
+        keyNoclip           = getOptionKey("keyFlyNoClip");
+        optAirJump          = getOptionBool("optFlyAirJump");
+        optNoInertia        = getOptionBool("optFlyNoInertia");
+        optFreeFly          = getOptionBool("optFlyFreeFly");
+        optSpeedIsToggle    = getOptionBool("optFlySpeedIsToggle");
         optRunSpeedIsToggle = getOptionBool("optFlyRunSpeedIsToggle");
-        optNoclip = getOptionBool("optFlyNoClip");
-        optVanillaFly = getOptionBool("optFlyVanillaFly");
-        optVanillaSprint = getOptionBool("optFlyVanillaSprint");
-        optJump = getOptionFloat("optFlyJump");
-        optJumpHigh = getOptionFloat("optFlyJumpHigh");
-        optSpeedVertical = getOptionFloat("optFlySpeedVertical");
-        optSpeedForward = 0;
+        optNoclip           = getOptionBool("optFlyNoClip");
+        optVanillaFly       = getOptionBool("optFlyVanillaFly");
+        optVanillaSprint    = getOptionBool("optFlyVanillaSprint");
+        optJump             = getOptionFloat("optFlyJump");
+        optJumpHigh         = getOptionFloat("optFlyJumpHigh");
+        optSpeedVertical    = getOptionFloat("optFlySpeedVertical");
+        optSpeedForward  = 0;
         //optSpeedForward     = getOptionFloat("optFlySpeedForward");
-        optSpeedMulNormal = getOptionFloat("optFlySpeedMulNormal");
+        optSpeedMulNormal   = getOptionFloat("optFlySpeedMulNormal");
         optSpeedMulModifier = getOptionFloat("optFlySpeedMulModifier");
-        optRunSpeedMul = getOptionFloat("optFlyRunSpeedMul");
-        optRunSpeedVMul = getOptionFloat("optFlyRunSpeedVMul");
+        optRunSpeedMul      = getOptionFloat("optFlyRunSpeedMul");
+        optRunSpeedVMul     = getOptionFloat("optFlyRunSpeedVMul");
     }
 
     @Override
     protected void onWorldChange() {
         flyPlayer = null;
-        flyDummy = null;
+        flyDummy  = null;
         modFlyAllowed = ZHandle.handle("allowFlying", true);
         modNoclipAllowed = ZHandle.handle("allowNoclip", true);
         playerNoclip = optNoclip && modNoclipAllowed;
@@ -509,11 +675,11 @@ public final class Fly extends ZMod {
         if (wasKeyPressedThisTick(keyFreeFly)) {
             flyFree = !flyFree;
         }
-        flyUp = isKeyDownThisTick(keyUp);
-        flyDown = isKeyDownThisTick(keyDown);
+        flyUp      = isKeyDownThisTick(keyUp);
+        flyDown    = isKeyDownThisTick(keyDown);
         flyForward = isKeyDownThisTick(keyForward);
-        flySpeed = flySpeed || (!optSpeedIsToggle && isKeyDownThisTick(keySpeed));
-        flyRun = flyRun || (!optRunSpeedIsToggle && isKeyDownThisTick(keyRun));
+        flySpeed   = flySpeed || (!optSpeedIsToggle && isKeyDownThisTick(keySpeed));
+        flyRun     = flyRun || (!optRunSpeedIsToggle && isKeyDownThisTick(keyRun));
     }
 
     @Override
@@ -527,5 +693,4 @@ public final class Fly extends ZMod {
         }
         return txt;
     }
-
 }

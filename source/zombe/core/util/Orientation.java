@@ -16,6 +16,5 @@ public class Orientation {
         this.pitch = pitch;
         this.roll = roll;
     }
-
 }
 

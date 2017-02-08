@@ -140,8 +140,8 @@ public final class Config {
             return null;
         }
 
-        String value = this.get(key);
-        Option option = options.get(key);
+        String value        = this.get(key);
+        Option option       = options.get(key);
         OptionConstraint tc = option.constraint;
 
         if (value != null && tc.canParse(value)) {
@@ -228,9 +228,7 @@ public final class Config {
     }
 
     @SuppressWarnings("DuplicateThrows")
-    private void update(
-            @Nonnull String key,
-            @Nullable String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
+    private void update(@Nonnull String key, @Nullable String newValue) throws IOException, FileNotFoundException, UnsupportedEncodingException {
         // Create config file if necessary
         if (!this.configFile.isFile()) {
             log.config("config file '" + this.configFile + "' not found, creating it");
@@ -250,9 +248,9 @@ public final class Config {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(this.configFile), "UTF-8"))) {
             Option opt = getOption(key);
             String category = null, optComment = null;
-            Pattern commentRegex = Pattern.compile("^#.*");
+            Pattern commentRegex  = Pattern.compile("^#.*");
             Pattern categoryRegex = null;
-            Pattern optionRegex = Pattern.compile("^" + key + "\\s*=.*");
+            Pattern optionRegex   = Pattern.compile("^" + key + "\\s*=.*");
 
             if (opt != null) {
                 category = opt.category;

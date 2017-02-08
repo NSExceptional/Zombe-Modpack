@@ -3,30 +3,19 @@ package zombe.core.config;
 
 import javax.annotation.Nonnull;
 
-public abstract class IntervalConstraint<T extends Comparable<T>> extends OptionConstraint<T> {
-    private final T min;
-    private final T max;
+public abstract class IntervalConstraint<T extends Number & Comparable<T>> extends OptionConstraint<T> {
+    public final T min;
+    public final T max;
 
     public IntervalConstraint(T min, T max) {
         this.min = min;
         this.max = max;
     }
 
-    @Nonnull
-    public T normalize(@Nonnull T o) {
-        return (this.min.compareTo(o) <= 0) ? (this.max.compareTo(o) < 0 ? this.max : o) : this.min;
-    }
-
-    @Nonnull
-    @Override
-    public T getMin() {
-        return this.min;
-    }
-
-    @Nonnull
-    @Override
-    public T getMax() {
-        return this.max;
+    public T normalize(T o) {
+        return (this.min.compareTo(o) <= 0)
+             ? (this.max.compareTo(o) < 0 ? this.max : o)
+             : this.min;
     }
 
     @Nonnull

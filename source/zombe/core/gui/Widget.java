@@ -97,7 +97,7 @@ public abstract class Widget {
         return this.defaultText;
     }
 
-    public void setDefaultText(String text) {
+    public void setDefaultText(@Nullable String text) {
         this.defaultText = text;
     }
 

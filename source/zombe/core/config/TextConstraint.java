@@ -28,10 +28,4 @@ public class TextConstraint extends OptionConstraint<String> {
             throw new IllegalArgumentException();
         }
     }
-
-    @Nonnull
-    @Override
-    public String getMax() {
-        return "";
-    }
 }

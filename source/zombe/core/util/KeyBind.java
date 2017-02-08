@@ -6,12 +6,12 @@ import javax.annotation.Nonnull;
 public class KeyBind {
     @Nonnull public static KeyBind NONE = new KeyBind(KeyHelper.KEY_NONE);
 
-    public final int code;
     @Nonnull public final String name;
+    public final int code;
 
     public KeyBind(int code) {
-        this.code = code;
         this.name = KeyHelper.getKeyName(code);
+        this.code = code;
     }
 
     public KeyBind(@Nonnull String name) {
@@ -21,6 +21,6 @@ public class KeyBind {
 
     @Nonnull
     public String toString() {
-        return name;
+        return this.name;
     }
 }

@@ -14,15 +14,15 @@ public final class Color {
         this.rgba = (rgbt & 0x00ffffff) | (0xff000000 - (rgbt & 0xff000000));
         this.tb = (byte) ((rgbt >>> 24) & 0xff);
         this.rb = (byte) ((rgbt >>> 16) & 0xff);
-        this.gb = (byte) ((rgbt >>> 8) & 0xff);
-        this.bb = (byte) (rgbt & 0xff);
-        this.ab = (byte) (0xff - (tb & 0xff));
-        this.tf = (tb & 0xff) / 255f;
+        this.gb = (byte) ((rgbt >>>  8) & 0xff);
+        this.bb = (byte) ( rgbt         & 0xff);
+        this.ab = (byte) (0xff - (this.tb & 0xff));
+        this.tf = (this.tb & 0xff) / 255f;
         //this.af = (ab & 0xff) / 255f;
-        this.af = 1f - tf;
-        this.rf = (rb & 0xff) / 255f;
-        this.gf = (gb & 0xff) / 255f;
-        this.bf = (bb & 0xff) / 255f;
+        this.af = 1f - this.tf;
+        this.rf = (this.rb & 0xff) / 255f;
+        this.gf = (this.gb & 0xff) / 255f;
+        this.bf = (this.bb & 0xff) / 255f;
     }
 
     public Color(byte r, byte g, byte b, byte a) {
@@ -31,13 +31,16 @@ public final class Color {
         this.rb = r;
         this.gb = g;
         this.bb = b;
-        this.rgbt = ((((int) tb) << 24) & 0xff000000) | ((((int) rb) << 16) & 0x00ff0000) | ((((int) gb) << 8) & 0x0000ff00) | (((int) bb) & 0x000000ff);
+        this.rgbt = ((((int) this.tb) << 24) & 0xff000000)
+                  | ((((int) this.rb) << 16) & 0x00ff0000)
+                  | ((((int) this.gb) <<  8) & 0x0000ff00)
+                  | ( ((int) this.bb)        & 0x000000ff);
         this.rgba = (this.rgbt & 0x00ffffff) | (0xff000000 - (this.rgbt & 0xff000000));
-        this.tf = (tb & 0xff) / 255f;
-        this.af = (ab & 0xff) / 255f;
-        this.rf = (rb & 0xff) / 255f;
-        this.gf = (gb & 0xff) / 255f;
-        this.bf = (bb & 0xff) / 255f;
+        this.tf = (this.tb & 0xff) / 255f;
+        this.af = (this.ab & 0xff) / 255f;
+        this.rf = (this.rb & 0xff) / 255f;
+        this.gf = (this.gb & 0xff) / 255f;
+        this.bf = (this.bb & 0xff) / 255f;
     }
 
     public Color(byte r, byte g, byte b) {
@@ -49,13 +52,16 @@ public final class Color {
         this.rf = clamp(r);
         this.gf = clamp(g);
         this.bf = clamp(b);
-        this.tf = 1f - af;
-        this.ab = (byte) (af * 255.999999f);
-        this.rb = (byte) (rf * 255.999999f);
-        this.gb = (byte) (gf * 255.999999f);
-        this.bb = (byte) (bf * 255.999999f);
-        this.tb = (byte) (tf * 255.999999f);
-        this.rgbt = (((tb & 0xff) << 24) & 0xff000000) | (((rb & 0xff) << 16) & 0x00ff0000) | (((gb & 0xff) << 8) & 0x0000ff00) | ((bb & 0xff) & 0x000000ff);
+        this.tf = 1f - this.af;
+        this.ab = (byte) (this.af * 255.999999f);
+        this.rb = (byte) (this.rf * 255.999999f);
+        this.gb = (byte) (this.gf * 255.999999f);
+        this.bb = (byte) (this.bf * 255.999999f);
+        this.tb = (byte) (this.tf * 255.999999f);
+        this.rgbt = (((this.tb & 0xff) << 24) & 0xff000000)
+                  | (((this.rb & 0xff) << 16) & 0x00ff0000)
+                  | (((this.gb & 0xff) <<  8) & 0x0000ff00)
+                  | ( (this.bb & 0xff)        & 0x000000ff);
         this.rgba = (this.rgbt & 0x00ffffff) | (0xff000000 - (this.rgbt & 0xff000000));
     }
 

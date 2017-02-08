@@ -1,6 +1,8 @@
 package zombe.core.util;
 
 
+import java.lang.*;
+
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;

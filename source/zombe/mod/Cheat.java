@@ -38,7 +38,7 @@ public final class Cheat extends ZMod {
     private static float optSeeDist, optShowMobsRange;
 
     private static boolean optCheatInfArrows;
-    @Nullable private static boolean cheating = false, cheatShowMobs = false, cheatShowOres = false, cheatSee, cheatDamage[], cheatHighlight;
+    private static boolean cheating = false, cheatShowMobs = false, cheatShowOres = false, cheatSee, cheatDamage[], cheatHighlight;
     private static int cheatCur = 0, cheatUpdate;
     private static float cheatGamma;
     private static boolean cheatCarryBlocks[], cheatCarryOverride;
@@ -46,7 +46,10 @@ public final class Cheat extends ZMod {
     @Nullable private static Color cheatMobs[], cheatOres[], cheatType[];
     @Nullable private static Vec3d cheatMark[];
     private static int cheatArrowCount;
-    private static final int MOBS_MAX = ZWrapper.MAXTYPE, ORES_MAX = 4096, ITEMS_MAX = 400, MARKS_MAX = 16384;
+    private static final int MOBS_MAX = ZWrapper.MAXTYPE;
+    private static final int ORES_MAX = 4096;
+    private static final int ITEMS_MAX = 400;
+    private static final int MARKS_MAX = 16384;
 
     public Cheat() {
         super("cheat", "1.8", "9.0.0");
@@ -123,26 +126,26 @@ public final class Cheat extends ZMod {
         keyRemoveFire = Keyboard.KEY_NONE;
         //keyCheatRemoveFire = getSetBind(keyCheatRemoveFire, "keyCheatRemoveFire",    Keyboard.KEY_N, "Remove fire nearby");
 
-        keyCheat = getOptionKey("keyCheat");
+        keyCheat     = getOptionKey("keyCheat");
         keyHighlight = getOptionKey("keyCheatHighlight");
-        keyHealth = getOptionKey("keyCheatHealth");
-        keyDamage = getOptionKey("keyCheatDamage");
-        keyShowMobs = getOptionKey("keyCheatShowMobs");
-        keyShowOres = getOptionKey("keyCheatShowOres");
-        keySee = getOptionKey("keyCheatSee");
-        optShowMobsRange = getOptionFloat("optCheatShowMobsRange");
+        keyHealth    = getOptionKey("keyCheatHealth");
+        keyDamage    = getOptionKey("keyCheatDamage");
+        keyShowMobs  = getOptionKey("keyCheatShowMobs");
+        keyShowOres  = getOptionKey("keyCheatShowOres");
+        keySee       = getOptionKey("keyCheatSee");
+        optShowMobsRange  = getOptionFloat("optCheatShowMobsRange");
         optShowOresRangeH = getOptionInt("optCheatShowOresRangeH");
         optShowOresRangeV = getOptionInt("optCheatShowOresRangeV");
-        optSeeDist = getOptionFloat("optCheatSeeDist");
-        optCheat = getOptionBool("optCheat");
-        optSeeIsToggle = getOptionBool("optCheatSeeIsToggle");
-        optShowMobsSize = getOptionBool("optCheatShowMobsSize");
+        optSeeDist       = getOptionFloat("optCheatSeeDist");
+        optCheat         = getOptionBool("optCheat");
+        optSeeIsToggle   = getOptionBool("optCheatSeeIsToggle");
+        optShowMobsSize  = getOptionBool("optCheatShowMobsSize");
         optRestoreHealth = getOptionBool("optCheatRestoreHealth");
         optDisableDamage = getOptionBool("optCheatDisableDamage");
-        optFallDamage = getOptionBool("optCheatFallDamage");
-        optFireImmune = getOptionBool("optCheatFireImmune");
-        optNerfEnderman = getOptionBool("optCheatNerfEnderman");
-        optNoAir = getOptionBool("optCheatNoAir");
+        optFallDamage    = getOptionBool("optCheatFallDamage");
+        optFireImmune    = getOptionBool("optCheatFireImmune");
+        optNerfEnderman  = getOptionBool("optCheatNerfEnderman");
+        optNoAir         = getOptionBool("optCheatNoAir");
 
         optCheatInfArrows = getOptionBool("optCheatInfArrows");
 
@@ -294,6 +297,7 @@ public final class Cheat extends ZMod {
         if (!cheatShowMobs && !cheatShowOres && !optShowHealth) {
             return;
         }
+        
         List list = getEntities();
         Entity view = getView();
 
@@ -308,6 +312,7 @@ public final class Cheat extends ZMod {
                 if (!(obj instanceof EntityLiving) || obj == view) {
                     continue;
                 }
+                
                 EntityLiving ent = (EntityLiving) obj;
                 Vec3d pos = getPositionDelta(ent, delta);
                 float health = getHealth(ent);
@@ -324,6 +329,7 @@ public final class Cheat extends ZMod {
                 if (d < 0.1 || d > 64) {
                     continue;
                 }
+                
                 dx /= d;
                 dz /= d;
                 while (health > 0) {
@@ -357,6 +363,7 @@ public final class Cheat extends ZMod {
                 if (col == null || obj == view) {
                     continue;
                 }
+                
                 Vec3d pos = getPositionDelta(ent, delta);
                 mx = getX(pos);
                 my = getY(pos) + getYFix(ent);
@@ -367,6 +374,7 @@ public final class Cheat extends ZMod {
                 if (optShowMobsRange > 0 && dx * dx + dy * dy + dz * dz > range) {
                     continue;
                 }
+                
                 float height = (optShowMobsSize || !(ent instanceof EntityLiving)) ? getHeight(ent) : 2.0f;
                 GL11.glColor3ub(col.rb, col.gb, col.bb);
                 GL11.glVertex3d(dx, dy, dz);
@@ -404,11 +412,13 @@ public final class Cheat extends ZMod {
         GL11.glEnd();
     }
 
+    @Nullable
     @Override
     protected String getTag() {
         if (!modCheatAllowed || !cheating) {
             return null;
         }
+        
         String tag = tagCheat;
         if (cheatShowMobs) {
             tag += ' ' + tagMobs;

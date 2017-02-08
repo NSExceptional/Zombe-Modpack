@@ -58,7 +58,10 @@ public final class Motion extends ZMod {
     private static void onClientUpdate(@Nonnull EntityPlayer player) {
         checkDummy(player);
         // if position was changed between two updates,
-        if (clientPosition != null && (getX(clientPosition) != getPrevX(player) || getY(clientPosition) != getPrevY(player) || getZ(clientPosition) != getPrevZ(player))) {
+        if (clientPosition != null
+            && (getX(clientPosition) != getPrevX(player)
+             || getY(clientPosition) != getPrevY(player)
+             || getZ(clientPosition) != getPrevZ(player))) {
             // then emulate the handling of S08PacketPlayerPosLook
             serverMotion = clientMotion = getMotion(player);
             serverPosition = getPosition(player);
@@ -76,7 +79,7 @@ public final class Motion extends ZMod {
         setMotion(serverDummy, serverMotion);
         serverDummy.onUpdate();
         serverNextPosition = getPosition(serverDummy);
-        serverNextMotion = getMotion(serverDummy);
+        serverNextMotion   = getMotion(serverDummy);
         anticipated = true;
     }
 
@@ -178,8 +181,7 @@ public final class Motion extends ZMod {
         }
     }
 
-    private static void emulateHandleMotion(
-            @Nonnull EntityPlayer player, @Nullable Vec3d newPosition, boolean packetOnGround) {
+    private static void emulateHandleMotion(@Nonnull EntityPlayer player, @Nullable Vec3d newPosition, boolean packetOnGround) {
         // emulate server handling of C03PacketPlayer
         Vec3d oldPosition = serverPosition;
         if (newPosition == null) {
@@ -188,13 +190,13 @@ public final class Motion extends ZMod {
         if (player.isRiding()) {
             // needs improvement
             serverPosition = serverNextPosition = newPosition;
-            serverMotion = serverNextMotion;
+            serverMotion   = serverNextMotion;
             return;
         }
         if (isSleeping(player)) {
             // needs improvement
             serverPosition = serverNextPosition = oldPosition;
-            serverMotion = serverNextMotion;
+            serverMotion   = serverNextMotion;
             return;
         }
         // server update part
@@ -203,10 +205,10 @@ public final class Motion extends ZMod {
             setMotion(serverDummy, serverMotion);
             serverDummy.onUpdate();
             serverNextPosition = getPosition(serverDummy);
-            serverNextMotion = getMotion(serverDummy);
+            serverNextMotion   = getMotion(serverDummy);
         }
         serverPosition = serverNextPosition;
-        serverMotion = serverNextMotion;
+        serverMotion   = serverNextMotion;
         anticipated = false;
         // moved too quickly check
         if (isMultiplayer() && isMoveTooQuick(newPosition)) {
@@ -242,7 +244,7 @@ public final class Motion extends ZMod {
         // serverUpdateMountedMovingPlayer(serverDummy)
         // serverDummy.handleFalling(getY(serverDummy) - getY(oldPosition), packetOnGround);
         serverNextPosition = serverPosition = getPosition(serverDummy);
-        serverNextMotion = serverMotion = getMotion(serverDummy);
+        serverNextMotion   = serverMotion   = getMotion(serverDummy);
     }
 
     private static boolean isMoveTooQuick(@Nonnull Vec3d move) {
@@ -327,5 +329,4 @@ public final class Motion extends ZMod {
         this.quit();
         this.init();
     }
-
 }

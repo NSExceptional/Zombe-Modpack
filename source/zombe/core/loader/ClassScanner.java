@@ -5,9 +5,9 @@ import zombe.core.util.ClassHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.lang.*;
+import java.net.*;
+import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 

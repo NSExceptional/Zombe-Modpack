@@ -15,14 +15,10 @@ public class TimeHelper {
 
     @Nonnull
     public static String getRealTime(long time) {
-        long d = time / 1728000;
-        time %= 1728000;
-        long h = time / 72000;
-        time %= 72000;
-        long m = time / 1200;
-        time %= 1200;
-        long s = time / 20;
-        time %= 20;
+        long d = time / 1728000; time %= 1728000;
+        long h = time / 72000; time %= 72000;
+        long m = time / 1200; time %= 1200;
+        long s = time / 20; time %= 20;
         long u = time / 2;
 
         String ds = (h < 10 ? "\u00a7f : \u00a790" : "\u00a7f : \u00a79");

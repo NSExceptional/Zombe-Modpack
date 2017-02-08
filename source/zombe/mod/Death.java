@@ -43,7 +43,7 @@ public final class Death extends ZMod {
         }
         if (!optLoseExp) {
             ent.experienceTotal = 0;
-            ent.experience = 0;
+            ent.experience      = 0;
             ent.experienceLevel = 0;
         }
     }
@@ -66,7 +66,7 @@ public final class Death extends ZMod {
         if (!optLoseExp) {
             deathHaveExp = true;
             deathXpTotal = ent.experienceTotal;
-            deathXpP = ent.experience;
+            deathXpP     = ent.experience;
             deathXpLevel = ent.experienceLevel;
         }
     }
@@ -87,7 +87,7 @@ public final class Death extends ZMod {
         }
         if (!optLoseExp && deathHaveExp) {
             ent.experienceTotal = deathXpTotal;
-            ent.experience = deathXpP;
+            ent.experience      = deathXpP;
             ent.experienceLevel = deathXpLevel;
         }
     }
@@ -169,6 +169,4 @@ public final class Death extends ZMod {
             }
         }
     }
-
-
 }

@@ -64,19 +64,19 @@ public final class Sun extends ZMod {
         tagSun = getOptionString("tagSunTime");
 
         optTimeStep = 20 * getOptionInt("optSunTimeStep");
-        keyTimeAdd = getOptionKey("keySunTimeAdd");
-        keyTimeSub = getOptionKey("keySunTimeSub");
-        keyStop = getOptionKey("keySunStop");
-        keyTimeNormal = getOptionKey("keySunTimeNormal");
-        keyServer = getOptionKey("keySunServer");
+        keyTimeAdd       = getOptionKey("keySunTimeAdd");
+        keyTimeSub       = getOptionKey("keySunTimeSub");
+        keyStop          = getOptionKey("keySunStop");
+        keyTimeNormal    = getOptionKey("keySunTimeNormal");
+        keyServer        = getOptionKey("keySunServer");
         optServerCmdPlus = getOptionBool("optSunServerCmdPlus");
-        optServerCmd = getOptionString("optSunServerCmd");
+        optServerCmd     = getOptionString("optSunServerCmd");
     }
 
     @Override
     protected void onWorldChange() {
         sunTimeOffset = 0;
-        sunTimeStop = false;
+        sunTimeStop   = false;
         sunServerSetTime = false;
     }
 

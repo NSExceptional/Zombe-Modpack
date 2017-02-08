@@ -1,36 +1,35 @@
 package zombe.core.gui;
 
 
+import zombe.core.config.IntegerConstraint;
+
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class ScrollBar extends Slider {
+public class ScrollBar extends Slider<Integer> {
 
-    private float inner, outer;
+    private double inner, outer;
 
-    public ScrollBar(String name, @Nonnull Scale scale, @Nonnull Axis axis, float innerlength, float outerlength) {
-        super(name, scale, 0, 0);
-        setAxis(axis);
-        if (scale == Scale.DISCRETE) {
-            setValue((Integer) 0);
-        } else {
-            setValue((Float) 0f);
-        }
-        setLengths(innerlength, outerlength);
+    public ScrollBar(@Nullable String name, @Nonnull Axis axis, double innerlength, double outerlength) {
+        super(name, Scale.DISCRETE, new IntegerConstraint(0, 0));
+        this.setAxis(axis);
+        this.setValue(0);
+        this.setLengths(innerlength, outerlength);
     }
 
-    public ScrollBar(String name, @Nonnull Scale scale, @Nonnull Axis axis) {
-        this(name, scale, axis, 0, 0);
+    public ScrollBar(@Nullable String name, @Nonnull Axis axis) {
+        this(name, axis, 0, 0);
     }
 
-    public void setLengths(float inner, float outer) {
+    public void setLengths(double inner, double outer) {
         this.inner = inner;
         this.outer = outer;
         if (inner <= outer) {
-            setRange(0, 0);
-            setFit(1f);
+            this.setRange(0, 0);
+            this.setFit(1f);
         } else {
-            setRange(0, inner - outer);
-            setFit(outer / inner);
+            this.setRange(0, inner - outer);
+            this.setFit(outer / inner);
         }
     }
 
@@ -38,20 +37,19 @@ public class ScrollBar extends Slider {
     public void mouseReleased(int mouseX, int mouseY, int mouseButton) {
         super.mouseReleased(mouseX, mouseY, mouseButton);
         if (mouseButton == 0) {
-            deactivate();
+            this.deactivate();
         }
     }
 
     @Override
     public void mouseClickMove(int mouseX, int mouseY, int mouseButton) {
         super.mouseClickMove(mouseX, mouseY, mouseButton);
-        if (mouseButton == 0 && !contains(mouseX, mouseY) && isActivated()) {
-            setValueHovered(mouseX, mouseY);
+        if (mouseButton == 0 && !this.contains(mouseX, mouseY) && this.isActivated()) {
+            this.setValueHovered(mouseX, mouseY);
         }
     }
 
     @Override
     public void drawValue() {
     }
-
 }

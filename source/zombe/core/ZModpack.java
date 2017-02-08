@@ -1,8 +1,8 @@
 package zombe.core;
 
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.*;
+import net.minecraft.client.entity.*;
 import net.minecraft.client.gui.ChatLine;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -10,17 +10,12 @@ import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.Vec3d;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
-import zombe.core.config.Config;
-import zombe.core.config.Option;
-import zombe.core.content.ConfigurationScreen;
-import zombe.core.gui.Keys;
+
+import static zombe.core.ZWrapper.*;
+
 import zombe.core.loader.ZModLoader;
 import zombe.core.util.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -28,7 +23,11 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.logging.*;
 
-import static zombe.core.ZWrapper.*;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * The modpack's core class.

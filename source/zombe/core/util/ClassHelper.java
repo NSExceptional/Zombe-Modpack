@@ -4,6 +4,7 @@ package zombe.core.util;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.net.URL;
+import java.security.ProtectionDomain;
 import java.security.CodeSource;
 
 public final class ClassHelper {

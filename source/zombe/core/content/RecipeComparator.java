@@ -8,11 +8,14 @@ import java.util.Comparator;
 public class RecipeComparator implements Comparator<IRecipe> {
 
     public int compare(IRecipe p1, IRecipe p2) {
-        return p1 instanceof ShapelessRecipes && p2 instanceof ShapedRecipes ? 1 : (p2 instanceof ShapelessRecipes && p1 instanceof ShapedRecipes ? -1 : (p2.getRecipeSize() < p1.getRecipeSize() ? -1 : (p2.getRecipeSize() > p1.getRecipeSize() ? 1 : 0)));
+        if (p1 instanceof ShapelessRecipes && p2 instanceof ShapedRecipes) {
+            return 1;
+        } else if (p2 instanceof ShapelessRecipes && p1 instanceof ShapedRecipes) {
+            return -1;
+        } else if (p2.getRecipeSize() < p1.getRecipeSize()) {
+            return -1;
+        } else {
+            return (p2.getRecipeSize() > p1.getRecipeSize() ? 1 : 0);
+        }
     }
-
-    /*public int compare(Object p1, Object p2) {
-        return this.compare((IRecipe)p1, (IRecipe)p2);
-    }*/
-
 }
