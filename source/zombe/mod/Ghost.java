@@ -64,16 +64,6 @@ public final class Ghost extends ZMod {
         this.addOption("optGhostResetOnGetMouseOver", "Temporarily reset view on getMouseOver", false);
     }
 
-
-
-
-
-
-
-
-
-
-
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
         if (name == "isControllingPlayer") {
@@ -170,58 +160,7 @@ public final class Ghost extends ZMod {
         return isControllingPlayer() || optProjectionSwing;
     }
 
-    @Override
-    protected Object handle(@Nonnull String name, Object arg) {
-        if (name == "isControllingPlayer") {
-            return isControllingPlayer();
-        }
-        if (name == "isControllingView") {
-            return isControllingView();
-        }
-        if (name == "getControlledEntity") {
-            return getControlledEntity();
-        }
-        if (name == "shouldUpdatePlayerActionState") {
-            return shouldUpdatePlayerActionState();
-        }
-        if (name == "onSetAngles") {
-            return onSetAngles((Orientation) arg);
-        }
-        if (name == "allowSwing") {
-            return allowSwing();
-        }
-        if (name == "allowItemSync") {
-            return allowItemSync();
-        }
-        if (name == "onClientUpdate") {
-            onClientUpdate();
-        }
-        if (name == "beforeSendMotion") {
-            beforeReset(optResetOnSendMotion);
-        }
-        if (name == "afterSendMotion") {
-            afterReset(optResetOnSendMotion);
-        }
-        if (name == "beforeUpdateRenderer") {
-            beforeReset(doResetOnUpdateRenderer);
-        }
-        if (name == "afterUpdateRenderer") {
-            afterReset(doResetOnUpdateRenderer);
-        }
-        if (name == "catchUpdateRenderer") {
-            doResetOnUpdateRenderer = true;
-        }
-        if (name == "beforeGetMouseOver") {
-            beforeReset(doResetOnGetMouseOver);
-        }
-        if (name == "afterGetMouseOver") {
-            afterReset(doResetOnGetMouseOver);
-        }
-        if (name == "catchGetMouseOver") {
-            doResetOnGetMouseOver = true;
-        }
-        return arg;
-    }    private static boolean allowItemSync() {
+    private static boolean allowItemSync() {
         return isControllingPlayer() || !optProjectionSpoof;
     }
 
@@ -234,7 +173,9 @@ public final class Ghost extends ZMod {
         ghostProjectionLock = false;
         ghostUnspoof = false;
         playerMovementInput = null;
-    }    @Nonnull
+    }
+
+    @Nonnull
     private static Orientation onSetAngles(@Nonnull Orientation rot) {
         if (getPlayer() == null || isControllingPlayer()) {
             return rot;
@@ -274,7 +215,9 @@ public final class Ghost extends ZMod {
         optResetOnSendMotion = getOptionBool("optGhostResetOnSendMotion");
         doResetOnUpdateRenderer = optResetOnUpdateRenderer = getOptionBool("optGhostResetOnUpdateRenderer");
         doResetOnGetMouseOver = optResetOnGetMouseOver = getOptionBool("optGhostResetOnGetMouseOver");
-    }    private static void afterBlockDig() {
+    }
+
+    private static void afterBlockDig() {
         if (isControllingProjection() && optProjectionSpoof) {
             if (ghostUnspoof) {
                 getPlayerController().switchToIdleItem();
@@ -296,7 +239,9 @@ public final class Ghost extends ZMod {
         ghostPossession = null;
         ghostProjection = null;
         playerMovementInput = null;
-    }    private static void beforeBlockPlace() {
+    }
+
+    private static void beforeBlockPlace() {
         if (isControllingProjection() && optProjectionSpoof) {
             if (!ghostUnspoof) {
                 getPlayerController().switchToRealItem();
@@ -509,7 +454,9 @@ public final class Ghost extends ZMod {
                 ghostProjection.placeAt(ghostPossession != null ? ghostPossession : player);
             }
         }
-    }    private static void afterBlockPlace() {
+    }
+
+    private static void afterBlockPlace() {
         if (isControllingProjection() && optProjectionSpoof) {
             if (ghostUnspoof) {
                 getPlayerController().switchToIdleItem();

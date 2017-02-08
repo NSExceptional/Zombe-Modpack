@@ -297,7 +297,7 @@ public final class Cheat extends ZMod {
         if (!cheatShowMobs && !cheatShowOres && !optShowHealth) {
             return;
         }
-        
+
         List list = getEntities();
         Entity view = getView();
 
@@ -312,7 +312,7 @@ public final class Cheat extends ZMod {
                 if (!(obj instanceof EntityLiving) || obj == view) {
                     continue;
                 }
-                
+
                 EntityLiving ent = (EntityLiving) obj;
                 Vec3d pos = getPositionDelta(ent, delta);
                 float health = getHealth(ent);
@@ -329,7 +329,7 @@ public final class Cheat extends ZMod {
                 if (d < 0.1 || d > 64) {
                     continue;
                 }
-                
+
                 dx /= d;
                 dz /= d;
                 while (health > 0) {
@@ -363,7 +363,7 @@ public final class Cheat extends ZMod {
                 if (col == null || obj == view) {
                     continue;
                 }
-                
+
                 Vec3d pos = getPositionDelta(ent, delta);
                 mx = getX(pos);
                 my = getY(pos) + getYFix(ent);
@@ -374,7 +374,7 @@ public final class Cheat extends ZMod {
                 if (optShowMobsRange > 0 && dx * dx + dy * dy + dz * dz > range) {
                     continue;
                 }
-                
+
                 float height = (optShowMobsSize || !(ent instanceof EntityLiving)) ? getHeight(ent) : 2.0f;
                 GL11.glColor3ub(col.rb, col.gb, col.bb);
                 GL11.glVertex3d(dx, dy, dz);
@@ -418,7 +418,7 @@ public final class Cheat extends ZMod {
         if (!modCheatAllowed || !cheating) {
             return null;
         }
-        
+
         String tag = tagCheat;
         if (cheatShowMobs) {
             tag += ' ' + tagMobs;
@@ -499,20 +499,7 @@ public final class Cheat extends ZMod {
         return cheating;
     }
 
-    @Override
-    protected String getTag() {
-        if (!modCheatAllowed || !cheating) {
-            return null;
-        }
-        String tag = tagCheat;
-        if (cheatShowMobs) {
-            tag += ' ' + tagMobs;
-        }
-        if (cheatShowOres) {
-            tag += ' ' + tagOres;
-        }
-        return tag;
-    }    private static void startCheatRender() {
+    private static void startCheatRender() {
         try {
             if (modCheatAllowed && cheating && cheatSee) {
                 GuiHelper.setObliqueNearPlaneClip(0.0f, 0.0f, -1.0f, -optSeeDist);

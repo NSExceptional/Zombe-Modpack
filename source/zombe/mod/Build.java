@@ -298,181 +298,6 @@ public final class Build extends ZMod {
                     int meta = getMeta(stack);
                     Block block = getBlock(stack);
                     if (block == null) {
-                        if (id == 326) {
-                            block = getBlock(9); // water bucket
-                        }
-                        if (id == 327) {
-                            block = getBlock(11); // lava bucket
-                        }
-                        if (id == 355) {
-                            block = getBlock(26); // bed
-                        }
-                        if (id == 323) {
-                            block = getBlock(63); // sign
-                        }
-                        if (id == 259) {
-                            block = getBlock(51); // flint & steel
-                        }
-                        if (id == 331) {
-                            block = getBlock(55); // redstone
-                        }
-                        if (id == 356) {
-                            block = getBlock(93); // repeater
-                        }
-                        if (id == 404) {
-                            block = getBlock(149); // comparator
-                        }
-                        if (id == 324) {
-                            block = getBlock(64);  // door oak
-                        }
-                        if (id == 330) {
-                            block = getBlock(71);  // door iron
-                        }
-                        if (id == 427) {
-                            block = getBlock(193); // door spruce
-                        }
-                        if (id == 428) {
-                            block = getBlock(194); // door birch
-                        }
-                        if (id == 429) {
-                            block = getBlock(195); // door jungle
-                        }
-                        if (id == 430) {
-                            block = getBlock(196); // door acacia
-                        }
-                        if (id == 431) {
-                            block = getBlock(197); // door dark oak
-                        }
-                    }
-                    if (block != null) {
-                        serverActions.add(new int[]{ BUILD_ACTION_SET | (isKeyDownThisTick(keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(keyRemove) ? BUILD_MODIFIER_REMOVE : 0), buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ, getBlockIdMeta(getId(block), meta) });
-                    }
-                } else if (wasKeyPressedThisTick(keyPaste) && !isMultiplayer()) {
-                    if (buildMark == 1 && buildBuffer != null) {
-                        buildX2 = buildEX = buildSX + bufferWX - 1;
-                        buildY2 = buildEY = buildSY + bufferWY - 1;
-                        buildZ2 = buildEZ = buildSZ + bufferWZ - 1;
-                        buildMark = 2;
-                    } else if (buildBuffer != null) {
-                        serverActions.add(new int[]{ BUILD_ACTION_PASTE | (isKeyDownThisTick(keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(keyRemove) ? BUILD_MODIFIER_REMOVE : 0), buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ });
-                    }
-                }
-            }
-
-            // build actions
-            if (clientActions != null && !clientActions.isEmpty()) {
-                for (int[] action : clientActions) {
-                    buildAction(world, player, action);
-                }
-                clientActions.clear();
-            }
-        } //synchronized
-    }
-
-    @Override
-    protected void onClientTick(@Nonnull EntityPlayerSP player) {
-        synchronized (this) {
-            if (!building || isInMenu() || !optLockQuantity || isMultiplayer()) {
-                buildHandSlot = -1;
-            }
-            if (isInMenu()) {
-                return;
-            }
-            if (wasKeyPressedThisTick(keyToggle)) {
-                building = !building;
-            }
-            if (!building) {
-                buildMark = 0;
-                return;
-            }
-
-            World world = getWorld(player);
-
-            // sets
-            if (isKeyDownThisTick(keyA) || isKeyDownThisTick(keyB)) {
-                int set = -1;
-                for (int i = Keyboard.KEY_1; i <= Keyboard.KEY_9; ++i) {
-                    if (wasKeyPressedThisTick(i)) {
-                        set = i - Keyboard.KEY_1;
-                    }
-                }
-                if (set != -1) {
-                    if (isKeyDownThisTick(keyB)) {
-                        set += 9;
-                    }
-                    int[] data = new int[10];
-                    data[0] = BUILD_ACTION_ITEMSET;
-                    for (int slot = 0; slot < 9; ++slot) {
-                        data[slot + 1] = buildSets[set][slot];
-                    }
-                    serverActions.add(data);
-                }
-            }
-
-            // deselect
-            if (wasKeyPressedThisTick(keyDeselect)) {
-                if (buildMark == 2) {
-                    buildMark = 1;
-                    buildSX = buildEX = buildX2 = buildX1;
-                    buildSY = buildEY = buildY2 = buildY1;
-                    buildSZ = buildEZ = buildZ2 = buildZ1;
-                } else {
-                    buildMark = 0;
-                }
-            }
-
-            // action commands
-            if (optExtension && (wasKeyPressedThisTick(keyMark) || wasKeyPressedThisTick(keyPick))) {
-                // new marker position
-                Entity view = getView();
-                if (view == null) {
-                    view = player;
-                }
-                int x = fix(getX(view));
-                int y = fix(getY(view) + getEyeHeight(view)) - 1;
-                int z = fix(getZ(view));
-                if (isKeyDownThisTick(keyFeet)) {
-                    y -= 1;
-                } else if (isKeyDownThisTick(keyHead)) {
-                    y += 1;
-                } else if (wasKeyPressedThisTick(keyPick)) {
-                    BlockFace face = getBlockFace(rayTrace(view, 128, 1f));
-                    if (face != null) {
-                        x = face.x;
-                        y = face.y;
-                        z = face.z;
-                    }
-                }
-                // update markers
-                if (buildMark <= 0) {
-                    buildMark = 1;
-                    buildSX = buildEX = buildX2 = buildX1 = x;
-                    buildSY = buildEY = buildY2 = buildY1 = y;
-                    buildSZ = buildEZ = buildZ2 = buildZ1 = z;
-                } else {
-                    buildMark = 2;
-                    buildX2 = buildX1;
-                    buildY2 = buildY1;
-                    buildZ2 = buildZ1;
-                    buildX1 = x;
-                    buildY1 = y;
-                    buildZ1 = z;
-                    buildSX = Math.min(buildX1, buildX2);
-                    buildSY = Math.min(buildY1, buildY2);
-                    buildSZ = Math.min(buildZ1, buildZ2);
-                    buildEX = Math.max(buildX1, buildX2);
-                    buildEY = Math.max(buildY1, buildY2);
-                    buildEZ = Math.max(buildZ1, buildZ2);
-                }
-            } else if (buildMark > 0) {
-                if (wasKeyPressedThisTick(keyCopy)) {
-                    buildAction(world, player, new int[]{ BUILD_ACTION_COPY, buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ });
-                } else if (wasKeyPressedThisTick(keySet) && !isMultiplayer()) {
-                    ItemStack stack = getStacks(player)[getCurrentSlot(player)];
-                    int id = getId(stack);
-                    int meta = getMeta(stack);
-                    Block block = getBlock(stack);
-                    if (block == null) {
                         if (id == 326) block = getBlock(9); // water bucket
                         if (id == 327) block = getBlock(11); // lava bucket
                         if (id == 355) block = getBlock(26); // bed
@@ -512,7 +337,9 @@ public final class Build extends ZMod {
                 clientActions.clear();
             }
         } //synchronized
-    }    private static void buildAction(@Nonnull World world, @Nonnull EntityPlayer player, int[] data) {
+    }
+
+    private static void buildAction(@Nonnull World world, @Nonnull EntityPlayer player, int[] data) {
         final int action = data[0] & BUILD_ACTION_BITS;
 
         if (action == BUILD_ACTION_ITEMSET) {
@@ -621,7 +448,7 @@ public final class Build extends ZMod {
                                 int cy = (y - sy) % bufferWY;
                                 int cz = (z - sz) % bufferWZ;
                                 int at = (cx * bufferWY + cy) * bufferWZ + cz;
-                                
+
                                 setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x, y, z);
                                 if (buildBufferNBT[at] != null) {
                                     setTileEntityFromCopy(world, x, y, z, buildBufferNBT[at]);
@@ -654,7 +481,7 @@ public final class Build extends ZMod {
                             int cy = (y - sy) % bufferWY;
                             int cz = (z - sz) % bufferWZ;
                             int at = (cx * bufferWY + cy) * bufferWZ + cz;
-                            
+
                             setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x, y, z);
                             if (buildBufferNBT[at] != null) {
                                 setTileEntityFromCopy(world, x, y, z, buildBufferNBT[at]);
@@ -775,6 +602,5 @@ public final class Build extends ZMod {
         }
         return tagBuild;
     }
-
 }
 

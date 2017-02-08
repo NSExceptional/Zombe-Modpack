@@ -7,6 +7,7 @@ import org.lwjgl.input.Keyboard;
 import zombe.core.ZMod;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static zombe.core.ZWrapper.*;
 
@@ -17,8 +18,8 @@ public final class Cloud extends ZMod {
     private static boolean optShow;
     private static float optOffset;
 
-    private static boolean vanillaShow, cloudShow, cloudVanilla;
     @Nullable private static Entity view = null;
+    private static boolean vanillaShow, cloudShow, cloudVanilla;
     private static double viewY;
     private static double viewPrevY;
     private static double viewLastY;
