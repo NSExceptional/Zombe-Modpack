@@ -13,14 +13,13 @@ import static zombe.core.ZWrapper.*;
 
 public final class Death extends ZMod {
 
-    private static boolean optDropInv, optLoseExp;
-    private static int optHPPenalty;
-    private static boolean deathJustDied;
-    private static boolean deathHaveInv, deathHaveExp;
-    @Nullable private static ItemStack deathInv[];
-    @Nullable private static ItemStack deathArmor[];
-    private static int deathXpLevel, deathXpTotal;
-    private static float deathXpP;
+    @Nullable private ItemStack deathInv[];
+    @Nullable private ItemStack deathArmor[];
+    private boolean optDropInv, optLoseExp;
+    private boolean deathJustDied;
+    private boolean deathHaveInv, deathHaveExp;
+    private int deathXpLevel, deathXpTotal, optHPPenalty;
+    private float deathXpP;
 
     public Death() {
         super("death", "1.8", "9.0.0");
@@ -31,72 +30,76 @@ public final class Death extends ZMod {
         this.addOption("optDeathHPPenalty", "Respawn HP penalty", 0, 0, 100);
     }
 
-    private static void deathVoid(@Nonnull EntityPlayer ent) {
-        if (!optDropInv) {
+    private void deathVoid(@Nonnull EntityPlayer ent) {
+        assert this.deathInv != null && this.deathArmor != null;
+
+        if (!this.optDropInv) {
             InventoryPlayer inv = ent.inventory;
-            for (int i = 0; i < deathInv.length; ++i) {
+            for (int i = 0; i < this.deathInv.length; ++i) {
                 inv.mainInventory.set(i, ItemStack.EMPTY);
             }
-            for (int i = 0; i < deathArmor.length; ++i) {
+            for (int i = 0; i < this.deathArmor.length; ++i) {
                 inv.armorInventory.set(i, ItemStack.EMPTY);
             }
         }
-        if (!optLoseExp) {
+        if (!this.optLoseExp) {
             ent.experienceTotal = 0;
             ent.experience      = 0;
             ent.experienceLevel = 0;
         }
     }
 
-    private static void deathSave(@Nonnull EntityPlayer ent) {
-        if (!optDropInv) { // save inventory
-            deathHaveInv = true;
+    private void deathSave(@Nonnull EntityPlayer ent) {
+        if (!this.optDropInv) { // save inventory
+            this.deathHaveInv = true;
             InventoryPlayer inv = ent.inventory;
-            deathInv = new ItemStack[inv.mainInventory.size()];
-            deathArmor = new ItemStack[inv.armorInventory.size()];
-            for (int i = 0; i < deathInv.length; ++i) {
+            this.deathInv = new ItemStack[inv.mainInventory.size()];
+            this.deathArmor = new ItemStack[inv.armorInventory.size()];
+            for (int i = 0; i < this.deathInv.length; ++i) {
                 ItemStack is = inv.mainInventory.get(i);
-                deathInv[i] = is.copy();
+                this.deathInv[i] = is.copy();
             }
-            for (int i = 0; i < deathArmor.length; ++i) {
+            for (int i = 0; i < this.deathArmor.length; ++i) {
                 ItemStack is = inv.armorInventory.get(i);
-                deathArmor[i] = is.copy();
+                this.deathArmor[i] = is.copy();
             }
         }
-        if (!optLoseExp) {
-            deathHaveExp = true;
-            deathXpTotal = ent.experienceTotal;
-            deathXpP     = ent.experience;
-            deathXpLevel = ent.experienceLevel;
+        if (!this.optLoseExp) {
+            this.deathHaveExp = true;
+            this.deathXpTotal = ent.experienceTotal;
+            this.deathXpP = ent.experience;
+            this.deathXpLevel = ent.experienceLevel;
         }
     }
 
-    private static void deathLoad(@Nonnull EntityPlayer ent) {
-        if (!optDropInv && deathHaveInv) { // load inventory
+    private void deathLoad(@Nonnull EntityPlayer ent) {
+        assert this.deathInv != null && this.deathArmor != null;
+
+        if (!this.optDropInv && this.deathHaveInv) { // load inventory
             InventoryPlayer inv = ent.inventory;
-            for (int i = 0; i < deathInv.length; ++i) {
-                ItemStack is = deathInv[i];
+            for (int i = 0; i < this.deathInv.length; ++i) {
+                ItemStack is = this.deathInv[i];
                 is = (is == null) ? ItemStack.EMPTY : is.copy();
                 inv.mainInventory.set(i, is);
             }
-            for (int i = 0; i < deathArmor.length; ++i) {
-                ItemStack is = deathArmor[i];
+            for (int i = 0; i < this.deathArmor.length; ++i) {
+                ItemStack is = this.deathArmor[i];
                 is = (is == null) ? ItemStack.EMPTY : is.copy();
                 inv.armorInventory.set(i, is);
             }
         }
-        if (!optLoseExp && deathHaveExp) {
-            ent.experienceTotal = deathXpTotal;
-            ent.experience      = deathXpP;
-            ent.experienceLevel = deathXpLevel;
+        if (!this.optLoseExp && this.deathHaveExp) {
+            ent.experienceTotal = this.deathXpTotal;
+            ent.experience      = this.deathXpP;
+            ent.experienceLevel = this.deathXpLevel;
         }
     }
 
-    private static void respawnDeathMod() {
+    private void respawnDeathMod() {
         // TODO: hook it somewhere
         EntityPlayerSP ent = getPlayer();
-        if (optHPPenalty != 0) {
-            float hp = getHealth(ent) - optHPPenalty;
+        if (this.optHPPenalty != 0) {
+            float hp = getHealth(ent) - this.optHPPenalty;
             if (hp < 1) {
                 hp = 1;
             }
@@ -106,9 +109,9 @@ public final class Death extends ZMod {
 
     private void clear() {
         synchronized (this) {
-            deathJustDied = false;
-            deathInv = null;
-            deathArmor = null;
+            this.deathJustDied = false;
+            this.deathInv = null;
+            this.deathArmor = null;
         }
     }
 
@@ -136,9 +139,9 @@ public final class Death extends ZMod {
     @Override
     protected void updateConfig() {
         synchronized (this) {
-            optDropInv = getOptionBool("optDeathDropInv");
-            optLoseExp = getOptionBool("optDeathLoseExp");
-            optHPPenalty = getOptionInt("optDeathHPPenalty");
+            this.optDropInv = getOptionBool("optDeathDropInv");
+            this.optLoseExp = getOptionBool("optDeathLoseExp");
+            this.optHPPenalty = getOptionInt("optDeathHPPenalty");
         }
     }
 
@@ -149,23 +152,23 @@ public final class Death extends ZMod {
 
     private void onPlayerDeath(@Nonnull EntityPlayerMP ent) {
         synchronized (this) {
-            deathSave(ent);
-            deathVoid(ent);
-            deathJustDied = true;
+            this.deathSave(ent);
+            this.deathVoid(ent);
+            this.deathJustDied = true;
         }
     }
 
     private void onServerUpdate(@Nonnull EntityPlayerMP ent) {
         synchronized (this) {
             if (!ent.isDead && getHealth(ent) > 0) {
-                if (deathJustDied) {
-                    deathLoad(ent);
-                    deathJustDied = false;
+                if (this.deathJustDied) {
+                    this.deathLoad(ent);
+                    this.deathJustDied = false;
                 } else {
-                    deathSave(ent);
+                    this.deathSave(ent);
                 }
             } else {
-                deathJustDied = true;
+                this.deathJustDied = true;
             }
         }
     }
