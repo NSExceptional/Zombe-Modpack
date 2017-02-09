@@ -21,35 +21,42 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static zombe.core.ZWrapper.*;
 
 public final class Cheat extends ZMod {
 
-    private static boolean modCheatAllowed = true;
-    private static String tagCheat, tagMobs, tagOres;
-    private static int keyCheat, keyShowMobs, keyShowOres, keySee, keyHighlight, keyRemoveFire, keyHealth, keyDamage;
-    private static boolean optCheat, optFallDamage, optDisableDamage, optRestoreHealth, optShowDangerous, optShowNeutral, optSeeIsToggle, optShowMobsSize;
-    private static boolean optInfArrows, optInfArmor, optInfSword, optInfTools, optFireImmune, optShowHealth;
-    private static boolean optNoAir, optNerfEnderman;
-    private static int optHighlightMode, optShowOresRangeH, optShowOresRangeV;
-    private static float optSeeDist, optShowMobsRange;
-
-    private static boolean optCheatInfArrows;
-    private static boolean cheating = false, cheatShowMobs = false, cheatShowOres = false, cheatSee, cheatDamage[], cheatHighlight;
-    private static int cheatCur = 0, cheatUpdate;
-    private static float cheatGamma;
-    private static boolean cheatCarryBlocks[], cheatCarryOverride;
-    @Nullable private static Field fCarryBlocks = getField(EntityEnderman.class, "ee_canCarryBlocks");
-    @Nullable private static Color cheatMobs[], cheatOres[], cheatType[];
-    @Nullable private static Vec3d cheatMark[];
-    private static int cheatArrowCount;
     private static final int MOBS_MAX = ZWrapper.MAXTYPE;
     private static final int ORES_MAX = 4096;
     private static final int ITEMS_MAX = 400;
     private static final int MARKS_MAX = 16384;
+
+    @Nonnull ArrayList<Color> cheatMobs = new ArrayList<>();
+    @Nonnull ArrayList<Color> cheatOres = new ArrayList<>();
+    @Nonnull ArrayList<Color> cheatType = new ArrayList<>();
+    @Nonnull ArrayList<Vec3d> cheatMark = new ArrayList<>();
+    @Nonnull private ArrayList<Boolean> cheatCarryBlocks = new ArrayList<>();
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    @Nonnull private ArrayList<Boolean> cheatDamage = new ArrayList<>();
+    @SuppressWarnings("ConstantConditions")
+    @Nonnull private Field fCarryBlocks = getField(EntityEnderman.class, "ee_canCarryBlocks");
+
+    private String tagCheat, tagMobs, tagOres;
+    private int keyCheat, keyShowMobs, keyShowOres, keySee, keyHighlight, keyRemoveFire, keyHealth, keyDamage;
+    private int optHighlightMode, optShowOresRangeH, optShowOresRangeV;
+    private int cheatCur = 0, cheatUpdate;
+    private int cheatArrowCount;
+    private float optSeeDist, optShowMobsRange;
+    private float cheatGamma;
+    private boolean modCheatAllowed = true;
+    private boolean optCheat, optFallDamage, optDisableDamage, optRestoreHealth, optShowDangerous, optShowNeutral, optSeeIsToggle, optShowMobsSize;
+    private boolean optInfArrows, optInfArmor, optInfSword, optInfTools, optFireImmune, optShowHealth;
+    private boolean optNoAir, optNerfEnderman;
+    private boolean optCheatInfArrows;
+
+    private boolean cheating = false, cheatShowMobs = false, cheatShowOres = false, cheatSee, cheatHighlight, cheatCarryOverride;
 
     public Cheat() {
         super("cheat", "1.8", "9.0.0");
@@ -92,70 +99,82 @@ public final class Cheat extends ZMod {
     }
 
     @Override
+    protected Object handle(@Nonnull String name, Object arg) {
+        switch (name) {
+            case "isCheating":
+                return this.isCheating();
+            case "onServerUpdate":
+                this.onServerUpdate((EntityPlayerMP) arg);
+                break;
+            case "afterPlayerMove":
+                this.afterPlayerMove();
+                break;
+            case "onSortAndRender":
+                this.startCheatRender();
+                break;
+        }
+
+        return arg;
+    }
+
+    @Override
     protected void init() {
-        if (cheatMobs == null) {
-            cheatMobs = new Color[MOBS_MAX];
-        }
-        if (cheatOres == null) {
-            cheatOres = new Color[ORES_MAX];
-        }
-        cheatType = new Color[MARKS_MAX];
-        cheatMark = new Vec3d[MARKS_MAX];
-        cheatCur = 0;
-        cheatUpdate = 0;
-        cheatDamage = new boolean[ITEMS_MAX];
+        this.cheatMobs.ensureCapacity(MOBS_MAX);
+        this.cheatOres.ensureCapacity(ORES_MAX);
+        this.cheatDamage.ensureCapacity(ITEMS_MAX);
+        this.cheatCur = 0;
+        this.cheatUpdate = 0;
     }
 
     @Override
     protected void quit() {
-        cheatMobs = null;
-        cheatOres = null;
-        cheatType = null;
-        cheatMark = null;
-        cheatDamage = null;
+        this.cheatMobs.clear();
+        this.cheatOres.clear();
+        this.cheatType.clear();
+        this.cheatMark.clear();
+        this.cheatDamage.clear();
     }
 
     @Override
     protected void updateConfig() {
-        tagCheat = getOptionString("tagCheater");
-        tagMobs = getOptionString("tagCheatShowMobs");
-        tagOres = getOptionString("tagCheatShowOres");
-        boolean prev = false;
-        optShowHealth = false;
+        this.tagCheat = getOptionString("tagCheater");
+        this.tagMobs = getOptionString("tagCheatShowMobs");
+        this.tagOres = getOptionString("tagCheatShowOres");
+        this.optShowHealth = false;
         //optCheatShowHealth = getSetBool(optCheatShowHealth, "optCheatShowHealth", true, "Show critter health");
-        keyRemoveFire = Keyboard.KEY_NONE;
+        this.keyRemoveFire = Keyboard.KEY_NONE;
         //keyCheatRemoveFire = getSetBind(keyCheatRemoveFire, "keyCheatRemoveFire",    Keyboard.KEY_N, "Remove fire nearby");
 
-        keyCheat     = getOptionKey("keyCheat");
-        keyHighlight = getOptionKey("keyCheatHighlight");
-        keyHealth    = getOptionKey("keyCheatHealth");
-        keyDamage    = getOptionKey("keyCheatDamage");
-        keyShowMobs  = getOptionKey("keyCheatShowMobs");
-        keyShowOres  = getOptionKey("keyCheatShowOres");
-        keySee       = getOptionKey("keyCheatSee");
-        optShowMobsRange  = getOptionFloat("optCheatShowMobsRange");
-        optShowOresRangeH = getOptionInt("optCheatShowOresRangeH");
-        optShowOresRangeV = getOptionInt("optCheatShowOresRangeV");
-        optSeeDist       = getOptionFloat("optCheatSeeDist");
-        optCheat         = getOptionBool("optCheat");
-        optSeeIsToggle   = getOptionBool("optCheatSeeIsToggle");
-        optShowMobsSize  = getOptionBool("optCheatShowMobsSize");
-        optRestoreHealth = getOptionBool("optCheatRestoreHealth");
-        optDisableDamage = getOptionBool("optCheatDisableDamage");
-        optFallDamage    = getOptionBool("optCheatFallDamage");
-        optFireImmune    = getOptionBool("optCheatFireImmune");
-        optNerfEnderman  = getOptionBool("optCheatNerfEnderman");
-        optNoAir         = getOptionBool("optCheatNoAir");
+        this.keyCheat = getOptionKey("keyCheat");
+        this.keyHighlight = getOptionKey("keyCheatHighlight");
+        this.keyHealth = getOptionKey("keyCheatHealth");
+        this.keyDamage = getOptionKey("keyCheatDamage");
+        this.keyShowMobs = getOptionKey("keyCheatShowMobs");
+        this.keyShowOres = getOptionKey("keyCheatShowOres");
+        this.keySee = getOptionKey("keyCheatSee");
+        this.optShowMobsRange = getOptionFloat("optCheatShowMobsRange");
+        this.optShowOresRangeH = getOptionInt("optCheatShowOresRangeH");
+        this.optShowOresRangeV = getOptionInt("optCheatShowOresRangeV");
+        this.optSeeDist = getOptionFloat("optCheatSeeDist");
+        this.optCheat = getOptionBool("optCheat");
+        this.optSeeIsToggle = getOptionBool("optCheatSeeIsToggle");
+        this.optShowMobsSize = getOptionBool("optCheatShowMobsSize");
+        this.optRestoreHealth = getOptionBool("optCheatRestoreHealth");
+        this.optDisableDamage = getOptionBool("optCheatDisableDamage");
+        this.optFallDamage = getOptionBool("optCheatFallDamage");
+        this.optFireImmune = getOptionBool("optCheatFireImmune");
+        this.optNerfEnderman = getOptionBool("optCheatNerfEnderman");
+        this.optNoAir = getOptionBool("optCheatNoAir");
 
-        optCheatInfArrows = getOptionBool("optCheatInfArrows");
+        this.optCheatInfArrows = getOptionBool("optCheatInfArrows");
 
-        optInfArmor = false;
+        this.optInfArmor = false;
         //optCheatInfArmor = getSetBool(optCheatInfArmor, "optCheatInfArmor", false, "Indestructible armor");
         //for (int i=298;i<=317;i++) cheatDamage[i] = optInfArmor;
-        optInfSword = false;
+        this.optInfSword = false;
         //optCheatInfSword = getSetBool(optCheatInfSword, "optCheatInfSword", false, "Indestructible sword/bow");
         //cheatDamage[267] = cheatDamage[268] = cheatDamage[272] = cheatDamage[276] = cheatDamage[283] = cheatDamage[261] = optInfSword;
-        optInfTools = false;
+        this.optInfTools = false;
         //optCheatInfTools = getSetBool(optCheatInfTools, "optCheatInfTools", false, "Indestructible tools");
         /*cheatDamage[256] = cheatDamage[257] = cheatDamage[258] = cheatDamage[259]
                          = cheatDamage[269] = cheatDamage[270] = cheatDamage[271]
@@ -166,93 +185,97 @@ public final class Cheat extends ZMod {
                          = cheatDamage[293] = cheatDamage[294] = cheatDamage[346]
                          = cheatDamage[359] = optInfTools;
 */
-        cheatMobs = new Color[MOBS_MAX];
-        cheatOres = new Color[ORES_MAX];
-        Map<Integer, Color> colormap;
-        colormap = parseEntityColorMap(getOptionString("optCheatShowMobs"));
+        this.cheatMobs.clear();
+        this.cheatOres.clear();
+
+        Map<Integer, Color> colormap = parseEntityColorMap(getOptionString("optCheatShowMobs"));
         for (Map.Entry<Integer, Color> entry : colormap.entrySet()) {
             int id = entry.getKey();
             if (0 <= id && id < MOBS_MAX) {
-                cheatMobs[id] = entry.getValue();
+                this.cheatMobs.set(id, entry.getValue());
             }
         }
+
         colormap = parseBlockColorMap(getOptionString("optCheatShowOres"));
         for (Map.Entry<Integer, Color> entry : colormap.entrySet()) {
             int id = entry.getKey();
             if (0 <= id && id < ORES_MAX) {
-                cheatOres[id] = entry.getValue();
+                this.cheatOres.set(id, entry.getValue());
             }
         }
     }
 
     @Override
     protected void onWorldChange() {
-        cheating = optCheat && modCheatAllowed;
+        this.cheating = this.optCheat && this.modCheatAllowed;
     }
 
     @Override
     protected void onClientTick(EntityPlayerSP player) {
-        modCheatAllowed = ZHandle.handle("allowCheats", true);
+        this.modCheatAllowed = ZHandle.handle("allowCheats", true);
 
         if (getGamma() < 100f) {
-            cheatGamma = getGamma();
+            this.cheatGamma = getGamma();
         }
-        setGamma((cheating && cheatHighlight && (!isInMenu() || getMenu() instanceof GuiChat || getMenu() instanceof GuiContainer)) ? 1000f : cheatGamma);
+        setGamma((this.cheating && this.cheatHighlight && (!isInMenu() || getMenu() instanceof GuiChat || getMenu() instanceof GuiContainer)) ? 1000f : this.cheatGamma);
 
-        boolean enable = optNerfEnderman && !isMultiplayer();
-        if (enable != cheatCarryOverride) {
+        boolean enable = this.optNerfEnderman && !isMultiplayer();
+        if (enable != this.cheatCarryOverride) {
             try {
-                cheatCarryOverride = enable;
-                Object arr = getValue(fCarryBlocks, null);
-                if (cheatCarryBlocks == null) {
-                    cheatCarryBlocks = new boolean[256];
+                this.cheatCarryOverride = enable;
+                Object arr = getValue(this.fCarryBlocks, null);
+                if (this.cheatCarryBlocks.isEmpty()) {
+                    this.cheatCarryBlocks.ensureCapacity(256);
                     for (int i = 0; i < 256; i++) {
-                        cheatCarryBlocks[i] = Array.getBoolean(arr, i);
+                        this.cheatCarryBlocks.set(i, Array.getBoolean(arr, i));
                     }
                 }
                 for (int i = 0; i < 256; i++) {
-                    Array.setBoolean(arr, i, !enable && cheatCarryBlocks[i]);
+                    Array.setBoolean(arr, i, !enable && this.cheatCarryBlocks.get(i));
                 }
             } catch (Exception e) {
             }
         }
 
-        if (!isInMenu() && wasKeyPressedThisTick(keyCheat)) {
-            cheating = !cheating;
-            if (!modCheatAllowed && cheating) {
-                cheating = false;
+        if (!isInMenu() && wasKeyPressedThisTick(this.keyCheat)) {
+            this.cheating = !this.cheating;
+            if (!this.modCheatAllowed && this.cheating) {
+                this.cheating = false;
                 chatClient("\u00a74zombe's \u00a72cheat\u00a74-mod is not allowed on this server.");
             }
         }
 
-        if (!cheating) {
+        if (!this.cheating) {
             return;
         }
         if (!isInMenu()) {
-            if (wasKeyPressedThisTick(keyShowMobs)) {
-                cheatShowMobs = !cheatShowMobs;
+            if (wasKeyPressedThisTick(this.keyShowMobs)) {
+                this.cheatShowMobs = !this.cheatShowMobs;
             }
-            if (wasKeyPressedThisTick(keyShowOres)) {
-                cheatShowOres = !cheatShowOres;
+            if (wasKeyPressedThisTick(this.keyShowOres)) {
+                this.cheatShowOres = !this.cheatShowOres;
             }
-            if (wasKeyPressedThisTick(keyHighlight)) {
-                cheatHighlight = !cheatHighlight;
+            if (wasKeyPressedThisTick(this.keyHighlight)) {
+                this.cheatHighlight = !this.cheatHighlight;
             }
-            if (wasKeyPressedThisTick(keyHealth)) {
-                optRestoreHealth = !optRestoreHealth;
+            if (wasKeyPressedThisTick(this.keyHealth)) {
+                this.optRestoreHealth = !this.optRestoreHealth;
             }
-            if (wasKeyPressedThisTick(keyDamage)) {
-                optDisableDamage = !optDisableDamage;
+            if (wasKeyPressedThisTick(this.keyDamage)) {
+                this.optDisableDamage = !this.optDisableDamage;
             }
-            if (optSeeIsToggle) {
-                if (wasKeyPressedThisTick(keySee)) {
-                    cheatSee = !cheatSee;
+            if (this.optSeeIsToggle) {
+                if (wasKeyPressedThisTick(this.keySee)) {
+                    this.cheatSee = !this.cheatSee;
                 }
             } else {
-                cheatSee = isKeyDownThisTick(keySee);
+                this.cheatSee = isKeyDownThisTick(this.keySee);
             }
-            if (!isMultiplayer() && wasKeyPressedThisTick(keyRemoveFire)) {
-                BlockPos pos = getPos(getView());
+            if (!isMultiplayer() && wasKeyPressedThisTick(this.keyRemoveFire)) {
+                Entity view = getView();
+                assert view != null;
+
+                BlockPos pos = getPos(view);
                 int x = getX(pos), y = getY(pos), z = getZ(pos);
                 World world = getWorld();
                 for (int dx = -16; dx <= 16; ++dx) {
@@ -266,8 +289,11 @@ public final class Cheat extends ZMod {
                 }
             }
         }
-        if (!isMultiplayer()) {
+
+        // TODO why is this commented out and what did it do?
+
             /*
+        if (!isMultiplayer()) {
             if (!optCheatFallDamage) setFall(player, 0f);
             boolean arrowChk = true;
             if (optCheatInfArrows || optCheatInfArmor || optCheatInfSword || optCheatInfTools)
@@ -288,24 +314,24 @@ public final class Cheat extends ZMod {
                 if (id < 256 || id >= cheatItems) continue;
                 if (cheatDamage[id]) setItemsInfo(invArmorsArr[slot], 0);
             }
-            */
         }
+            */
     }
 
     @Override
-    protected void onWorldDraw(float delta, float x, float y, float z) {
-        if (!cheatShowMobs && !cheatShowOres && !optShowHealth) {
+    protected void onWorldDraw(float delta, float px, float py, float pz) {
+        if (!this.cheatShowMobs && !this.cheatShowOres && !this.optShowHealth) {
             return;
         }
 
         List list = getEntities();
         Entity view = getView();
 
-        double px = x, py = y, pz = z, mx, my, mz, dx, dy, dz;
+        double mx, my, mz, dx, dy, dz;
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-        if (cheating && optShowHealth && !isMultiplayer()) {
+        if (this.cheating && this.optShowHealth && !isMultiplayer()) {
             GL11.glColor3ub((byte) 0, (byte) 128, (byte) 0);
             GL11.glBegin(GL11.GL_QUADS);
             for (Object obj : list) {
@@ -323,9 +349,9 @@ public final class Cheat extends ZMod {
                 dz = -(mx - px);
                 double d = Math.sqrt(dx * dx + dz * dz);
                 double w = 0.25 * health;
-                mx -= x;
-                my -= y;
-                mz -= z;
+                mx -= px;
+                my -= py;
+                mz -= pz;
                 if (d < 0.1 || d > 64) {
                     continue;
                 }
@@ -351,15 +377,15 @@ public final class Cheat extends ZMod {
         }
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_FOG);
-        if (modCheatAllowed && cheating && cheatShowMobs) {
-            float range = optShowMobsRange * optShowMobsRange;
+        if (this.modCheatAllowed && this.cheating && this.cheatShowMobs) {
+            float range = this.optShowMobsRange * this.optShowMobsRange;
             //GL11.glEnable(GL11.GL_LINE_STIPPLE);
             //GL11.glLineStipple(1, (short)0x5555);
             GL11.glBegin(GL11.GL_LINES);
             for (Object obj : list) {
                 Entity ent = (Entity) obj;
                 int id = getId(ent);
-                Color col = (0 <= id && id < MOBS_MAX) ? cheatMobs[id] : null;
+                Color col = (0 <= id && id < MOBS_MAX) ? this.cheatMobs.get(id) : null;
                 if (col == null || obj == view) {
                     continue;
                 }
@@ -368,14 +394,14 @@ public final class Cheat extends ZMod {
                 mx = getX(pos);
                 my = getY(pos) + getYFix(ent);
                 mz = getZ(pos);
-                dx = mx - x;
-                dy = my - y;
-                dz = mz - z;
-                if (optShowMobsRange > 0 && dx * dx + dy * dy + dz * dz > range) {
+                dx = mx - px;
+                dy = my - py;
+                dz = mz - pz;
+                if (this.optShowMobsRange > 0 && dx * dx + dy * dy + dz * dz > range) {
                     continue;
                 }
 
-                float height = (optShowMobsSize || !(ent instanceof EntityLiving)) ? getHeight(ent) : 2.0f;
+                float height = (this.optShowMobsSize || !(ent instanceof EntityLiving)) ? getHeight(ent) : 2.0f;
                 GL11.glColor3ub(col.rb, col.gb, col.bb);
                 GL11.glVertex3d(dx, dy, dz);
                 GL11.glVertex3d(dx, dy + height, dz);
@@ -384,21 +410,22 @@ public final class Cheat extends ZMod {
             //GL11.glDisable(GL11.GL_LINE_STIPPLE);
         }
         GL11.glBegin(GL11.GL_LINES);
-        if (modCheatAllowed && cheating && cheatShowOres) {
-            if (--cheatUpdate < 0) {
-                cheatUpdate = 17;
-                cheatReCheck(fix(x), fix(y), fix(z));
+        if (this.modCheatAllowed && this.cheating && this.cheatShowOres) {
+            if (--this.cheatUpdate < 0) {
+                this.cheatUpdate = 17;
+                this.cheatReCheck(fix(px), fix(py), fix(pz));
             }
-            for (int i = 0; i < cheatCur; ++i) {
-                Color col = cheatType[i];
-                Vec3d pos = cheatMark[i];
+            for (int i = 0; i < this.cheatCur; ++i) {
+                Color col = this.cheatType.get(i);
+                Vec3d pos = this.cheatMark.get(i);
                 if (col == null || pos == null) {
                     continue;
                 }
+
                 GL11.glColor3ub(col.rb, col.gb, col.bb);
-                mx = getX(pos) - x;
-                my = getY(pos) - y;
-                mz = getZ(pos) - z;
+                mx = getX(pos) - px;
+                my = getY(pos) - py;
+                mz = getZ(pos) - pz;
                 GL11.glVertex3d(mx + 0.25, my + 0.25, mz + 0.25);
                 GL11.glVertex3d(mx - 0.25, my - 0.25, mz - 0.25);
                 GL11.glVertex3d(mx + 0.25, my + 0.25, mz - 0.25);
@@ -415,55 +442,38 @@ public final class Cheat extends ZMod {
     @Nullable
     @Override
     protected String getTag() {
-        if (!modCheatAllowed || !cheating) {
+        if (!this.modCheatAllowed || !this.cheating) {
             return null;
         }
 
-        String tag = tagCheat;
-        if (cheatShowMobs) {
-            tag += ' ' + tagMobs;
+        String tag = this.tagCheat;
+        if (this.cheatShowMobs) {
+            tag += ' ' + this.tagMobs;
         }
-        if (cheatShowOres) {
-            tag += ' ' + tagOres;
+        if (this.cheatShowOres) {
+            tag += ' ' + this.tagOres;
         }
         return tag;
     }
 
-    @Override
-    protected Object handle(@Nonnull String name, Object arg) {
-        if (name.equals("isCheating")) {
-            return isCheating();
-        }
-        if (name.equals("onServerUpdate")) {
-            onServerUpdate((EntityPlayerMP) arg);
-        }
-        if (name.equals("afterPlayerMove")) {
-            afterPlayerMove();
-        }
-        if (name.equals("onSortAndRender")) {
-            startCheatRender();
-        }
-        return arg;
-    }
-
-    private static void cheatReCheck(int pX, int pY, int pZ) {
-        cheatCur = 0;
+    private void cheatReCheck(int pX, int pY, int pZ) {
+        this.cheatCur = 0;
         World world = getWorld();
-        for (int x = pX - optShowOresRangeH; x < pX + optShowOresRangeH; ++x) {
-            for (int y = pY - optShowOresRangeV; y < pY + optShowOresRangeV; ++y) {
-                for (int z = pZ - optShowOresRangeH; z < pZ + optShowOresRangeH; ++z) {
+        for (int x = pX - this.optShowOresRangeH; x < pX + this.optShowOresRangeH; ++x) {
+            for (int y = pY - this.optShowOresRangeV; y < pY + this.optShowOresRangeV; ++y) {
+                for (int z = pZ - this.optShowOresRangeH; z < pZ + this.optShowOresRangeH; ++z) {
                     int id = getIdAt(world, x, y, z);
-                    if (id < 0 || id > cheatOres.length) {
+                    if (id < 0 || id > this.cheatOres.size()) {
                         continue;
                     }
-                    Color color = cheatOres[id];
+                    Color color = this.cheatOres.get(id);
                     if (color == null) {
                         continue;
                     }
-                    cheatType[cheatCur] = color;
-                    cheatMark[cheatCur] = new Vec3d(x + 0.5f, y + 0.5f, z + 0.5f);
-                    ++cheatCur;
-                    if (cheatCur >= cheatMark.length) {
+                    this.cheatType.set(this.cheatCur, color);
+                    this.cheatMark.set(this.cheatCur, new Vec3d(x + 0.5f, y + 0.5f, z + 0.5f));
+                    ++this.cheatCur;
+                    if (this.cheatCur >= this.cheatMark.size()) {
                         return;
                     }
                 }
@@ -471,38 +481,38 @@ public final class Cheat extends ZMod {
         }
     }
 
-    private static void onServerUpdate(@Nonnull EntityPlayerMP ent) {
-        if (!modCheatAllowed) {
+    private void onServerUpdate(@Nonnull EntityPlayerMP ent) {
+        if (!this.modCheatAllowed) {
             return;
         }
-        ent.capabilities.disableDamage = cheating && optDisableDamage || ent.capabilities.isCreativeMode;
-        setFireImmune(ent, cheating && optFireImmune);
-        if (cheating && optRestoreHealth && getHealth(ent) < getMaxHealth(ent)) {
+        ent.capabilities.disableDamage = this.cheating && this.optDisableDamage || ent.capabilities.isCreativeMode;
+        setFireImmune(ent, this.cheating && this.optFireImmune);
+        if (this.cheating && this.optRestoreHealth && getHealth(ent) < getMaxHealth(ent)) {
             setHealth(ent, getHealth(ent) + 1);
         }
-        if (cheating && optNoAir) {
+        if (this.cheating && this.optNoAir) {
             setAir(ent, 300);
         }
-        if (cheating && !optFallDamage) {
+        if (this.cheating && !this.optFallDamage) {
             setFall(ent, 0);
         }
     }
 
-    private static void afterPlayerMove() {
-        if (cheating && !optFallDamage) {
+    private void afterPlayerMove() {
+        if (this.cheating && !this.optFallDamage) {
             setFall(getPlayer(), 0f);
             setOnGround(getPlayer(), true);
         }
     }
 
-    private static boolean isCheating() {
-        return cheating;
+    private boolean isCheating() {
+        return this.cheating;
     }
 
-    private static void startCheatRender() {
+    private void startCheatRender() {
         try {
-            if (modCheatAllowed && cheating && cheatSee) {
-                GuiHelper.setObliqueNearPlaneClip(0.0f, 0.0f, -1.0f, -optSeeDist);
+            if (this.modCheatAllowed && this.cheating && this.cheatSee) {
+                GuiHelper.setObliqueNearPlaneClip(0.0f, 0.0f, -1.0f, -this.optSeeDist);
             }
         } catch (Exception error) {
             showOnscreenError("Cheat: see-through setup failed", error);
