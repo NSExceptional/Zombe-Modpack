@@ -1,6 +1,7 @@
 package zombe.mod;
 
 
+import com.google.common.base.Function;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -32,8 +33,8 @@ public final class Cheat extends ZMod {
     private static final int ITEMS_MAX = 400;
     private static final int MARKS_MAX = 16384;
 
-    @Nonnull ArrayList<Color> cheatMobs = new ArrayList<>();
-    @Nonnull ArrayList<Color> cheatOres = new ArrayList<>();
+    @Nonnull Map<Integer, Color> cheatMobs = new HashMap<>();
+    @Nonnull Map<Integer, Color> cheatOres = new HashMap<>();
     @Nonnull ArrayList<Color> cheatType = new ArrayList<>();
     @Nonnull ArrayList<Vec3d> cheatMark = new ArrayList<>();
     @Nonnull private ArrayList<Boolean> cheatCarryBlocks = new ArrayList<>();
@@ -119,8 +120,6 @@ public final class Cheat extends ZMod {
 
     @Override
     protected void init() {
-        this.cheatMobs.ensureCapacity(MOBS_MAX);
-        this.cheatOres.ensureCapacity(ORES_MAX);
         this.cheatDamage.ensureCapacity(ITEMS_MAX);
         this.cheatCur = 0;
         this.cheatUpdate = 0;
@@ -185,23 +184,24 @@ public final class Cheat extends ZMod {
                          = cheatDamage[293] = cheatDamage[294] = cheatDamage[346]
                          = cheatDamage[359] = optInfTools;
 */
-        this.cheatMobs.clear();
-        this.cheatOres.clear();
 
-        Map<Integer, Color> colormap = parseEntityColorMap(getOptionString("optCheatShowMobs"));
-        for (Map.Entry<Integer, Color> entry : colormap.entrySet()) {
+        this.cheatMobs = parseEntityColorMap(getOptionString("optCheatShowMobs"));
+        this.cheatOres = parseBlockColorMap(getOptionString("optCheatShowOres"));
+        this.filterCheatMap(this.cheatMobs);
+        this.filterCheatMap(this.cheatOres);
+    }
+
+    private void filterCheatMap(Map<Integer, Color> map) {
+        List<Integer> toRemove = new ArrayList<>();
+        for (Map.Entry<Integer, Color> entry : map.entrySet()) {
             int id = entry.getKey();
-            if (0 <= id && id < MOBS_MAX) {
-                this.cheatMobs.set(id, entry.getValue());
+            if (id < 0 || id >= MOBS_MAX) {
+                toRemove.add(id);
             }
         }
 
-        colormap = parseBlockColorMap(getOptionString("optCheatShowOres"));
-        for (Map.Entry<Integer, Color> entry : colormap.entrySet()) {
-            int id = entry.getKey();
-            if (0 <= id && id < ORES_MAX) {
-                this.cheatOres.set(id, entry.getValue());
-            }
+        for (Integer i : toRemove) {
+            map.remove(i);
         }
     }
 

@@ -347,7 +347,7 @@ public final class Build extends ZMod {
             this.bufferEY = ey;
             this.bufferEZ = ez;
 
-            int size = this.bufferWX * this.bufferWY * this.bufferWZ, at = 0;
+            int size = this.bufferWX * this.bufferWY * this.bufferWZ;
             this.buildBuffer.clear();
             this.buildBufferNBT.clear();
             this.buildBuffer.ensureCapacity(size);
@@ -357,9 +357,8 @@ public final class Build extends ZMod {
             for (int x = sx; x <= ex; x++) {
                 for (int y = sy; y <= ey; y++) {
                     for (int z = sz; z <= ez; z++) {
-                        this.buildBuffer.set(at, getIdMetaAt(world, x, y, z));
-                        this.buildBufferNBT.set(at, getTileEntityCopy(getTileEntityAt(world, x, y, z)));
-                        at++;
+                        this.buildBuffer.add(getIdMetaAt(world, x, y, z));
+                        this.buildBufferNBT.add(getTileEntityCopy(getTileEntityAt(world, x, y, z)));
                     }
                 }
             }
