@@ -1,6 +1,7 @@
 package zombe.mod;
 
 
+import com.google.common.base.Function;
 import net.minecraft.block.Block;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
@@ -12,38 +13,49 @@ import net.minecraft.world.World;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import zombe.core.ZMod;
-import zombe.core.util.BlockFace;
-import zombe.core.util.GuiHelper;
+import zombe.core.util.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static zombe.core.ZWrapper.*;
 
 public final class Build extends ZMod {
 
-    private static String tagBuild;
-    private static int keyToggle, keyA, keyB, keyMark, keyCopy, keyPaste, keySet, keyFill, keyRemove, keyFeet, keyHead, keyPick, keyDeselect;
-    private static float optLockQuantityRatio;
-    private static boolean optBuild, optExtension, optLockQuantity;
+    @Nonnull private static String[] sets = new String[] {
+            "optBuildA1", "optBuildA2", "optBuildA3",
+            "optBuildA4", "optBuildA5", "optBuildA6",
+            "optBuildA7", "optBuildA8", "optBuildA9",
+            "optBuildB1", "optBuildB2", "optBuildB3",
+            "optBuildB4", "optBuildB5", "optBuildB6",
+            "optBuildB7", "optBuildB8", "optBuildB9"
+    };
 
-    private static boolean building, buildBufferHere;
-    private static int buildSX, buildSY, buildSZ,
-                       buildEX, buildEY, buildEZ,
-                       buildX1, buildY1, buildZ1,
-                       buildX2, buildY2, buildZ2,
-                       buildMark = 0;
-    private static int bufferSX, bufferSY, bufferSZ,
-                       bufferEX, bufferEY, bufferEZ,
-                       bufferWX, bufferWY, bufferWZ;
-    private static int buildHandSlot, buildHandSize;
-    @Nullable private static int buildSets[][], buildBuffer[] = null;
-    @Nullable private static NBTTagCompound buildBufferNBT[];
-    @Nullable private static ItemStack buildHand;
-    @Nullable private static List<int[]> serverActions = null;
-    @Nullable private static List<int[]> clientActions = null;
+    private String tagBuild;
+    private int keyToggle, keyA, keyB, keyMark,
+                keyCopy, keyPaste, keySet, keyFill,
+                keyRemove, keyFeet, keyHead, keyPick, keyDeselect;
+    private float optLockQuantityRatio;
+    private boolean optBuild, optExtension, optLockQuantity;
+
+    private boolean building, buildBufferHere;
+    private int buildSX, buildSY, buildSZ,
+                buildEX, buildEY, buildEZ,
+                buildX1, buildY1, buildZ1,
+                buildX2, buildY2, buildZ2,
+                buildMark = 0;
+    private int bufferSX, bufferSY, bufferSZ,
+                bufferEX, bufferEY, bufferEZ,
+                bufferWX, bufferWY, bufferWZ;
+    private int buildHandSlot, buildHandSize;
+
+    @Nonnull int[][] buildSets = new int[sets.length][9];
+    @Nonnull ArrayList<Integer> buildBuffer = new ArrayList<>();
+    @Nonnull ArrayList<NBTTagCompound> buildBufferNBT = new ArrayList<>();
+    @Nonnull ItemStack buildHand = ItemStack.EMPTY;
+    @Nonnull List<int[]> serverActions = new ArrayList<>();
+    @Nonnull List<int[]> clientActions = new ArrayList<>();
 
     private static final int
         BUILD_ACTION_BITS = 7,
@@ -99,84 +111,67 @@ public final class Build extends ZMod {
 
     @Override
     protected void init() {
-        building = optBuild;
-        buildMark = 0;
-        buildHandSlot = -1;
-        clientActions = new LinkedList<int[]>();
-        serverActions = new LinkedList<int[]>();
+        this.building = this.optBuild;
+        this.buildMark = 0;
+        this.buildHandSlot = -1;
     }
 
     @Override
     protected void quit() {
         synchronized (this) {
-            buildSets = null;
-            buildBuffer = null;
-            buildBufferNBT = null;
-            buildHand = null;
-            clientActions = null;
-            serverActions = null;
-        } //synchronized
+            this.buildBuffer.clear();
+            this.buildBufferNBT.clear();
+            this.buildHand = ItemStack.EMPTY;
+            this.serverActions.clear();
+            this.clientActions.clear();
+        }
     }
 
     @Override
     protected void updateConfig() {
         synchronized(this) {
-            tagBuild         = getOptionString("tagBuild");
+            this.tagBuild = getOptionString("tagBuild");
 
-            keyToggle        = getOptionKey("keyBuildToggle");
-            keyA             = getOptionKey("keyBuildA");
-            keyB             = getOptionKey("keyBuildB");
-            optBuild         = getOptionBool("optBuild");
-            optLockQuantity  = getOptionBool("optBuildLockQuantity");
-            optLockQuantityRatio = getOptionFloat("optBuildLockQuantityRatio");
-            optExtension     = getOptionBool("optBuildExtension");
-            keyPick          = getOptionKey("keyBuildPick");
-            keyMark          = getOptionKey("keyBuildMark");
-            keyCopy          = getOptionKey("keyBuildCopy");
-            keyPaste         = getOptionKey("keyBuildPaste");
-            keySet           = getOptionKey("keyBuildSet");
-            keyFill          = getOptionKey("keyBuildFill");
-            keyRemove        = getOptionKey("keyBuildRemove");
-            keyHead          = getOptionKey("keyBuildHead");
-            keyFeet          = getOptionKey("keyBuildFeet");
-            keyDeselect      = getOptionKey("keyBuildDeselect");
+            this.optLockQuantityRatio = getOptionFloat("optBuildLockQuantityRatio");
+            this.optBuild = getOptionBool("optBuild");
+            this.optLockQuantity = getOptionBool("optBuildLockQuantity");
+            this.optExtension = getOptionBool("optBuildExtension");
+            this.keyToggle = getOptionKey("keyBuildToggle");
+            this.keyA = getOptionKey("keyBuildA");
+            this.keyB = getOptionKey("keyBuildB");
+            this.keyPick = getOptionKey("keyBuildPick");
+            this.keyMark = getOptionKey("keyBuildMark");
+            this.keyCopy = getOptionKey("keyBuildCopy");
+            this.keyPaste = getOptionKey("keyBuildPaste");
+            this.keySet = getOptionKey("keyBuildSet");
+            this.keyFill = getOptionKey("keyBuildFill");
+            this.keyRemove = getOptionKey("keyBuildRemove");
+            this.keyHead = getOptionKey("keyBuildHead");
+            this.keyFeet = getOptionKey("keyBuildFeet");
+            this.keyDeselect = getOptionKey("keyBuildDeselect");
 
-            String sets[] = new String[] {
-                getOptionString("optBuildA1"),
-                getOptionString("optBuildA2"),
-                getOptionString("optBuildA3"),
-                getOptionString("optBuildA4"),
-                getOptionString("optBuildA5"),
-                getOptionString("optBuildA6"),
-                getOptionString("optBuildA7"),
-                getOptionString("optBuildA8"),
-                getOptionString("optBuildA9"),
-                getOptionString("optBuildB1"),
-                getOptionString("optBuildB2"),
-                getOptionString("optBuildB3"),
-                getOptionString("optBuildB4"),
-                getOptionString("optBuildB5"),
-                getOptionString("optBuildB6"),
-                getOptionString("optBuildB7"),
-                getOptionString("optBuildB8"),
-                getOptionString("optBuildB9")
-            };
-            buildSets = new int[sets.length][9];
-            for (int set = 0; set < sets.length; ++set) {
-                List<Integer> got = parseItemList(sets[set]);
+            String setsOptions[] = ArrayHelper.map(String.class, sets, new Function<String, String>() {
+                @Nullable @Override public String apply(String s) {
+                    return getOptionString(s);
+                }
+            });
+
+            for (int set = 0; set < setsOptions.length; set++) {
+                List<Integer> got = parseItemList(setsOptions[set]);
                 int defs = got.size();
                 if (defs > 9) {
                     defs = 9;
                 }
-                for (int slot = 0; slot < defs; ++slot) {
+                for (int slot = 0; slot < defs; slot++) {
                     int idmeta = got.get(slot);
                     if (idmeta == -1) {
-                        showOnscreenError("error: option optBuild" + (set > 9 ? "B" : "A") + ((set % 9) + 1) + ", slot " + slot + " - unknown item name or invalid code");
+                        showOnscreenError("error: option optBuild" + (set > 9 ? "B" : "A") + ((set % 9) + 1) +
+                                ", slot " + slot + " - unknown item name or invalid code");
                     }
-                    buildSets[set][slot] = idmeta;
+                    this.buildSets[set][slot] = idmeta;
                 }
-                for (int slot = defs; slot < 9; ++slot) {
-                    buildSets[set][slot] = 0;
+                for (int slot = defs; slot < 9; slot++) {
+                    this.buildSets[set][slot] = 0;
                 }
             }
         } //synchronized
@@ -185,69 +180,67 @@ public final class Build extends ZMod {
     @Override
     protected void onWorldChange() {
         synchronized (this) {
-            building = optBuild;
-            buildHandSlot = -1;
-            buildHand = null;
-            buildBufferHere = false;
-            clientActions.clear();
-            serverActions.clear();
-        } //synchronized
+            this.building = this.optBuild;
+            this.buildHandSlot = -1;
+            this.buildHand = ItemStack.EMPTY;
+            this.buildBufferHere = false;
+            this.clientActions.clear();
+            this.serverActions.clear();
+        }
     }
 
     @Override
     protected void onClientTick(@Nonnull EntityPlayerSP player) {
         synchronized (this) {
-            if (!building || isInMenu() || !optLockQuantity || isMultiplayer()) {
-                buildHandSlot = -1;
+            if (!this.building || isInMenu() || !this.optLockQuantity || isMultiplayer()) {
+                this.buildHandSlot = -1;
             }
             if (isInMenu()) {
                 return;
             }
-            if (wasKeyPressedThisTick(keyToggle)) {
-                building = !building;
+            if (wasKeyPressedThisTick(this.keyToggle)) {
+                this.building = !this.building;
             }
-            if (!building) {
-                buildMark = 0;
+            if (!this.building) {
+                this.buildMark = 0;
                 return;
             }
 
             World world = getWorld(player);
 
             // sets
-            if (isKeyDownThisTick(keyA) || isKeyDownThisTick(keyB)) {
+            if (isKeyDownThisTick(this.keyA) || isKeyDownThisTick(this.keyB)) {
                 int set = -1;
-                for (int i = Keyboard.KEY_1; i <= Keyboard.KEY_9; ++i) {
+                for (int i = Keyboard.KEY_1; i <= Keyboard.KEY_9; i++) {
                     if (wasKeyPressedThisTick(i)) {
                         set = i - Keyboard.KEY_1;
                     }
                 }
                 if (set != -1) {
-                    if (isKeyDownThisTick(keyB)) {
+                    if (isKeyDownThisTick(this.keyB)) {
                         set += 9;
                     }
                     int[] data = new int[10];
                     data[0] = BUILD_ACTION_ITEMSET;
-                    for (int slot = 0; slot < 9; ++slot) {
-                        data[slot + 1] = buildSets[set][slot];
-                    }
-                    serverActions.add(data);
+                    System.arraycopy(this.buildSets[set], 0, data, 1, 9);
+                    this.serverActions.add(data);
                 }
             }
 
             // deselect
-            if (wasKeyPressedThisTick(keyDeselect)) {
-                if (buildMark == 2) {
-                    buildMark = 1;
-                    buildSX = buildEX = buildX2 = buildX1;
-                    buildSY = buildEY = buildY2 = buildY1;
-                    buildSZ = buildEZ = buildZ2 = buildZ1;
+            if (wasKeyPressedThisTick(this.keyDeselect)) {
+                if (this.buildMark == 2) {
+                    this.buildMark = 1;
+                    this.buildSX = this.buildEX = this.buildX2 = this.buildX1;
+                    this.buildSY = this.buildEY = this.buildY2 = this.buildY1;
+                    this.buildSZ = this.buildEZ = this.buildZ2 = this.buildZ1;
                 } else {
-                    buildMark = 0;
+                    this.buildMark = 0;
                 }
             }
 
             // action commands
-            if (optExtension && (wasKeyPressedThisTick(keyMark) || wasKeyPressedThisTick(keyPick))) {
+            if (this.optExtension && (wasKeyPressedThisTick(this.keyMark) || wasKeyPressedThisTick(this.keyPick))) {
                 // new marker position
                 Entity view = getView();
                 if (view == null) {
@@ -256,11 +249,11 @@ public final class Build extends ZMod {
                 int x = fix(getX(view));
                 int y = fix(getY(view) + getEyeHeight(view)) - 1;
                 int z = fix(getZ(view));
-                if (isKeyDownThisTick(keyFeet)) {
+                if (isKeyDownThisTick(this.keyFeet)) {
                     y -= 1;
-                } else if (isKeyDownThisTick(keyHead)) {
+                } else if (isKeyDownThisTick(this.keyHead)) {
                     y += 1;
-                } else if (wasKeyPressedThisTick(keyPick)) {
+                } else if (wasKeyPressedThisTick(this.keyPick)) {
                     BlockFace face = getBlockFace(rayTrace(view, 128, 1f));
                     if (face != null) {
                         x = face.x;
@@ -269,81 +262,61 @@ public final class Build extends ZMod {
                     }
                 }
                 // update markers
-                if (buildMark <= 0) {
-                    buildMark = 1;
-                    buildSX = buildEX = buildX2 = buildX1 = x;
-                    buildSY = buildEY = buildY2 = buildY1 = y;
-                    buildSZ = buildEZ = buildZ2 = buildZ1 = z;
+                if (this.buildMark <= 0) {
+                    this.buildMark = 1;
+                    this.buildSX = this.buildEX = this.buildX2 = this.buildX1 = x;
+                    this.buildSY = this.buildEY = this.buildY2 = this.buildY1 = y;
+                    this.buildSZ = this.buildEZ = this.buildZ2 = this.buildZ1 = z;
                 } else {
-                    buildMark = 2;
-                    buildX2 = buildX1;
-                    buildY2 = buildY1;
-                    buildZ2 = buildZ1;
-                    buildX1 = x;
-                    buildY1 = y;
-                    buildZ1 = z;
-                    buildSX = Math.min(buildX1, buildX2);
-                    buildSY = Math.min(buildY1, buildY2);
-                    buildSZ = Math.min(buildZ1, buildZ2);
-                    buildEX = Math.max(buildX1, buildX2);
-                    buildEY = Math.max(buildY1, buildY2);
-                    buildEZ = Math.max(buildZ1, buildZ2);
+                    this.buildMark = 2;
+                    this.buildX2 = this.buildX1;
+                    this.buildY2 = this.buildY1;
+                    this.buildZ2 = this.buildZ1;
+                    this.buildX1 = x;
+                    this.buildY1 = y;
+                    this.buildZ1 = z;
+                    this.buildSX = Math.min(this.buildX1, this.buildX2);
+                    this.buildSY = Math.min(this.buildY1, this.buildY2);
+                    this.buildSZ = Math.min(this.buildZ1, this.buildZ2);
+                    this.buildEX = Math.max(this.buildX1, this.buildX2);
+                    this.buildEY = Math.max(this.buildY1, this.buildY2);
+                    this.buildEZ = Math.max(this.buildZ1, this.buildZ2);
                 }
-            } else if (buildMark > 0) {
-                if (wasKeyPressedThisTick(keyCopy)) {
-                    buildAction(world, player, new int[]{ BUILD_ACTION_COPY, buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ });
-                } else if (wasKeyPressedThisTick(keySet) && !isMultiplayer()) {
+            } else if (this.buildMark > 0) {
+                if (wasKeyPressedThisTick(this.keyCopy)) {
+                    this.buildAction(world, player, new int[]{ BUILD_ACTION_COPY, this.buildSX, this.buildSY, this.buildSZ, this.buildEX, this.buildEY, this.buildEZ });
+                } else if (wasKeyPressedThisTick(this.keySet) && !isMultiplayer()) {
                     ItemStack stack = getStacks(player)[getCurrentSlot(player)];
-                    int id = getId(stack);
                     int meta = getMeta(stack);
                     Block block = getBlock(stack);
-                    if (block == null) {
-                        if (id == 326) block = getBlock(9); // water bucket
-                        if (id == 327) block = getBlock(11); // lava bucket
-                        if (id == 355) block = getBlock(26); // bed
-                        if (id == 323) block = getBlock(63); // sign
-                        if (id == 259) block = getBlock(51); // flint & steel
-                        if (id == 331) block = getBlock(55); // redstone
-                        if (id == 356) block = getBlock(93); // repeater
-                        if (id == 404) block = getBlock(149); // comparator
-                        if (id == 324) block = getBlock(64);  // door oak
-                        if (id == 330) block = getBlock(71);  // door iron
-                        if (id == 427) block = getBlock(193); // door spruce
-                        if (id == 428) block = getBlock(194); // door birch
-                        if (id == 429) block = getBlock(195); // door jungle
-                        if (id == 430) block = getBlock(196); // door acacia
-                        if (id == 431) block = getBlock(197); // door dark oak
-                    }
-                    if (block != null) {
-                        serverActions.add(new int[]{ BUILD_ACTION_SET | (isKeyDownThisTick(keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(keyRemove) ? BUILD_MODIFIER_REMOVE : 0), buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ, getBlockIdMeta(getId(block), meta) });
-                    }
-                } else if (wasKeyPressedThisTick(keyPaste) && !isMultiplayer()) {
-                    if (buildMark == 1 && buildBuffer != null) {
-                        buildX2 = buildEX = buildSX + bufferWX - 1;
-                        buildY2 = buildEY = buildSY + bufferWY - 1;
-                        buildZ2 = buildEZ = buildSZ + bufferWZ - 1;
-                        buildMark = 2;
-                    } else if (buildBuffer != null) {
-                        serverActions.add(new int[]{ BUILD_ACTION_PASTE | (isKeyDownThisTick(keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(keyRemove) ? BUILD_MODIFIER_REMOVE : 0), buildSX, buildSY, buildSZ, buildEX, buildEY, buildEZ });
+                    this.serverActions.add(new int[]{ BUILD_ACTION_SET | (isKeyDownThisTick(this.keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(this.keyRemove) ? BUILD_MODIFIER_REMOVE : 0), this.buildSX, this.buildSY, this.buildSZ, this.buildEX, this.buildEY, this.buildEZ, getBlockIdMeta(getId(block), meta) });
+                } else if (wasKeyPressedThisTick(this.keyPaste) && !isMultiplayer()) {
+                    if (this.buildMark == 1 && !this.buildBuffer.isEmpty()) {
+                        this.buildX2 = this.buildEX = this.buildSX + this.bufferWX - 1;
+                        this.buildY2 = this.buildEY = this.buildSY + this.bufferWY - 1;
+                        this.buildZ2 = this.buildEZ = this.buildSZ + this.bufferWZ - 1;
+                        this.buildMark = 2;
+                    } else if (!this.buildBuffer.isEmpty()) {
+                        this.serverActions.add(new int[]{ BUILD_ACTION_PASTE | (isKeyDownThisTick(this.keyFill) ? BUILD_MODIFIER_FILL : 0) | (isKeyDownThisTick(this.keyRemove) ? BUILD_MODIFIER_REMOVE : 0), this.buildSX, this.buildSY, this.buildSZ, this.buildEX, this.buildEY, this.buildEZ });
                     }
                 }
             }
 
             // build actions
-            if (clientActions != null && !clientActions.isEmpty()) {
-                for (int[] action : clientActions) {
-                    buildAction(world, player, action);
+            if (!this.clientActions.isEmpty()) {
+                for (int[] action : this.clientActions) {
+                    this.buildAction(world, player, action);
                 }
-                clientActions.clear();
+                this.clientActions.clear();
             }
         } //synchronized
     }
 
-    private static void buildAction(@Nonnull World world, @Nonnull EntityPlayer player, int[] data) {
+    private void buildAction(@Nonnull World world, @Nonnull EntityPlayer player, int[] data) {
         final int action = data[0] & BUILD_ACTION_BITS;
 
         if (action == BUILD_ACTION_ITEMSET) {
-            for (int slot = 0; slot < 9; ++slot) {
+            for (int slot = 0; slot < 9; slot++) {
                 int idmeta = data[slot + 1];
                 if (idmeta == 0 || idmeta == -1) {
                     getStacks(player)[slot] = null;
@@ -351,7 +324,7 @@ public final class Build extends ZMod {
                     getStacks(player)[slot] = getStack(idmeta, getItemMax(getItem(getBase(idmeta))));
                 }
             }
-            buildHandSlot = -1;
+            this.buildHandSlot = -1;
             return;
         }
 
@@ -364,25 +337,29 @@ public final class Build extends ZMod {
         if (action == BUILD_ACTION_UPDATE) {
             markForUpdate(world, sx, sy, sz, ex, ey, ez);
         } else if (action == BUILD_ACTION_COPY) {
-            bufferWX = 1 + ex - sx;
-            bufferWY = 1 + ey - sy;
-            bufferWZ = 1 + ez - sz;
-            bufferSX = sx;
-            bufferSY = sy;
-            bufferSZ = sz;
-            bufferEX = ex;
-            bufferEY = ey;
-            bufferEZ = ez;
-            int size = bufferWX * bufferWY * bufferWZ, at = 0;
-            buildBuffer = new int[size];
-            buildBufferNBT = new NBTTagCompound[size];
-            buildBufferHere = true;
-            for (int x = sx; x <= ex; ++x) {
-                for (int y = sy; y <= ey; ++y) {
-                    for (int z = sz; z <= ez; ++z) {
-                        buildBuffer[at] = getIdMetaAt(world, x, y, z);
-                        buildBufferNBT[at] = getTileEntityCopy(getTileEntityAt(world, x, y, z));
-                        ++at;
+            this.bufferWX = 1 + ex - sx;
+            this.bufferWY = 1 + ey - sy;
+            this.bufferWZ = 1 + ez - sz;
+            this.bufferSX = sx;
+            this.bufferSY = sy;
+            this.bufferSZ = sz;
+            this.bufferEX = ex;
+            this.bufferEY = ey;
+            this.bufferEZ = ez;
+
+            int size = this.bufferWX * this.bufferWY * this.bufferWZ, at = 0;
+            this.buildBuffer.clear();
+            this.buildBufferNBT.clear();
+            this.buildBuffer.ensureCapacity(size);
+            this.buildBufferNBT.ensureCapacity(size);
+
+            this.buildBufferHere = true;
+            for (int x = sx; x <= ex; x++) {
+                for (int y = sy; y <= ey; y++) {
+                    for (int z = sz; z <= ez; z++) {
+                        this.buildBuffer.set(at, getIdMetaAt(world, x, y, z));
+                        this.buildBufferNBT.set(at, getTileEntityCopy(getTileEntityAt(world, x, y, z)));
+                        at++;
                     }
                 }
             }
@@ -393,9 +370,9 @@ public final class Build extends ZMod {
             //int meta = data[8];
 
             if (fill) {
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
                             if (getIdAt(world, x, y, z) == 0) {
                                 setIdMetaAt(world, idmeta, UPDATE_NONE, x, y, z);
                             }
@@ -403,9 +380,9 @@ public final class Build extends ZMod {
                     }
                 }
             } else if (remove) {
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
                             int gotmeta = getIdMetaAt(world, x, y, z);
                             int got = getBlockId(gotmeta);
                             if (gotmeta == idmeta || !sub && (got == id
@@ -418,9 +395,9 @@ public final class Build extends ZMod {
                     }
                 }
             } else {
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
                             setIdMetaAt(world, idmeta, UPDATE_NONE, x, y, z);
                         }
                     }
@@ -429,10 +406,10 @@ public final class Build extends ZMod {
             notifyAndMark(world, sx, sy, sz, ex, ey, ez);
             //clientActions.add(new int[] { BUILD_ACTION_UPDATE,
             //                  sx,sy,sz, ex,ey,ez });
-        } else if (action == BUILD_ACTION_PASTE && buildBuffer != null) {
-            int wx = 1 + ex - sx; wx = (wx > bufferWX) ? wx % bufferWX : 0;
-            int wy = 1 + ey - sy; wy = (wy > bufferWY) ? wy % bufferWY : 0;
-            int wz = 1 + ez - sz; wz = (wz > bufferWZ) ? wz % bufferWZ : 0;
+        } else if (action == BUILD_ACTION_PASTE && !this.buildBuffer.isEmpty()) {
+            int wx = 1 + ex - sx; wx = (wx > this.bufferWX) ? wx % this.bufferWX : 0;
+            int wy = 1 + ey - sy; wy = (wy > this.bufferWY) ? wy % this.bufferWY : 0;
+            int wz = 1 + ez - sz; wz = (wz > this.bufferWZ) ? wz % this.bufferWZ : 0;
             if (wx != 0 || wy != 0 || wz != 0) {
                 ex -= wx;
                 ey -= wy;
@@ -440,18 +417,18 @@ public final class Build extends ZMod {
                 // assert : (1+ex-sx) % bufferWX == 0 || (1+ex-sx) < bufferWX
             }
             if (fill) { // fill space
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
                             if (getIdAt(world, x, y, z) == 0) {
-                                int cx = (x - sx) % bufferWX;
-                                int cy = (y - sy) % bufferWY;
-                                int cz = (z - sz) % bufferWZ;
-                                int at = (cx * bufferWY + cy) * bufferWZ + cz;
+                                int cx = (x - sx) % this.bufferWX;
+                                int cy = (y - sy) % this.bufferWY;
+                                int cz = (z - sz) % this.bufferWZ;
+                                int at = (cx * this.bufferWY + cy) * this.bufferWZ + cz;
 
-                                setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x, y, z);
-                                if (buildBufferNBT[at] != null) {
-                                    setTileEntityFromCopy(world, x, y, z, buildBufferNBT[at]);
+                                setIdMetaAt(world, this.buildBuffer.get(at), UPDATE_NONE, x, y, z);
+                                if (this.buildBufferNBT.get(at) != null) {
+                                    setTileEntityFromCopy(world, x, y, z, this.buildBufferNBT.get(at));
                                     setChanged(getTileEntityAt(world, x, y, z));
                                 }
                             }
@@ -459,14 +436,14 @@ public final class Build extends ZMod {
                     }
                 }
             } else if (remove) { // remove matching
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
-                            int cx = (x - sx) % bufferWX,
-                                    cy = (y - sy) % bufferWY,
-                                    cz = (z - sz) % bufferWZ;
-                            int at = (cx * bufferWY + cy) * bufferWZ + cz;
-                            int idmeta = buildBuffer[at], got = getIdMetaAt(world, x, y, z);
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
+                            int cx = (x - sx) % this.bufferWX,
+                                    cy = (y - sy) % this.bufferWY,
+                                    cz = (z - sz) % this.bufferWZ;
+                            int at = (cx * this.bufferWY + cy) * this.bufferWZ + cz;
+                            int idmeta = this.buildBuffer.get(at), got = getIdMetaAt(world, x, y, z);
                             if (idmeta == got || (idmeta == 8 && got == 9) || (idmeta == 10 && got == 11)) {
                                 setIdAt(world, 0, UPDATE_NONE, x, y, z);
                             }
@@ -474,17 +451,17 @@ public final class Build extends ZMod {
                     }
                 }
             } else { // replace
-                for (int x = sx; x <= ex; ++x) {
-                    for (int y = sy; y <= ey; ++y) {
-                        for (int z = sz; z <= ez; ++z) {
-                            int cx = (x - sx) % bufferWX;
-                            int cy = (y - sy) % bufferWY;
-                            int cz = (z - sz) % bufferWZ;
-                            int at = (cx * bufferWY + cy) * bufferWZ + cz;
+                for (int x = sx; x <= ex; x++) {
+                    for (int y = sy; y <= ey; y++) {
+                        for (int z = sz; z <= ez; z++) {
+                            int cx = (x - sx) % this.bufferWX;
+                            int cy = (y - sy) % this.bufferWY;
+                            int cz = (z - sz) % this.bufferWZ;
+                            int at = (cx * this.bufferWY + cy) * this.bufferWZ + cz;
 
-                            setIdMetaAt(world, buildBuffer[at], UPDATE_NONE, x, y, z);
-                            if (buildBufferNBT[at] != null) {
-                                setTileEntityFromCopy(world, x, y, z, buildBufferNBT[at]);
+                            setIdMetaAt(world, this.buildBuffer.get(at), UPDATE_NONE, x, y, z);
+                            if (this.buildBufferNBT.get(at) != null) {
+                                setTileEntityFromCopy(world, x, y, z, this.buildBufferNBT.get(at));
                                 setChanged(getTileEntityAt(world, x, y, z));
                             }
                         }
@@ -502,33 +479,38 @@ public final class Build extends ZMod {
         synchronized (this) {
             // build actions
             World world = getWorld(ent);
-            if (serverActions != null && !serverActions.isEmpty()) {
-                for (int[] action : serverActions) {
+            if (!this.serverActions.isEmpty()) {
+                for (int[] action : this.serverActions) {
                     try {
-                        buildAction(world, ent, action);
+                        this.buildAction(world, ent, action);
                     } catch (Exception e) {
                         showOnscreenError("In Build: a build action ("+action[0]+") failed",e);
                     }
                 }
-                serverActions.clear();
+                this.serverActions.clear();
             }
 
             // lock items in hand
-            if (building && optLockQuantity) {
+            if (this.building && this.optLockQuantity) {
                 ItemStack[] stacks = getStacks(ent);
                 int cur = getCurrentSlot(ent);
-                if (cur != buildHandSlot || (stacks[cur] != null && stacks[cur] != buildHand)) {
-                    buildHandSlot = cur;
-                    buildHand     = stacks[cur];
-                    buildHandSize = buildHand != null ? getStackSize(buildHand) : 0;
-                } else if (buildHand != null && (stacks[cur] == null || stacks[cur] == buildHand)) {
-                    int size = buildHandSize;
-                    if (optLockQuantityRatio > 0) {
-                        int max = getItemMax(getItem(buildHand));
-                        size = (int) Math.round(Math.ceil(max * optLockQuantityRatio));
+                if (cur != this.buildHandSlot || (stacks[cur] != null && stacks[cur] != this.buildHand)) {
+                    this.buildHandSlot = cur;
+                    this.buildHand = stacks[cur];
+                    this.buildHandSize = this.buildHand != null ? getStackSize(this.buildHand) : 0;
+                } else if (stacks[cur] == null || stacks[cur] == this.buildHand) {
+                    //noinspection unused
+                    int size = this.buildHandSize;
+
+                    // TODO possible bug? Did he intend to use `size` instead of `this.buildHandSize` below this part?
+                    if (this.optLockQuantityRatio > 0) {
+                        int max = getItemMax(getItem(this.buildHand));
+                        //noinspection UnusedAssignment
+                        size = (int) Math.round(Math.ceil(max * this.optLockQuantityRatio));
                     }
-                    setStackSize(buildHand, buildHandSize);
-                    setStack(ent, cur, buildHand);
+
+                    setStackSize(this.buildHand, this.buildHandSize /* `size`? */);
+                    setStack(ent, cur, this.buildHand);
                 }
             }
         } //synchronized
@@ -542,11 +524,11 @@ public final class Build extends ZMod {
         GL11.glDepthMask(false);
         GL11.glDisable(GL11.GL_CULL_FACE);
         // draw selection box sides
-        if (buildMark == 2) {
+        if (this.buildMark == 2) {
             // calculate selection box
-            sx = buildSX - x - 0.1f; ex = buildEX - x + 1.1f;
-            sy = buildSY - y - 0.1f; ey = buildEY - y + 1.1f;
-            sz = buildSZ - z - 0.1f; ez = buildEZ - z + 1.1f;
+            sx = this.buildSX - x - 0.1f; ex = this.buildEX - x + 1.1f;
+            sy = this.buildSY - y - 0.1f; ey = this.buildEY - y + 1.1f;
+            sz = this.buildSZ - z - 0.1f; ez = this.buildEZ - z + 1.1f;
             // draw selection box
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -558,23 +540,23 @@ public final class Build extends ZMod {
             GuiHelper.drawLineBox(sx, sy, sz, ex, ey, ez);
         }
         // draw buffer box source
-        if (buildBuffer != null && buildBufferHere) {
-            sx = bufferSX -x - 0.06f; ex = bufferEX -x + 1.06f;
-            sy = bufferSY -y - 0.06f; ey = bufferEY -y + 1.06f;
-            sz = bufferSZ -z - 0.06f; ez = bufferEZ -z + 1.06f;
+        if (!this.buildBuffer.isEmpty() && this.buildBufferHere) {
+            sx = this.bufferSX -x - 0.06f; ex = this.bufferEX -x + 1.06f;
+            sy = this.bufferSY -y - 0.06f; ey = this.bufferEY -y + 1.06f;
+            sz = this.bufferSZ -z - 0.06f; ez = this.bufferEZ -z + 1.06f;
             GL11.glColor3ub((byte) 192,(byte) 192,(byte) 192);
             GuiHelper.drawLineBox(sx, sy, sz, ex, ey, ez);
         }
         // draw buffer box destination
-        if (buildBuffer != null && buildMark > 0 && !isMultiplayer()) {
-            sx = buildSX -x - 0.08f; ex = buildSX + bufferWX -x + 0.08f;
-            sy = buildSY -y - 0.08f; ey = buildSY + bufferWY -y + 0.08f;
-            sz = buildSZ -z - 0.08f; ez = buildSZ + bufferWZ -z + 0.08f;
-            if (buildEX-buildSX+1 == bufferWX
-                 && buildEY-buildSY+1 == bufferWY
-                 && buildEZ-buildSZ+1 == bufferWZ) {
+        if (!this.buildBuffer.isEmpty() && this.buildMark > 0 && !isMultiplayer()) {
+            sx = this.buildSX -x - 0.08f; ex = this.buildSX + this.bufferWX -x + 0.08f;
+            sy = this.buildSY -y - 0.08f; ey = this.buildSY + this.bufferWY -y + 0.08f;
+            sz = this.buildSZ -z - 0.08f; ez = this.buildSZ + this.bufferWZ -z + 0.08f;
+            if (this.buildEX - this.buildSX +1 == this.bufferWX
+                 && this.buildEY - this.buildSY +1 == this.bufferWY
+                 && this.buildEZ - this.buildSZ +1 == this.bufferWZ) {
                 GL11.glColor3ub((byte) 64, (byte) 255, (byte) 64);
-            } else if (buildMark == 1) {
+            } else if (this.buildMark == 1) {
                 GL11.glColor3ub((byte) 192, (byte) 32, (byte) 255);
             } else {
                 GL11.glColor3ub((byte) 255, (byte) 64, (byte) 64);
@@ -582,10 +564,10 @@ public final class Build extends ZMod {
             GuiHelper.drawLineBox(sx, sy, sz, ex, ey, ez);
         }
         // draw marker 1
-        if (buildMark > 0) {
-            sx = buildX1 -x -0.04f; ex = buildX1 -x + 1.04f;
-            sy = buildY1 -y -0.04f; ey = buildY1 -y + 1.04f;
-            sz = buildZ1 -z -0.04f; ez = buildZ1 -z + 1.04f;
+        if (this.buildMark > 0) {
+            sx = this.buildX1 -x -0.04f; ex = this.buildX1 -x + 1.04f;
+            sy = this.buildY1 -y -0.04f; ey = this.buildY1 -y + 1.04f;
+            sz = this.buildZ1 -z -0.04f; ez = this.buildZ1 -z + 1.04f;
             GL11.glColor3ub((byte) 0, (byte) 255, (byte) 255);
             GuiHelper.drawLineBox(sx, sy, sz, ex, ey, ez);
         }
@@ -595,12 +577,14 @@ public final class Build extends ZMod {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 
+    @Nullable
     @Override
     protected String getTag() {
-        if (!building || tagBuild.length() == 0) {
+        if (!this.building || this.tagBuild.length() == 0) {
             return null;
         }
-        return tagBuild;
+
+        return this.tagBuild;
     }
 }
 
