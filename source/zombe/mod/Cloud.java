@@ -5,6 +5,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import org.lwjgl.input.Keyboard;
 import zombe.core.ZMod;
+import zombe.core.gui.Keys;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -13,16 +14,16 @@ import static zombe.core.ZWrapper.*;
 
 public final class Cloud extends ZMod {
 
-    private static String tagVanilla, tagNone, tagOffset;
-    private static int keyToggle, keyUp, keyDown, keyVanilla;
-    private static boolean optShow;
-    private static float optOffset;
+    private String tagVanilla, tagNone, tagOffset;
+    private int keyToggle, keyUp, keyDown, keyVanilla;
+    private boolean optShow;
+    private double optOffset;
 
-    @Nullable private static Entity view = null;
-    private static boolean vanillaShow, cloudShow, cloudVanilla;
-    private static double viewY;
-    private static double viewPrevY;
-    private static double viewLastY;
+    @Nullable static Entity view = null;
+    private boolean vanillaShow, cloudShow, cloudVanilla;
+    private double viewY;
+    private double viewPrevY;
+    private double viewLastY;
 
     public Cloud() {
         super("cloud", "1.8", "9.0.1");
@@ -42,43 +43,48 @@ public final class Cloud extends ZMod {
         this.addOption("optCloudOffset", "Cloud offset", 4f, -60f, 140f);
     }
 
-    private static boolean getCloudSetting() {
+    private boolean getCloudSetting() {
         return getGameSettings().shouldRenderClouds() > 0;
     }
 
     /** Defaults to "fast" (off=0, fast=1, normal=2) */
-    private static void setCloudSetting(boolean clouds) {
+    private void setCloudSetting(boolean clouds) {
         getGameSettings().clouds = clouds ? 1 : 0;
     }
 
-    private static float getCloudHeight(float def) {
-        return (cloudVanilla) ? def : def + optOffset;
+    private double getCloudHeight(double def) {
+        return this.cloudVanilla ? def : (def + this.optOffset);
     }
 
-    private static boolean beforeRenderClouds(float delta) {
-        if (!cloudVanilla && view == null) {
+    private boolean beforeRenderClouds(double delta) {
+        if (!this.cloudVanilla && view == null) {
             view = getView();
-            if (cloudShow && view != null) {
-                viewY = getY(view);
-                viewPrevY = getPrevY(view);
-                viewLastY = getLastY(view);
-                setY(view, viewY - optOffset);
-                setPrevY(view, viewPrevY - optOffset);
-                setLastY(view, viewLastY - optOffset);
+
+            if (this.cloudShow && view != null) {
+                this.viewY = getY(view);
+                this.viewPrevY = getPrevY(view);
+                this.viewLastY = getLastY(view);
+                setY(view, this.viewY - this.optOffset);
+                setPrevY(view, this.viewPrevY - this.optOffset);
+                setLastY(view, this.viewLastY - this.optOffset);
+
                 return true;
             }
+
             return false;
         }
+
         return true;
     }
 
-    private static void afterRenderClouds(float delta) {
-        if (!cloudVanilla) {
-            if (cloudShow && view != null) {
-                setY(view, viewY);
-                setPrevY(view, viewPrevY);
-                setLastY(view, viewLastY);
+    private void afterRenderClouds(double delta) {
+        if (!this.cloudVanilla) {
+            if (this.cloudShow && view != null) {
+                setY(view, this.viewY);
+                setPrevY(view, this.viewPrevY);
+                setLastY(view, this.viewLastY);
             }
+
             view = null;
         }
     }
@@ -86,48 +92,48 @@ public final class Cloud extends ZMod {
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
         if (name.equals("getCloudHeight")) {
-            return getCloudHeight((Float) arg);
+            return this.getCloudHeight((Double) arg);
         }
         /*if (name.equals("beforeRenderClouds"))
-            return (Boolean) beforeRenderClouds((Float) arg);
+            return (Boolean) beforeRenderClouds((Double) arg);
         if (name.equals("afterRenderClouds"))
-            afterRenderClouds((Float) arg);*/
+            afterRenderClouds((Double) arg);*/
         return arg;
     }
 
     @Override
     protected void init() {
         if (getGameSettings() != null) {
-            vanillaShow = getCloudSetting();
-            setCloudSetting(cloudVanilla = cloudShow = optShow);
+            this.vanillaShow = this.getCloudSetting();
+            this.setCloudSetting(this.cloudVanilla = this.cloudShow = this.optShow);
         }
     }
 
     @Override
     protected void quit() {
         if (getGameSettings() != null) {
-            setCloudSetting(vanillaShow);
+            this.setCloudSetting(this.vanillaShow);
         }
     }
 
     @Override
     protected void updateConfig() {
-        tagVanilla = getOptionString("tagCloudVanilla");
-        tagNone    = getOptionString("tagCloudNone");
-        tagOffset  = getOptionString("tagCloudOffset");
+        this.tagVanilla = getOptionString("tagCloudVanilla");
+        this.tagNone    = getOptionString("tagCloudNone");
+        this.tagOffset  = getOptionString("tagCloudOffset");
 
-        keyToggle  = getOptionKey("keyCloudToggle");
-        optShow    = getOptionBool("optCloudShow");
-        keyVanilla = getOptionKey("keyCloudVanilla");
-        keyUp      = getOptionKey("keyCloudUp");
-        keyDown    = getOptionKey("keyCloudDown");
-        optOffset  = getOptionFloat("optCloudOffset");
+        this.keyToggle  = getOptionKey("keyCloudToggle");
+        this.optShow    = getOptionBool("optCloudShow");
+        this.keyVanilla = getOptionKey("keyCloudVanilla");
+        this.keyUp      = getOptionKey("keyCloudUp");
+        this.keyDown    = getOptionKey("keyCloudDown");
+        this.optOffset  = getOptionFloat("optCloudOffset");
     }
 
     @Override
     protected void onWorldChange() {
-        vanillaShow = getCloudSetting();
-        setCloudSetting(cloudVanilla = cloudShow = optShow);
+        this.vanillaShow = this.getCloudSetting();
+        this.setCloudSetting(this.cloudVanilla = this.cloudShow = this.optShow);
     }
 
     @Override
@@ -135,52 +141,59 @@ public final class Cloud extends ZMod {
         if (isInMenu()) {
             return;
         }
-        if (cloudShow != getCloudSetting()) {
-            vanillaShow = getCloudSetting();
+
+        if (this.cloudShow != this.getCloudSetting()) {
+            this.vanillaShow = this.getCloudSetting();
         }
-        if (wasKeyPressedThisTick(keyVanilla)) {
-            cloudVanilla = !cloudVanilla;
-            if (cloudVanilla) {
-                setCloudSetting(vanillaShow);
+
+        int keyPressed = Keys.getKeyPressedThisTick();
+
+        if (keyPressed == this.keyVanilla) {
+            this.cloudVanilla = !this.cloudVanilla;
+            if (this.cloudVanilla) {
+                this.setCloudSetting(this.vanillaShow);
             }
-        }
-        if (wasKeyPressedThisTick(keyToggle)) {
-            if (cloudVanilla) {
-                cloudVanilla = false;
+        } else {
+            if (!this.cloudVanilla) {
+                if (keyPressed == this.keyToggle) {
+                    this.cloudShow = !this.cloudShow;
+                }
+                if (keyPressed == this.keyUp) {
+                    this.optOffset += 1f;
+                }
+                if (keyPressed == this.keyDown) {
+                    this.optOffset -= 1f;
+                }
             } else {
-                cloudShow = !cloudShow;
+                this.cloudVanilla = false;
             }
         }
-        if (wasKeyPressedThisTick(keyUp)) {
-            if (cloudVanilla) {
-                cloudVanilla = false;
-            } else {
-                optOffset += 1f;
-            }
-        }
-        if (wasKeyPressedThisTick(keyDown)) {
-            if (cloudVanilla) {
-                cloudVanilla = false;
-            } else {
-                optOffset -= 1f;
-            }
-        }
-        if (!cloudVanilla) {
-            setCloudSetting(cloudShow);
+
+        if (!this.cloudVanilla) {
+            this.setCloudSetting(this.cloudShow);
         }
     }
 
+    @Nullable
     @Override
     protected String getTag() {
-        if (cloudVanilla && tagVanilla.length() != 0) {
-            return tagVanilla;
+        // Do not merge if statements, this method is logically simplified
+        
+        if (this.cloudVanilla) {
+            if (!this.tagVanilla.isEmpty()) {
+                return this.tagVanilla;
+            }
+        } else {
+            if (this.cloudShow) {
+                if (!this.tagOffset.isEmpty() && this.optOffset != 0f) {
+                    return this.tagOffset + (this.optOffset > 0 ? "+" : "") + this.optOffset;
+                }
+            } else if (!this.tagNone.isEmpty()) {
+                return this.tagNone;
+
+            }
         }
-        if (!cloudVanilla && !cloudShow && tagNone.length() != 0) {
-            return tagNone;
-        }
-        if (!cloudVanilla && cloudShow && tagOffset.length() != 0 && optOffset != 0f) {
-            return tagOffset + (optOffset > 0 ? "+" : "") + optOffset;
-        }
+
         return null;
     }
 }
