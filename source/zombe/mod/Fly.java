@@ -19,23 +19,23 @@ public final class Fly extends ZMod {
 
     private static final double TO_RADIANS = Math.PI / 180f;
 
-    private static boolean modFlyAllowed = true, modNoclipAllowed = true;
-    private static String tagFly, tagNoclip;
-    private static int keyOn, keyOff, keyToggle, keyNoclip, keySpeed, keyRun, keyUp, keyDown, keyFreeFly, keyForward, keyBackward;
-    private static float optSpeedVertical, optSpeedForward, optSpeedMulNormal, optSpeedMulModifier, optRunSpeedMul, optRunSpeedVMul, optJump, optJumpHigh;
-    private static boolean optNoclip, optFreeFly, optAirJump,
+    private boolean modFlyAllowed = true, modNoclipAllowed = true;
+    private String tagFly, tagNoclip;
+    private int keyOn, keyOff, keyToggle, keyNoclip, keySpeed, keyRun, keyUp, keyDown, keyFreeFly, keyForward, keyBackward;
+    private double optSpeedVertical, optSpeedForward, optSpeedMulNormal, optSpeedMulModifier, optRunSpeedMul, optRunSpeedVMul, optJump, optJumpHigh;
+    private boolean optNoclip, optFreeFly, optAirJump,
         optVanillaFly, optVanillaSprint, optNoInertia,
         optSpeedIsToggle, optRunSpeedIsToggle,
         optFixMovedWrongly, optFixMovedTooQuickly;
-    private static boolean playerFly, playerNoclip, playerSpeed, playerRun;
-    private static boolean dummyFly, dummyNoclip, dummySpeed, dummyRun;
-    private static boolean flying, noclip, flyRun, flySpeed, flyUp, flyDown, flyForward, flyFree;
-    private static boolean playerClassActive = false, flew = false, playerOnGround, dummyOnGround, controllingPlayer;
-    @Nullable private static Entity controlledEntity;
-    @Nullable private static EntityPlayerSP flyPlayer;
-    @Nullable private static DummyPlayer flyDummy;
-    private static float flySteps;
-    private static double motionX, motionY, motionZ;
+    private boolean playerFly, playerNoclip, playerSpeed, playerRun;
+    private boolean dummyFly, dummyNoclip, dummySpeed, dummyRun;
+    private boolean flying, noclip, flyRun, flySpeed, flyUp, flyDown, flyForward, flyFree;
+    private boolean playerClassActive = false, flew = false, playerOnGround, dummyOnGround, controllingPlayer;
+    private double flySteps;
+    private double motionX, motionY, motionZ;
+    @Nullable private Entity controlledEntity;
+    @Nullable private EntityPlayerSP flyPlayer;
+    @Nullable private DummyPlayer flyDummy;
 
     public Fly() {
         super("fly", "1.8", "9.0.2");
@@ -87,127 +87,136 @@ public final class Fly extends ZMod {
         this.addOption("optFlyVanillaSprint", "Allow vanilla MC sprint toggle", true);
     }
 
-    private static boolean isFlying(Object arg) {
-        return arg == flyPlayer && playerFly || arg == flyDummy && dummyFly || arg instanceof Boolean && flying;
+    private boolean isFlying(Object arg) {
+        return arg == this.flyPlayer && this.playerFly || arg == this.flyDummy && this.dummyFly || arg instanceof Boolean && this.flying;
     }
 
-    private static boolean isNoclip(Object arg) {
-        if (arg == flyPlayer && playerFly && playerNoclip && !isMultiplayer()) {
+    private boolean isNoclip(Object arg) {
+        if (arg == this.flyPlayer && this.playerFly && this.playerNoclip && !isMultiplayer()) {
             return true;
         }
 
-        if (arg == flyDummy && dummyFly && dummyNoclip) {
+        if (arg == this.flyDummy && this.dummyFly && this.dummyNoclip) {
             return true;
         }
 
         if (arg instanceof EntityPlayerMP) {
-            if (isServerPlayer((EntityPlayerMP) arg) && playerFly && playerNoclip) {
+            if (isServerPlayer((EntityPlayerMP) arg) && this.playerFly && this.playerNoclip) {
                 return true;
             }
         }
         if (arg instanceof Boolean) {
-            if (flying && noclip && (!isMultiplayer() || controlledEntity != flyPlayer)) {
+            if (this.flying && this.noclip && (!isMultiplayer() || this.controlledEntity != this.flyPlayer)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean allowVanillaFly() {
-        return !modFlyAllowed || optVanillaFly;
+    private boolean allowVanillaFly() {
+        return !this.modFlyAllowed || this.optVanillaFly;
     }
 
-    private static boolean allowVanillaSprint() {
-        return !modFlyAllowed || optVanillaSprint;
+    private boolean allowVanillaSprint() {
+        return !this.modFlyAllowed || this.optVanillaSprint;
     }
 
-    private static boolean isPlayerOnGround() {
-        if (playerClassActive && flyPlayer != null) {
-            return playerOnGround;
+    private boolean isPlayerOnGround() {
+        if (this.playerClassActive && this.flyPlayer != null) {
+            return this.playerOnGround;
         } else {
-            return flyPlayer == null || getOnGround(flyPlayer);
+            return this.flyPlayer == null || getOnGround(this.flyPlayer);
         }
     }
 
     @Nonnull
-    private static Vec3d getServerMotion() {
-        if (playerClassActive && flyPlayer != null) {
-            return new Vec3d(motionX, motionY, motionZ);
+    private Vec3d getServerMotion() {
+        if (this.playerClassActive && this.flyPlayer != null) {
+            return new Vec3d(this.motionX, this.motionY, this.motionZ);
         } else {
-            return (flyPlayer != null) ? getMotion(flyPlayer) : new Vec3d(0, 0, 0);
+            return (this.flyPlayer != null) ? getMotion(this.flyPlayer) : new Vec3d(0, 0, 0);
         }
     }
 
-    private static void onClientUpdate(EntityPlayerSP ent) {
-        if (flyPlayer != ent) {
+    private void onClientUpdate(@Nonnull EntityPlayerSP ent) {
+        if (this.flyPlayer != ent) {
             return;
         }
-        if (modFlyAllowed && optAirJump) {
-            setOnGround(flyPlayer, true);
-        } else if (playerClassActive && (!playerFly || !modFlyAllowed)) {
-            setOnGround(flyPlayer, playerOnGround); // avoids air-jumping
+
+        if (this.modFlyAllowed && this.optAirJump) {
+            setOnGround(this.flyPlayer, true);
+        } else if (this.playerClassActive && (!this.playerFly || !this.modFlyAllowed)) {
+            setOnGround(this.flyPlayer, this.playerOnGround); // avoids air-jumping
         }
     }
 
-    private static void onViewUpdate(EntityPlayer ent) {
-        if (flyDummy != ent) {
+    private void onViewUpdate(@Nonnull EntityPlayer ent) {
+        if (this.flyDummy != ent) {
             return;
         }
-        if (optAirJump) {
-            setOnGround(flyDummy, true);
-        } else if (!dummyFly) {
-            setOnGround(flyDummy, dummyOnGround); // avoids air-jumping
+
+        if (this.optAirJump) {
+            setOnGround(this.flyDummy, true);
+        } else if (!this.dummyFly) {
+            setOnGround(this.flyDummy, this.dummyOnGround); // avoids air-jumping
         }
     }
 
-    private static void onServerUpdate(@Nonnull EntityPlayerMP ent) {
-        if (!modFlyAllowed || flyPlayer == null) {
+    private void onServerUpdate(@Nonnull EntityPlayerMP ent) {
+        if (!this.modFlyAllowed || this.flyPlayer == null) {
             return;
         }
-        setNoclip(ent, getNoclip(flyPlayer)); // necessary for noclip
+        setNoclip(ent, getNoclip(this.flyPlayer)); // necessary for noclip
 
-        if (!flyPlayer.capabilities.allowFlying) {
-            setFlying(ent, getFlying(flyPlayer)); // necessary for damage-over-lava bug
+        if (!this.flyPlayer.capabilities.allowFlying) {
+            setFlying(ent, getFlying(this.flyPlayer)); // necessary for damage-over-lava bug
         }
     }
 
-    private static void onPlayerJump(@Nonnull EntityPlayer ent) {
-        if (ent == flyPlayer && !modFlyAllowed) {
+    private void onPlayerJump(@Nonnull EntityPlayer ent) {
+        if (ent == this.flyPlayer && !this.modFlyAllowed) {
             return;
         }
-        ent.motionY *= getJumpMultiplier();
+        ent.motionY *= this.getJumpMultiplier();
     }
 
-    private static float getJumpMultiplier() {
-        return flyRun ? optJumpHigh : optJump;
+    private double getJumpMultiplier() {
+        return this.flyRun ? this.optJumpHigh : this.optJump;
     }
 
     // note: used to be flyHandle()
     @Nonnull
-    private static Vec3d beforeMove(@Nonnull EntityPlayer ent, @Nonnull Vec3d move) {
+    private Vec3d beforeMove(@Nonnull EntityPlayer ent, @Nonnull Vec3d move) {
         if (isSleeping(ent) || ent.isRiding()) {
             return move;
         }
-        double mx = motionX = getX(move),
-                my = motionY = getY(move),
-                mz = motionZ = getZ(move);
-        flySteps = 0;
-        if (modFlyAllowed && ent == flyPlayer || ent == flyDummy) {
-            flySteps = getSteps(ent);
-            if (ent == flyPlayer && playerFly || ent == flyDummy && dummyFly) {
-                if (ent == flyPlayer) {
-                    flyPlayer.movementInput.sneak = false;
+
+        double mx = this.motionX = getX(move);
+        double my = this.motionY = getY(move);
+        double mz = this.motionZ = getZ(move);
+
+        this.flySteps = 0;
+        if ((this.modFlyAllowed && (ent == this.flyPlayer)) || ent == this.flyDummy) {
+            assert this.flyDummy != null;
+
+            this.flySteps = getSteps(ent);
+            if (ent == this.flyPlayer && this.playerFly || ent == this.flyDummy && this.dummyFly) {
+                if (ent == this.flyPlayer) {
+                    this.flyPlayer.movementInput.sneak = false;
                 } else {
-                    flyDummy.movementInput.sneak = false;
+                    assert this.flyDummy.movementInput != null;
+                    this.flyDummy.movementInput.sneak = false;
                 }
-                my = 0d;
-                if (optNoInertia || ent != controlledEntity) {
+
+                my = 0;
+                if (this.optNoInertia || ent != this.controlledEntity) {
                     mx = my = mz = 0;
                 }
-                if (ent == controlledEntity) {
-                    if (flyUp)   my += optSpeedVertical;
-                    if (flyDown) my -= optSpeedVertical;
-                    if (flyFree) {
+
+                if (ent == this.controlledEntity) {
+                    if (this.flyUp)   my += this.optSpeedVertical;
+                    if (this.flyDown) my -= this.optSpeedVertical;
+                    if (this.flyFree) {
                         double siny = Math.sin(getYaw(ent) * TO_RADIANS);
                         double cosy = Math.cos(getYaw(ent) * TO_RADIANS);
                         double sinp = Math.sin(getPitch(ent) * TO_RADIANS);
@@ -219,80 +228,87 @@ public final class Fly extends ZMod {
                         mz -= mf * cosy;
                         my += mv;
                     }
-                    if (flyForward) {
-                        double moves = optSpeedForward;
+
+                    if (this.flyForward) {
+                        double moves = this.optSpeedForward;
                         double movef = -moves * Math.cos(getPitch(ent) * TO_RADIANS);
                         double movev = -moves * Math.sin(getPitch(ent) * TO_RADIANS);
                         mx += movef * Math.sin(getYaw(ent) * TO_RADIANS);
                         mz += -movef * Math.cos(getYaw(ent) * TO_RADIANS);
                         my += movev;
                     }
-                    double mul = flySpeed ? optSpeedMulModifier : optSpeedMulNormal;
-                    if (optNoInertia) {
+
+                    double mul = this.flySpeed ? this.optSpeedMulModifier : this.optSpeedMulNormal;
+                    if (this.optNoInertia) {
                         mul *= 2;
                     }
+
                     mx *= mul;
                     my *= mul;
                     mz *= mul;
                 }
+
                 setFall(ent, 0f);
-                if (ent == flyPlayer) {
-                    flew = true;
+                if (ent == this.flyPlayer) {
+                    this.flew = true;
                 }
-            } else if (ent == controlledEntity && flyRun) {
-                mx *= optRunSpeedMul;
-                mz *= optRunSpeedMul;
+            } else if (ent == this.controlledEntity && this.flyRun) {
+                mx *= this.optRunSpeedMul;
+                mz *= this.optRunSpeedMul;
                 int id = getIdAt(getWorld(), fix(getX(ent)), fix(getY(ent)), fix(getZ(ent)));
+
                 // if in ladders, water or lava
                 if (id == 65 || id >= 8 && id <= 11) {
-                    my *= optRunSpeedVMul;
+                    my *= this.optRunSpeedVMul;
                 }
             }
         }
+
         setMotion(ent, mx, my, mz);
         return new Vec3d(mx, my, mz);
     }
 
-    private static void afterMove(@Nonnull EntityPlayer ent, Vec3d move) {
+    private void afterMove(@Nonnull EntityPlayer ent, Vec3d move) {
         if (isSleeping(ent) || ent.isRiding()) {
             return;
         }
-        if (ent == flyPlayer) {
-            playerClassActive = true;
-            playerOnGround = getOnGround(ent);
 
-            if (modFlyAllowed) {
-                if (getMotionX(ent) != 0) setMotionX(ent, motionX);
-                if (getMotionY(ent) != 0) setMotionY(ent, motionY);
-                if (getMotionZ(ent) != 0) setMotionZ(ent, motionZ);
-                if (playerFly) {
-                    flyPlayer.movementInput.sneak = false;
+        if (ent == this.flyPlayer) {
+            this.playerClassActive = true;
+            this.playerOnGround = getOnGround(ent);
+
+            if (this.modFlyAllowed) {
+                if (getMotionX(ent) != 0) setMotionX(ent, this.motionX);
+                if (getMotionY(ent) != 0) setMotionY(ent, this.motionY);
+                if (getMotionZ(ent) != 0) setMotionZ(ent, this.motionZ);
+                if (this.playerFly) {
+                    this.flyPlayer.movementInput.sneak = false;
                     setFall(ent, 0f);
                     setOnGround(ent, true);
-                    setSteps(ent, flySteps);
+                    setSteps(ent, this.flySteps);
                     setFlying(ent, true);
                     if (ent.capabilities.allowFlying) {
                         ent.sendPlayerAbilities();
                     }
-                } else if (flew && !getOnGround(ent)) {
+                } else if (this.flew && !getOnGround(ent)) {
                     setFall(ent, 0f);
                     setOnGround(ent, true);
                     if (ent.capabilities.allowFlying) {
                         ent.sendPlayerAbilities();
                     }
                 } else {
-                    flew = false;
+                    this.flew = false;
                 }
             }
         }
-        if (ent == flyDummy) {
-            dummyOnGround = getOnGround(ent);
-            if (getMotionX(ent) != 0) setMotionX(ent, motionX);
-            if (getMotionY(ent) != 0) setMotionY(ent, motionY);
-            if (getMotionZ(ent) != 0) setMotionZ(ent, motionZ);
-            if (dummyFly) {
-                flyDummy.movementInput.sneak = false;
-                setSteps(ent, flySteps);
+        if (ent == this.flyDummy) {
+            this.dummyOnGround = getOnGround(ent);
+            if (getMotionX(ent) != 0) setMotionX(ent, this.motionX);
+            if (getMotionY(ent) != 0) setMotionY(ent, this.motionY);
+            if (getMotionZ(ent) != 0) setMotionZ(ent, this.motionZ);
+            if (this.dummyFly) {
+                this.flyDummy.movementInput.sneak = false;
+                setSteps(ent, this.flySteps);
                 setFlying(ent, true);
             }
             setFall(ent, 0f);
@@ -303,216 +319,227 @@ public final class Fly extends ZMod {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
-        if (name.equals("ignorePlayerInsideOpaqueBlock")) {
-            return getNoclip();
+        switch (name) {
+            case "ignorePlayerInsideOpaqueBlock":
+                return getNoclip();
+            case "allowVanillaFly":
+                return this.allowVanillaFly();
+            case "allowVanillaSprint":
+                return this.allowVanillaSprint();
+            case "isFlying":
+                return this.isFlying(arg);
+            case "isNoclip":
+                return this.isNoclip(arg);
+            case "isPlayerOnGround":
+                return this.isPlayerOnGround();
+            case "beforePlayerMove":
+                return this.beforeMove(getPlayer(), (Vec3d) arg);
+            case "afterPlayerMove":
+                this.afterMove(ZWrapper.getPlayer(), (Vec3d) arg);
+                break;
+            case "beforeViewMove":
+                return this.beforeMove((EntityPlayer) getView(), (Vec3d) arg);
+            case "afterViewMove":
+                this.afterMove((EntityPlayer) getView(), (Vec3d) arg);
+                break;
+            case "onPlayerJump":
+                this.onPlayerJump((EntityPlayer) arg);
+                break;
+            case "onClientUpdate":
+                this.onClientUpdate((EntityPlayerSP) arg);
+                break;
+            case "onViewUpdate":
+                this.onViewUpdate((EntityPlayer) arg);
+                break;
+            case "onServerUpdate":
+                this.onServerUpdate((EntityPlayerMP) arg);
+                break;
         }
-        if (name.equals("allowVanillaFly")) {
-            return allowVanillaFly();
-        }
-        if (name.equals("allowVanillaSprint")) {
-            return allowVanillaSprint();
-        }
-        if (name.equals("isFlying")) {
-            return isFlying(arg);
-        }
-        if (name.equals("isNoclip")) {
-            return isNoclip(arg);
-        }
-        if (name.equals("isPlayerOnGround")) {
-            return isPlayerOnGround();
-        }
-        if (name.equals("beforePlayerMove")) {
-            return beforeMove(getPlayer(), (Vec3d) arg);
-        }
-        if (name.equals("afterPlayerMove")) {
-            afterMove(ZWrapper.getPlayer(), (Vec3d) arg);
-        }
-        if (name.equals("beforeViewMove")) {
-            return beforeMove((EntityPlayer) getView(), (Vec3d) arg);
-        }
-        if (name.equals("afterViewMove")) {
-            afterMove((EntityPlayer) getView(), (Vec3d) arg);
-        }
-        if (name.equals("onPlayerJump")) {
-            onPlayerJump((EntityPlayer) arg);
-        }
-        if (name.equals("onClientUpdate")) {
-            onClientUpdate((EntityPlayerSP) arg);
-        }
-        if (name.equals("onViewUpdate")) {
-            onViewUpdate((EntityPlayer) arg);
-        }
-        if (name.equals("onServerUpdate")) {
-            onServerUpdate((EntityPlayerMP) arg);
-        }
+
         return arg;
     }
 
     @Override
     protected void init() {
-        flyPlayer = null;
-        flyDummy = null;
-        playerNoclip = optNoclip;
-        flyFree = optFreeFly;
-        motionX = motionY = motionZ = 0;
+        this.flyPlayer = null;
+        this.flyDummy = null;
+        this.playerNoclip = this.optNoclip;
+        this.flyFree = this.optFreeFly;
+        this.motionX = this.motionY = this.motionZ = 0;
     }
 
     @Override
     protected void quit() {
-        flyPlayer = null;
-        flyDummy  = null;
+        this.flyPlayer = null;
+        this.flyDummy = null;
     }
 
     @Override
     protected void updateConfig() {
-        tagFly              = getOptionString("tagFly");
-        tagNoclip           = getOptionString("tagFlyNoClip");
-        keyOn               = getOptionKey("keyFlyOn");
-        keyOff              = getOptionKey("keyFlyOff");
-        keyToggle           = getOptionKey("keyFlyToggle");
-        keyUp               = getOptionKey("keyFlyUp");
-        keyDown             = getOptionKey("keyFlyDown");
-        keyForward          = 0;
+        this.tagFly = getOptionString("tagFly");
+        this.tagNoclip = getOptionString("tagFlyNoClip");
+        this.keyOn = getOptionKey("keyFlyOn");
+        this.keyOff = getOptionKey("keyFlyOff");
+        this.keyToggle = getOptionKey("keyFlyToggle");
+        this.keyUp = getOptionKey("keyFlyUp");
+        this.keyDown = getOptionKey("keyFlyDown");
+        this.keyForward = 0;
         //keyForward          = getOptionKey("keyFlyForward");
-        keyFreeFly          = getOptionKey("keyFlyFreeFly");
-        keySpeed            = getOptionKey("keyFlySpeed");
-        keyRun              = getOptionKey("keyFlyRun");
-        keyNoclip           = getOptionKey("keyFlyNoClip");
-        optAirJump          = getOptionBool("optFlyAirJump");
-        optNoInertia        = getOptionBool("optFlyNoInertia");
-        optFreeFly          = getOptionBool("optFlyFreeFly");
-        optSpeedIsToggle    = getOptionBool("optFlySpeedIsToggle");
-        optRunSpeedIsToggle = getOptionBool("optFlyRunSpeedIsToggle");
-        optNoclip           = getOptionBool("optFlyNoClip");
-        optVanillaFly       = getOptionBool("optFlyVanillaFly");
-        optVanillaSprint    = getOptionBool("optFlyVanillaSprint");
-        optJump             = getOptionFloat("optFlyJump");
-        optJumpHigh         = getOptionFloat("optFlyJumpHigh");
-        optSpeedVertical    = getOptionFloat("optFlySpeedVertical");
-        optSpeedForward  = 0;
+        this.keyFreeFly = getOptionKey("keyFlyFreeFly");
+        this.keySpeed = getOptionKey("keyFlySpeed");
+        this.keyRun = getOptionKey("keyFlyRun");
+        this.keyNoclip = getOptionKey("keyFlyNoClip");
+        this.optAirJump = getOptionBool("optFlyAirJump");
+        this.optNoInertia = getOptionBool("optFlyNoInertia");
+        this.optFreeFly = getOptionBool("optFlyFreeFly");
+        this.optSpeedIsToggle = getOptionBool("optFlySpeedIsToggle");
+        this.optRunSpeedIsToggle = getOptionBool("optFlyRunSpeedIsToggle");
+        this.optNoclip = getOptionBool("optFlyNoClip");
+        this.optVanillaFly = getOptionBool("optFlyVanillaFly");
+        this.optVanillaSprint = getOptionBool("optFlyVanillaSprint");
+        this.optJump = getOptionFloat("optFlyJump");
+        this.optJumpHigh = getOptionFloat("optFlyJumpHigh");
+        this.optSpeedVertical = getOptionFloat("optFlySpeedVertical");
+        this.optSpeedForward = 0;
         //optSpeedForward     = getOptionFloat("optFlySpeedForward");
-        optSpeedMulNormal   = getOptionFloat("optFlySpeedMulNormal");
-        optSpeedMulModifier = getOptionFloat("optFlySpeedMulModifier");
-        optRunSpeedMul      = getOptionFloat("optFlyRunSpeedMul");
-        optRunSpeedVMul     = getOptionFloat("optFlyRunSpeedVMul");
+        this.optSpeedMulNormal = getOptionFloat("optFlySpeedMulNormal");
+        this.optSpeedMulModifier = getOptionFloat("optFlySpeedMulModifier");
+        this.optRunSpeedMul = getOptionFloat("optFlyRunSpeedMul");
+        this.optRunSpeedVMul = getOptionFloat("optFlyRunSpeedVMul");
     }
 
     @Override
     protected void onWorldChange() {
-        flyPlayer = null;
-        flyDummy  = null;
-        modFlyAllowed = ZHandle.handle("allowFlying", true);
-        modNoclipAllowed = ZHandle.handle("allowNoclip", true);
-        playerNoclip = optNoclip && modNoclipAllowed;
-        setNoclip(modFlyAllowed && playerNoclip && playerFly);
-        flyFree = optFreeFly;
-        motionX = motionY = motionZ = 0;
+        this.flyPlayer = null;
+        this.flyDummy = null;
+        this.modFlyAllowed = ZHandle.handle("allowFlying", true);
+        this.modNoclipAllowed = ZHandle.handle("allowNoclip", true);
+        this.playerNoclip = this.optNoclip && this.modNoclipAllowed;
+        setNoclip(this.modFlyAllowed && this.playerNoclip && this.playerFly);
+        this.flyFree = this.optFreeFly;
+        this.motionX = this.motionY = this.motionZ = 0;
     }
 
     @Override
     protected void onClientTick(@Nonnull EntityPlayerSP player) {
-        modFlyAllowed = ZHandle.handle("allowFlying", true);
-        modNoclipAllowed = ZHandle.handle("allowNoclip", true);
-        flyPlayer = player;
-        controlledEntity = (Entity) ZHandle.handle("getControlledEntity", player);
-        controllingPlayer = controlledEntity == player;
-        if (controlledEntity instanceof DummyPlayer) {
-            DummyPlayer controlledDummy = (DummyPlayer) controlledEntity;
-            if (controlledDummy != flyDummy) {
-                flyDummy = controlledDummy;
-                dummyFly = getFlying(flyDummy) && playerFly;
-                dummyNoclip = dummyFly && playerNoclip;
+        this.modFlyAllowed = ZHandle.handle("allowFlying", true);
+        this.modNoclipAllowed = ZHandle.handle("allowNoclip", true);
+        this.flyPlayer = player;
+        this.controlledEntity = (Entity) ZHandle.handle("getControlledEntity", player);
+        this.controllingPlayer = this.controlledEntity == player;
+
+        if (this.controlledEntity instanceof DummyPlayer) {
+            DummyPlayer controlledDummy = (DummyPlayer) this.controlledEntity;
+            if (controlledDummy != this.flyDummy) {
+                this.flyDummy = controlledDummy;
+                this.dummyFly = getFlying(this.flyDummy) && this.playerFly;
+                this.dummyNoclip = this.dummyFly && this.playerNoclip;
             }
         }
-        flyRun = flySpeed = false;
+
+        this.flyRun = this.flySpeed = false;
         if (isInMenu()) {
-            flyUp = flyDown = flyForward = false;
+            this.flyUp = this.flyDown = this.flyForward = false;
             return;
         }
-        if (controllingPlayer) {
-            boolean flyPrev = playerFly;
-            if (wasKeyPressedThisTick(keyToggle)) {
-                playerFly = !playerFly;
-            } else if (isKeyDownThisTick(keyOn)) {
-                playerFly = true;
-            } else if (isKeyDownThisTick(keyOff)) {
-                playerFly = false;
+
+        if (this.controllingPlayer) {
+            final boolean flyPrev = this.playerFly;
+            if (wasKeyPressedThisTick(this.keyToggle)) {
+                this.playerFly = !this.playerFly;
+            } else if (isKeyDownThisTick(this.keyOn)) {
+                this.playerFly = true;
+            } else if (isKeyDownThisTick(this.keyOff)) {
+                this.playerFly = false;
             }
-            if (!modFlyAllowed && playerFly) {
-                playerFly = false;
+
+            // Disallow fly mod and notify player
+            if (!this.modFlyAllowed && this.playerFly) {
+                this.playerFly = true; // ;)
                 chatClient("\u00a74zombe's \u00a72fly\u00a74-mod is not allowed on this server.");
             }
-            if (flyPrev != playerFly) {
-                setFlying(player, playerFly);
+
+            if (flyPrev != this.playerFly) {
+                setFlying(player, this.playerFly);
                 if (player.capabilities.allowFlying) {
                     player.sendPlayerAbilities();
                 }
             }
-            if (playerFly && wasKeyPressedThisTick(keyNoclip)) {
-                setNoclip(playerNoclip = !playerNoclip);
-            } else if (flyPrev != playerFly) {
-                setNoclip(playerFly && playerNoclip);
+
+            if (this.playerFly && wasKeyPressedThisTick(this.keyNoclip)) {
+                setNoclip(this.playerNoclip = !this.playerNoclip);
+            } else if (flyPrev != this.playerFly) {
+                setNoclip(this.playerFly && this.playerNoclip);
             }
-            flySpeed = playerSpeed = optSpeedIsToggle && (wasKeyPressedThisTick(keySpeed) != playerSpeed);
-            flyRun = playerRun = optRunSpeedIsToggle && (wasKeyPressedThisTick(keyRun) != playerRun);
-            flying = playerFly;
-            noclip = playerNoclip;
+
+            this.flySpeed = this.playerSpeed = this.optSpeedIsToggle && (wasKeyPressedThisTick(this.keySpeed) != this.playerSpeed);
+            this.flyRun = this.playerRun = this.optRunSpeedIsToggle && (wasKeyPressedThisTick(this.keyRun) != this.playerRun);
+            this.flying = this.playerFly;
+            this.noclip = this.playerNoclip;
         } else {
-            if (!optSpeedIsToggle) {
-                playerSpeed = false;
+            if (!this.optSpeedIsToggle) {
+                this.playerSpeed = false;
             }
-            if (!optRunSpeedIsToggle) {
-                playerRun = false;
+            if (!this.optRunSpeedIsToggle) {
+                this.playerRun = false;
             }
         }
-        if (!controllingPlayer) {
-            boolean flyPrev = dummyFly;
-            if (wasKeyPressedThisTick(keyToggle)) {
-                dummyFly = !dummyFly;
-            } else if (isKeyDownThisTick(keyOn)) {
-                dummyFly = true;
-            } else if (isKeyDownThisTick(keyOff)) {
-                dummyFly = false;
+
+        if (!this.controllingPlayer) {
+            final boolean flyPrev = this.dummyFly;
+            if (wasKeyPressedThisTick(this.keyToggle)) {
+                this.dummyFly = !this.dummyFly;
+            } else if (isKeyDownThisTick(this.keyOn)) {
+                this.dummyFly = true;
+            } else if (isKeyDownThisTick(this.keyOff)) {
+                this.dummyFly = false;
             }
-            if (flyPrev != dummyFly) {
-                setFlying(flyDummy, dummyFly);
+
+            if (flyPrev != this.dummyFly) {
+                setFlying(this.flyDummy, this.dummyFly);
             }
-            if (dummyFly && wasKeyPressedThisTick(keyNoclip)) {
-                setNoclip(flyDummy, dummyNoclip = !dummyNoclip);
-            } else if (flyPrev != dummyFly) {
-                setNoclip(flyDummy, dummyFly && dummyNoclip);
+
+            if (this.dummyFly && wasKeyPressedThisTick(this.keyNoclip)) {
+                setNoclip(this.flyDummy, this.dummyNoclip = !this.dummyNoclip);
+            } else if (flyPrev != this.dummyFly) {
+                setNoclip(this.flyDummy, this.dummyFly && this.dummyNoclip);
             }
-            flySpeed = dummySpeed = optSpeedIsToggle && (wasKeyPressedThisTick(keySpeed) != dummySpeed);
-            flyRun = dummyRun = optRunSpeedIsToggle && (wasKeyPressedThisTick(keyRun) != dummyRun);
-            flying = dummyFly;
-            noclip = dummyNoclip;
+
+            this.flySpeed = this.dummySpeed = this.optSpeedIsToggle && (wasKeyPressedThisTick(this.keySpeed) != this.dummySpeed);
+            this.flyRun = this.dummyRun = this.optRunSpeedIsToggle && (wasKeyPressedThisTick(this.keyRun) != this.dummyRun);
+            this.flying = this.dummyFly;
+            this.noclip = this.dummyNoclip;
         } else {
-            if (!optSpeedIsToggle) {
-                dummySpeed = false;
+            if (!this.optSpeedIsToggle) {
+                this.dummySpeed = false;
             }
-            if (!optRunSpeedIsToggle) {
-                dummyRun = false;
+            if (!this.optRunSpeedIsToggle) {
+                this.dummyRun = false;
             }
         }
-        if (wasKeyPressedThisTick(keyFreeFly)) {
-            flyFree = !flyFree;
+
+        if (wasKeyPressedThisTick(this.keyFreeFly)) {
+            this.flyFree = !this.flyFree;
         }
-        flyUp      = isKeyDownThisTick(keyUp);
-        flyDown    = isKeyDownThisTick(keyDown);
-        flyForward = isKeyDownThisTick(keyForward);
-        flySpeed   = flySpeed || (!optSpeedIsToggle && isKeyDownThisTick(keySpeed));
-        flyRun     = flyRun || (!optRunSpeedIsToggle && isKeyDownThisTick(keyRun));
+
+        this.flyUp = isKeyDownThisTick(this.keyUp);
+        this.flyDown = isKeyDownThisTick(this.keyDown);
+        this.flyForward = isKeyDownThisTick(this.keyForward);
+        this.flySpeed = this.flySpeed || (!this.optSpeedIsToggle && isKeyDownThisTick(this.keySpeed));
+        this.flyRun = this.flyRun || (!this.optRunSpeedIsToggle && isKeyDownThisTick(this.keyRun));
     }
 
+    @Nullable
     @Override
     protected String getTag() {
-        if (!playerFly) {
+        if (!this.playerFly) {
             return null;
         }
-        String txt = tagFly;
-        if (playerNoclip && tagNoclip.length() > 0) {
-            txt += " " + tagNoclip;
+
+        if (this.playerNoclip && !this.tagNoclip.isEmpty()) {
+            return this.tagFly += " " + this.tagNoclip;
         }
-        return txt;
+
+        return this.tagFly;
     }
 }

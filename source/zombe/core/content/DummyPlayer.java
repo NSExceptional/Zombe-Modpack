@@ -20,7 +20,7 @@ import static zombe.core.ZWrapper.*;
 
 public final class DummyPlayer extends AbstractClientPlayer {
     public EntityPlayer playerBody;
-    @Nullable public MovementInput movementInput;
+    public MovementInput movementInput;
 
     public DummyPlayer(@Nonnull EntityPlayer player) {
         super(getWorld(player), getProfile(player));
@@ -57,47 +57,50 @@ public final class DummyPlayer extends AbstractClientPlayer {
         }
 
         BlockPos var7 = new BlockPos(x, y, z);
-        double var8 = x - (double) getX(var7);
-        double var10 = z - (double) getZ(var7);
+        /// TODO wont' this always be zero? + better variable names
+        double dx = x - (double) getX(var7);
+        double dz = z - (double) getZ(var7);
 
         if (!this.isMostlyEmpty(var7)) {
             byte var12 = -1;
             double var13 = 9999.0D;
 
-            if (this.isMostlyEmpty(var7.offset(EnumFacing.WEST)) && var8 < var13) {
-                var13 = var8;
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.WEST)) && dx < var13) {
+                var13 = dx;
                 var12 = 0;
             }
 
-            if (this.isMostlyEmpty(var7.offset(EnumFacing.EAST)) && 1.0D - var8 < var13) {
-                var13 = 1.0D - var8;
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.EAST)) && 1.0D - dx < var13) {
+                var13 = 1.0D - dx;
                 var12 = 1;
             }
 
-            if (this.isMostlyEmpty(var7.offset(EnumFacing.NORTH)) && var10 < var13) {
-                var13 = var10;
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.NORTH)) && dz < var13) {
+                var13 = dz;
                 var12 = 4;
             }
 
-            if (this.isMostlyEmpty(var7.offset(EnumFacing.SOUTH)) && 1.0D - var10 < var13) {
+            if (this.isMostlyEmpty(var7.offset(EnumFacing.SOUTH)) && 1.0D - dz < var13) {
                 // Never used...
-                //var13 = 1.0D - var10;
+                //var13 = 1.0D - dz;
                 var12 = 5;
             }
 
             double var15 = 0.1;
 
-            if (var12 == 0) {
-                this.motionX = -var15;
-            }
-            if (var12 == 1) {
-                this.motionX = var15;
-            }
-            if (var12 == 4) {
-                this.motionZ = -var15;
-            }
-            if (var12 == 5) {
-                this.motionZ = var15;
+            switch (var12) {
+                case 0:
+                    this.motionX = -var15;
+                    break;
+                case 1:
+                    this.motionX = var15;
+                    break;
+                case 4:
+                    this.motionZ = -var15;
+                    break;
+                case 5:
+                    this.motionZ = var15;
+                    break;
             }
         }
 
@@ -105,11 +108,10 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void addChatMessage(@Nonnull ITextComponent message) {
-    }
+    public void addChatMessage(@Nonnull ITextComponent message) { }
 
     @Override
-    public boolean canCommandSenderUseCommand(int par1, @Nullable String par2Str) {
+    public boolean canCommandSenderUseCommand(int permLevel, @Nullable String commandName) {
         return false;
     }
 
@@ -127,12 +129,15 @@ public final class DummyPlayer extends AbstractClientPlayer {
         this.prevRotationYaw = this.rotationYaw;
         this.prevRotationPitch = this.rotationPitch;
         ZHandle.handle("onViewUpdate", this);
+
         super.onUpdate();
     }
 
     @Override
     public void updateEntityActionState() {
         super.updateEntityActionState();
+        assert this.movementInput != null;
+
         this.moveStrafing = this.movementInput.moveStrafe;
         this.moveForward = this.movementInput.moveForward;
         this.isJumping = this.movementInput.jump;
@@ -140,6 +145,8 @@ public final class DummyPlayer extends AbstractClientPlayer {
 
     @Override
     public void onLivingUpdate() {
+        assert this.movementInput != null;
+
         this.inPortal = false;
         this.movementInput.updatePlayerMoveState();
 
@@ -152,7 +159,7 @@ public final class DummyPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public boolean attackEntityFrom(@Nonnull DamageSource par1DamageSource, float par2) {
+    public boolean attackEntityFrom(@Nonnull DamageSource source, float amount) {
         return false;
     }
 
@@ -177,7 +184,8 @@ public final class DummyPlayer extends AbstractClientPlayer {
 
     private boolean isMostlyEmpty(@Nonnull BlockPos p) {
         IBlockState block = getStateAt(getWorld(this), p);
-        return !block.isNormalCube() && !getStateAt(getWorld(this), p.offset(EnumFacing.UP)).isNormalCube();
+        IBlockState above = getStateAt(getWorld(this), p.offset(EnumFacing.UP));
+        return !block.isNormalCube() && !above.isNormalCube();
     }
 
     @Override
@@ -185,6 +193,7 @@ public final class DummyPlayer extends AbstractClientPlayer {
         if (ZHandle.handle("isNoclip", this, false)) {
             ZWrapper.setNoclip(this, true);
         }
+
         return super.isSpectator();
     }
 
