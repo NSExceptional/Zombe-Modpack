@@ -15,10 +15,10 @@ import static zombe.core.ZWrapper.*;
 
 public final class Dig extends ZMod {
 
-    private static boolean optCheckReach, optCheckRaytrace, optSyncDigged;
-    private static boolean optReachSet, optReachSetDig, optReachSetUse, optReachSetPlace;
-    private static float optReach, optReachDig, optReachUse, optReachPlace;
-    private static int optBlockHitDelay = 5;
+    private boolean optCheckReach, optCheckRaytrace, optSyncDigged;
+    private boolean optReachSet, optReachSetDig, optReachSetUse, optReachSetPlace;
+    private double optReach, optReachDig, optReachUse, optReachPlace;
+    private int optBlockHitDelay = 5;
 
     public Dig() {
         super("dig", "1.8", "9.0.2");
@@ -53,102 +53,110 @@ public final class Dig extends ZMod {
     }
 
     @Nullable
-    private static Object onPlayerRaytrace(Object arg) {
+    private Object onPlayerRaytrace(Object arg) {
         if (arg instanceof RayTraceResult) {
-            return onRaytrace(getPlayer(), (RayTraceResult) arg);
+            return this.onRaytrace(getPlayer(), (RayTraceResult) arg);
         }
+
         return arg;
     }
 
     @Nullable
-    private static Object onViewRaytrace(Object arg) {
+    private Object onViewRaytrace(Object arg) {
+        Entity view = getView();
+        assert view != null;
+
         if (arg instanceof RayTraceResult) {
-            return onRaytrace(getView(), (RayTraceResult) arg);
+            return this.onRaytrace(view, (RayTraceResult) arg);
         }
+
         return arg;
     }
 
     @Nullable
-    private static RayTraceResult onRaytrace(Entity src, RayTraceResult mop) {
-        if (optCheckRaytrace) {
+    private RayTraceResult onRaytrace(Entity src, RayTraceResult mop) {
+        if (this.optCheckRaytrace) {
             BlockFace bf = getBlockFace(mop);
             Entity ent = getEntity(mop);
-            if (ent == src) {
+            if (ent == src || (ent == null || !this.checkReachUse(ent)) && (bf == null || (!this.checkReachDig(bf) && !this.checkReachPlace(bf)))) {
                 return getMOP();
             }
-            if (ent != null && checkReachUse(ent) || bf != null && (checkReachDig(bf) || checkReachPlace(bf))) {
-                return mop;
-            }
-            return getMOP();
         }
+
         return mop;
     }
 
-    private static int getBlockHitDelay(int def) {
-        return optBlockHitDelay;
+    private int getBlockHitDelay(int defaultValue) {
+        return this.optBlockHitDelay;
     }
 
-    private static float getReach(float reach) {
-        if (optReachSet) {
-            reach = optReach;
+    private double getReach(double reach) {
+        if (this.optReachSet) {
+            reach = this.optReach;
             if (isCreative(getPlayer())) {
                 reach += 0.5;
             }
         }
+
         return reach;
     }
 
-    private static float getReachSq(float def) {
-        float reach = getReach(0);
-        return reach == 0 ? def : reach * reach;
+    private double getReachSq(double defaultValue) {
+        return this.getThingSquared(this.getReach(0), defaultValue);
     }
 
-    private static float getReachUse(float reach) {
-        if (!isMultiplayer() && optReachSetUse) {
-            return optReachUse;
+    private double getReachUse(double reach) {
+        if (!isMultiplayer() && this.optReachSetUse) {
+            return this.optReachUse;
         }
+
         return reach;
     }
 
-    private static float getReachUseSq(float def) {
-        float reach = getReachUse(0);
-        return reach == 0 ? def : reach * reach;
+    private double getReachUseSq(double defaultValue) {
+        return this.getThingSquared(this.getReachUse(0), defaultValue);
     }
 
-    private static float getReachDig(float reach) {
-        if (!isMultiplayer() && optReachSetDig) {
-            return optReachDig;
+    private double getReachDig(double reach) {
+        if (!isMultiplayer() && this.optReachSetDig) {
+            return this.optReachDig;
         }
+
         return reach;
     }
 
-    private static float getReachDigSq(float def) {
-        float reach = getReachDig(0);
-        return reach == 0 ? def : reach * reach;
+    private double getReachDigSq(double defaultValue) {
+        return this.getThingSquared(this.getReachDig(0), defaultValue);
     }
 
-    private static float getReachPlace(float reach) {
-        if (!isMultiplayer() && optReachSetPlace) {
-            return optReachPlace;
+    private double getReachPlace(double reach) {
+        if (!isMultiplayer() && this.optReachSetPlace) {
+            return this.optReachPlace;
         }
+
         return reach;
     }
 
-    private static float getReachPlaceSq(float def) {
-        float reach = getReachPlace(0);
-        return reach == 0 ? def : reach * reach;
+    private double getReachPlaceSq(double defaultValue) {
+        return this.getThingSquared(this.getReachPlace(0), defaultValue);
     }
 
-    private static boolean checkReachUse(@Nullable Entity ent) {
-        if (!optCheckReach) {
+    private double getThingSquared(double thing, double defaultValue) {
+        return thing == 0 ? defaultValue : thing * thing;
+    }
+
+    private boolean checkReachUse(@Nullable Entity ent) {
+        if (!this.optCheckReach) {
             return true;
         }
+
         EntityPlayer player = getPlayer();
         if (player == null || ent == null || player == ent) {
             return false;
         }
+
         boolean seen = player.canEntityBeSeen(ent);
-        float reach = seen ? getReachUseSq(36) : 9f;
+        double reach = seen ? this.getReachUseSq(36) : 9f;
         double dx = player.posX - ent.posX;
         double dy = player.posY - ent.posY;
         double dz = player.posZ - ent.posZ;
@@ -156,23 +164,25 @@ public final class Dig extends ZMod {
         return dist < reach;
     }
 
-    private static boolean checkReachDig(@Nullable BlockFace bf) {
-        if (!optCheckReach) {
+    private boolean checkReachDig(@Nullable BlockFace bf) {
+        if (!this.optCheckReach) {
             return true;
         }
+
         EntityPlayer player = getPlayer();
         if (player == null || bf == null) {
             return false;
         }
+
         double dx = player.posX - (bf.x + 0.5);
         double dy = player.posY - (bf.y + 0.5) + 1.5;
         double dz = player.posZ - (bf.z + 0.5);
         double dist = dx * dx + dy * dy + dz * dz;
-        return dist <= getReachDigSq(36);
+        return dist <= this.getReachDigSq(36);
     }
 
-    private static boolean checkReachPlace(@Nullable BlockFace bf) {
-        if (!optCheckReach) {
+    private boolean checkReachPlace(@Nullable BlockFace bf) {
+        if (!this.optCheckReach) {
             return true;
         }
         EntityPlayer player = getPlayer();
@@ -183,91 +193,84 @@ public final class Dig extends ZMod {
         double dy = player.posY - (bf.y + 0.5);
         double dz = player.posZ - (bf.z + 0.5);
         double dist = dx * dx + dy * dy + dz * dz;
-        return dist < getReachPlaceSq(64);
+        return dist < this.getReachPlaceSq(64);
     }
 
     /*
-    private static Packet makeBlockRequestPacket(int x, int y, int z) {
+    private Packet makeBlockRequestPacket(int x, int y, int z) {
         return new Packet14BlockDig(3, x,y,z, -1);
     }
 
-    private static void askBlockInfo(int x, int y, int z) {
+    private void askBlockInfo(int x, int y, int z) {
         queuePacket(makeBlockRequestPacket(x,y,z));
     }
     */
-    private static void askBlockInfo(int x, int y, int z) {
+
+    // TODO fix this
+    private void askBlockInfo(int x, int y, int z) {
         // DNAA. broken feature as of 1.4.6
     }
 
-    public static void onBlockDigged(int x, int y, int z, int side) {
+    public void onBlockDigged(int x, int y, int z, int side) {
         if (ZWrapper.getPlayer() == null) {
             return;
         }
-        if (optSyncDigged) {
-            askBlockInfo(x, y, z);
+
+        if (this.optSyncDigged) {
+            this.askBlockInfo(x, y, z);
         }
     }
 
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
-        if (name.equals("onPlayerRayTrace")) {
-            return onPlayerRaytrace(arg);
+        switch (name) {
+            case "onPlayerRayTrace":
+                return this.onPlayerRaytrace(arg);
+            case "onViewRayTrace":
+                return this.onViewRaytrace(arg);
+            case "getBlockHitDelay":
+                return this.getBlockHitDelay((Integer) arg);
+            case "getPlayerReach":
+                return this.getReach((Double) arg);
+            case "getPlayerReachSq":
+                return this.getReachSq((Double) arg);
+            case "getPlayerReachUse":
+                return this.getReachUse((Double) arg);
+            case "getPlayerReachUseSq":
+                return this.getReachUseSq((Double) arg);
+            case "getPlayerReachDig":
+                return this.getReachDig((Double) arg);
+            case "getPlayerReachDigSq":
+                return this.getReachDigSq((Double) arg);
+            case "getPlayerReachPlace":
+                return this.getReachPlace((Double) arg);
+            case "getPlayerReachPlaceSq":
+                return this.getReachPlaceSq((Double) arg);
+            case "checkReachUse":
+                return this.checkReachUse((Entity) arg);
+            case "checkReachDig":
+                return this.checkReachDig((BlockFace) arg);
+            case "checkReachPlace":
+                return this.checkReachPlace((BlockFace) arg);
+
+            default:
+                return arg;
         }
-        if (name.equals("onViewRayTrace")) {
-            return onViewRaytrace(arg);
-        }
-        if (name.equals("getBlockHitDelay")) {
-            return getBlockHitDelay((Integer) arg);
-        }
-        if (name.equals("getPlayerReach")) {
-            return getReach((Float) arg);
-        }
-        if (name.equals("getPlayerReachSq")) {
-            return getReachSq((Float) arg);
-        }
-        if (name.equals("getPlayerReachUse")) {
-            return getReachUse((Float) arg);
-        }
-        if (name.equals("getPlayerReachUseSq")) {
-            return getReachUseSq((Float) arg);
-        }
-        if (name.equals("getPlayerReachDig")) {
-            return getReachDig((Float) arg);
-        }
-        if (name.equals("getPlayerReachDigSq")) {
-            return getReachDigSq((Float) arg);
-        }
-        if (name.equals("getPlayerReachPlace")) {
-            return getReachPlace((Float) arg);
-        }
-        if (name.equals("getPlayerReachPlaceSq")) {
-            return getReachPlaceSq((Float) arg);
-        }
-        if (name.equals("checkReachUse")) {
-            return checkReachUse((Entity) arg);
-        }
-        if (name.equals("checkReachDig")) {
-            return checkReachDig((BlockFace) arg);
-        }
-        if (name.equals("checkReachPlace")) {
-            return checkReachPlace((BlockFace) arg);
-        }
-        return arg;
     }
 
     @Override
     protected void updateConfig() {
-        optCheckReach    = getOptionBool("optDigCheckReach");
-        optCheckRaytrace = getOptionBool("optDigCheckRaytrace");
-        optSyncDigged    = false; // broken as of 1.4.6, they removed the BlockDig Request-status (3)
-        optReachSet      = getOptionBool("optDigReachSet");
-        optReach         = getOptionFloat("optDigReach");
-        optReachSetUse   = getOptionBool("optDigReachSetUse");
-        optReachUse      = getOptionFloat("optDigReachUse");
-        optReachSetDig   = getOptionBool("optDigReachSetDig");
-        optReachDig      = getOptionFloat("optDigReachDig");
-        optReachSetPlace = getOptionBool("optDigReachSetPlace");
-        optReachPlace    = getOptionFloat("optDigReachPlace");
-        optBlockHitDelay = getOptionInt("optDigBlockHitDelay");
+        this.optCheckReach = getOptionBool("optDigCheckReach");
+        this.optCheckRaytrace = getOptionBool("optDigCheckRaytrace");
+        this.optSyncDigged = false; // broken as of 1.4.6, they removed the BlockDig Request-status (3)
+        this.optReachSet = getOptionBool("optDigReachSet");
+        this.optReach = getOptionFloat("optDigReach");
+        this.optReachSetUse = getOptionBool("optDigReachSetUse");
+        this.optReachUse = getOptionFloat("optDigReachUse");
+        this.optReachSetDig = getOptionBool("optDigReachSetDig");
+        this.optReachDig = getOptionFloat("optDigReachDig");
+        this.optReachSetPlace = getOptionBool("optDigReachSetPlace");
+        this.optReachPlace = getOptionFloat("optDigReachPlace");
+        this.optBlockHitDelay = getOptionInt("optDigBlockHitDelay");
     }
 }
