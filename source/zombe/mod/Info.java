@@ -16,20 +16,22 @@ import zombe.core.util.BlockFace;
 import zombe.core.util.TimeHelper;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
+import static com.sun.tools.doclint.Entity.cap;
 import static zombe.core.ZWrapper.*;
 
 public final class Info extends ZMod {
 
-    private static int keyToggle;
-    private static boolean optHideAchievement, optTagPos, optTagDirection, optTagCompass, optTagBiome, optTagFPS, optTagTime, optShowPos, optShowDirection, optShowTime, optShowBiome, optShowItem, optShowBlock, optShowEntity;
+    private int keyToggle;
+    private boolean optHideAchievement, optTagPos, optTagDirection, optTagCompass, optTagBiome, optTagFPS, optTagTime, optShowPos, optShowDirection, optShowTime, optShowBiome, optShowItem, optShowBlock, optShowEntity;
 
-    private static boolean infoShow, infoDeath, infoServer;
-    private static int infoDeathX, infoDeathY, infoDeathZ, infoFrames = 0;
-    private static long infoTime = 0;
-    @Nonnull private static String infoFps = "";
+    private boolean infoShow, infoDeath, infoServer;
+    private int infoDeathX, infoDeathY, infoDeathZ, infoFrames = 0;
+    private long infoTime = 0;
+    @Nonnull private String infoFps = "";
 
     public Info() {
         super("info", "1.8", "9.0.2");
@@ -53,9 +55,9 @@ public final class Info extends ZMod {
 
     @Override
     protected void init() {
-        infoDeath = false;
-        infoShow = false;
-        infoServer = false;
+        this.infoDeath = false;
+        this.infoShow = false;
+        this.infoServer = false;
     }
 
     @Override
@@ -65,65 +67,62 @@ public final class Info extends ZMod {
 
     @Override
     protected void updateConfig() {
-        keyToggle = getOptionKey("keyInfoToggle");
-        optHideAchievement = getOptionBool("optInfoHideAchievement");
-        optTagPos = getOptionBool("optInfoTagPos");
-        optTagCompass = getOptionBool("optInfoTagCompass");
-        optTagDirection = getOptionBool("optInfoTagDirection");
-        optTagBiome = getOptionBool("optInfoTagBiome");
-        optTagFPS = getOptionBool("optInfoTagFPS");
-        optTagTime = getOptionBool("optInfoTagTime");
-        optShowPos = getOptionBool("optInfoShowPos");
-        optShowDirection = getOptionBool("optInfoShowDirection");
-        optShowBiome = getOptionBool("optInfoShowBiome");
-        optShowTime = getOptionBool("optInfoShowTime");
-        optShowItem = getOptionBool("optInfoShowItem");
-        optShowBlock = getOptionBool("optInfoShowBlock");
-        optShowEntity = getOptionBool("optInfoShowEntity");
+        this.keyToggle = getOptionKey("keyInfoToggle");
+        this.optHideAchievement = getOptionBool("optInfoHideAchievement");
+        this.optTagPos = getOptionBool("optInfoTagPos");
+        this.optTagCompass = getOptionBool("optInfoTagCompass");
+        this.optTagDirection = getOptionBool("optInfoTagDirection");
+        this.optTagBiome = getOptionBool("optInfoTagBiome");
+        this.optTagFPS = getOptionBool("optInfoTagFPS");
+        this.optTagTime = getOptionBool("optInfoTagTime");
+        this.optShowPos = getOptionBool("optInfoShowPos");
+        this.optShowDirection = getOptionBool("optInfoShowDirection");
+        this.optShowBiome = getOptionBool("optInfoShowBiome");
+        this.optShowTime = getOptionBool("optInfoShowTime");
+        this.optShowItem = getOptionBool("optInfoShowItem");
+        this.optShowBlock = getOptionBool("optInfoShowBlock");
+        this.optShowEntity = getOptionBool("optInfoShowEntity");
     }
 
     @Override
     protected void onWorldChange() {
-        infoServer = false;
-        infoDeath = false;
+        this.infoServer = false;
+        this.infoDeath = false;
     }
 
     @SuppressWarnings({ "UnusedAssignment", "ConstantConditions" })
     @Override
     protected void onClientTick(@Nonnull EntityPlayerSP player) {
-        List list = getEntities();
-        if (!isInMenu() && wasKeyPressedThisTick(keyToggle)) {
-            infoShow = !infoShow;
+        if (!isInMenu() && wasKeyPressedThisTick(this.keyToggle)) {
+            this.infoShow = !this.infoShow;
         }
+
         setMessage("info", null);
         String info = "";
         Entity view = getView();
         if (view == null) {
             view = player;
         }
+
         double px = getX(player), py = getY(player), pz = getZ(player);
         double vx = getX(view), vy = getY(view), vz = getZ(view);
         int x = fix(vx), y = fix(vy), z = fix(vz);
 
         if (getHealth(player) <= 0) {
-            infoDeath = true;
-            infoDeathX = fix(px);
-            infoDeathY = fix(py);
-            infoDeathZ = fix(pz);
+            this.infoDeath = true;
+            this.infoDeathX = fix(px);
+            this.infoDeathY = fix(py);
+            this.infoDeathZ = fix(pz);
         }
 
-        if (isInMenu() && !(getMenu() instanceof GuiChat)) {
-            return;
-        }
-
-        if (!infoShow) {
+        if (isInMenu() && !(getMenu() instanceof GuiChat) || !this.infoShow) {
             return;
         }
 
         int mx, my, mz, id, meta, cap, cnt, cx = x >> 4, cz = z >> 4;
-        long timeRT = getTime(), time = ZHandle.handle("getSunOffset", timeRT);
-        float val;
-        BlockPos at;
+        final long timeRT = getTime();
+        final long time = ZHandle.handle("getSunOffset", timeRT);
+        final BlockPos at;
 
         // fog & exp
         info += "\nFog: \u00a7b" + getViewDistance() + "\u00a7f    Exp-orbs: \u00a7b" + player.experienceTotal;
@@ -137,20 +136,21 @@ public final class Info extends ZMod {
         info += "\nChunk: \u00a7b" + cx + "\u00a7f,\u00a7b" + cz;
 
         // your location
-        if (optShowPos && !optTagPos) {
+        if (this.optShowPos && !this.optTagPos) {
             info += "  Position: \u00a7b" + x + "\u00a7f, \u00a7b" + y + "\u00a7f, \u00a7b" + z;
         }
 
         // biome
-        if (optShowBiome && !optTagBiome) {
+        if (this.optShowBiome && !this.optTagBiome) {
             info += "  Biome: \u00a7b" + getBiomeName(x, z);
         }
-        if (infoServer) {
+        if (this.infoServer) {
             // slimes
             Random rnd = new Random(getSeed() + (long) (cx * cx * 0x4c1906) + (long) (cx * 0x5ac0db) + (long) (cz * cz) * 0x4307a7L + (long) (cz * 0x5f24f) ^ 0x3ad8025f); // the silliest nonsense i have ever seen x_x
             info += "  Slimes: \u00a7b" + (rnd.nextInt(10) == 0 ? "yes" : "no ");
 
             // stronghold
+            // TODO update MCP func_190528_a to findClosestStructure
             //BlockPos stronghold = getWorld().findClosestStructure("Stronghold", x, y, z);
             BlockPos stronghold = getWorld().func_190528_a("Stronghold", new BlockPos(x, y, z), true);
             if (stronghold != null) {
@@ -177,15 +177,15 @@ public final class Info extends ZMod {
         }
 
         // last death
-        if (infoDeath) {
-            info += "\nYou died:   \u00a7b" + (mx = infoDeathX) + "\u00a7f , \u00a7b" + (my = infoDeathY) + "\u00a7f , \u00a7b" + (mz = infoDeathZ);
+        if (this.infoDeath) {
+            info += "\nYou died:   \u00a7b" + (mx = this.infoDeathX) + "\u00a7f , \u00a7b" + (my = this.infoDeathY) + "\u00a7f , \u00a7b" + (mz = this.infoDeathZ);
             mx -= x;
             mz -= z;
             info += "\u00a7f (\u00a7b" + (int) Math.sqrt(mx * mx + mz * mz) + "\u00a7fm)";
         }
 
         // world name
-        if (infoServer) {
+        if (this.infoServer) {
             info += "\nWorld:  name=\u00a7b" + getWorldName() + "  seed=\u00a7b" + getSeed();
 
             info += "\nRaining: \u00a7b" + (getRaining() ? "yes" : "no");
@@ -200,7 +200,7 @@ public final class Info extends ZMod {
 
         // time
         info += "\nWorld Age (real time): \u00a7b" + TimeHelper.getRealTime(timeRT);
-        if (optShowTime) {
+        if (this.optShowTime) {
             info += "\nTime: \u00a7b" + TimeHelper.getTime(time);
             if (time != timeRT) {
                 info += "\u00a7f (actual time: \u00a7b" + TimeHelper.getTime(timeRT) + "\u00a7f)";
@@ -209,7 +209,7 @@ public final class Info extends ZMod {
 
         // item in hand
         ItemStack stack = getStacks(player)[getCurrentSlot(player)];
-        if (optShowItem && stack != null) {
+        if (this.optShowItem && stack != null) {
             id = getId(stack);
             meta = getMeta(stack);
             cnt = getStackSize(stack);
@@ -258,19 +258,19 @@ public final class Info extends ZMod {
         RayTraceResult mop = null;
         BlockFace face = null;
         Entity ent = null;
-        if (optShowBlock || optShowEntity) {
+        if (this.optShowBlock || this.optShowEntity) {
             mop = rayTrace(view, ZHandle.handle("getPlayerReach", getDefaultReach()), 1f);
             face = getBlockFace(mop);
             ent = getEntity(mop);
         }
 
-        if (optShowBlock && face != null) {
+        if (this.optShowBlock && face != null) {
             int idmeta = getIdMetaAt(getWorld(), face.x, face.y, face.z);
             Block block = getBlock(getState(idmeta));
             info += "\nTarget block: \u00a7b" + ZWrapper.getName(block) + "\u00a7f (\u00a7b" + getBlockId(idmeta) + "\u00a7f/\u00a7b" + getBlockMeta(idmeta) + "\u00a7f)";
         }
 
-        if (optShowEntity && ent != null) {
+        if (this.optShowEntity && ent != null) {
             info += "\nTarget entity: \u00a7b" + ZWrapper.getName(ent) + "\u00a7f (" + getId(ent) + "\u00a7f)";
         }
 
@@ -287,11 +287,12 @@ public final class Info extends ZMod {
 
     @Override
     protected void onGUIDraw(float delta) {
-        if (optHideAchievement) {
+        if (this.optHideAchievement) {
             killAchievement();
         }
     }
 
+    @Nullable
     @Override
     protected String getTag() {
         String tag = "";
@@ -302,36 +303,36 @@ public final class Info extends ZMod {
             y = fix(getY(view));
             z = fix(getZ(view));
         }
-        if (optTagPos && view != null) {
+        if (this.optTagPos && view != null) {
             tag += "" + x + "," + y + "," + z + " ";
         }
-        if (optTagDirection && view != null) {
+        if (this.optTagDirection && view != null) {
             Vec3d look = getLookVector(view, 1f);
             tag += getFineFacingName(getX(look), getY(look), getZ(look)) + " ";
         }
-        if (optTagCompass && view != null) {
+        if (this.optTagCompass && view != null) {
             Vec3d look = getLookVector(view, 1f);
             Vec3i dir = getDirectionVec(EnumFacing.NORTH);
             tag += "(" + getRelativeCompass(getX(dir), getZ(dir), getX(look), getZ(look)) + ") ";
         }
-        if (optTagBiome && view != null) {
+        if (this.optTagBiome && view != null) {
             tag += getBiomeName(x, z) + " ";
         }
-        if (optTagFPS) {
+        if (this.optTagFPS) {
             long time = System.currentTimeMillis();
-            infoFrames++;
-            if (time > infoTime + 1000) {
-                infoFps = "" + infoFrames + "FPS ";
-                infoTime = time;
-                infoFrames = 0;
+            this.infoFrames++;
+            if (time > this.infoTime + 1000) {
+                this.infoFps = "" + this.infoFrames + "FPS ";
+                this.infoTime = time;
+                this.infoFrames = 0;
             }
-            tag += infoFps;
+            tag += this.infoFps;
         }
-        if (optTagTime && !optShowTime) {
+        if (this.optTagTime && !this.optShowTime) {
             tag += "[" + TimeHelper.getTime(ZHandle.handle("getSunOffset", getTime())) + "] ";
         }
         tag = tag.trim();
-        return tag.length() == 0 ? null : tag;
+        return tag.isEmpty() ? null : tag;
     }
 
 }
