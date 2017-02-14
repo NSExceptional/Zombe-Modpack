@@ -20,18 +20,17 @@ import static zombe.core.ZWrapper.*;
 
 public final class Ghost extends ZMod {
 
-    private static int keyPossession, keyProjection, keyRelocate;
-    private static boolean optProjectionSwing, optProjectionSpoof, optProjectionPlace, optResetOnSendMotion, optResetOnUpdateRenderer, optResetOnGetMouseOver;
-
-    private static float ghostYaw, ghostPitch;
-    @Nullable private static EntityLivingBase ghostView;
-    @Nullable private static EntityLivingBase ghostPossession;
-    @Nullable private static EntityPlayerSP ghostPlayer;
-    @Nullable private static DummyPlayer    ghostProjection;
-    private static boolean ghostProjectionLock, ghostUnspoof;
-    @Nullable private static MovementInput playerMovementInput;
-
-    private static boolean doResetOnUpdateRenderer, doResetOnGetMouseOver;
+    private int keyPossession, keyProjection, keyRelocate;
+    private double ghostYaw, ghostPitch;
+    private boolean optProjectionSwing, optProjectionSpoof, optProjectionPlace,
+                    optResetOnSendMotion, optResetOnUpdateRenderer, optResetOnGetMouseOver;
+    private boolean ghostProjectionLock, ghostUnspoof;
+    private boolean doResetOnUpdateRenderer, doResetOnGetMouseOver;
+    @Nullable private EntityLivingBase ghostView;
+    @Nullable private EntityLivingBase ghostPossession;
+    @Nullable private EntityPlayerSP ghostPlayer;
+    @Nullable private DummyPlayer ghostProjection;
+    @Nullable private MovementInput playerMovementInput;
 
     public Ghost() {
         super("ghost", "1.8", "9.0.0");
@@ -64,281 +63,220 @@ public final class Ghost extends ZMod {
         this.addOption("optGhostResetOnGetMouseOver", "Temporarily reset view on getMouseOver", false);
     }
 
+    private void afterBlockPlace() {
+        if (this.isControllingProjection() && this.optProjectionSpoof) {
+            if (this.ghostUnspoof) {
+                getPlayerController().switchToIdleItem();
+            }
+            this.ghostUnspoof = false;
+        }
+        if (this.isControllingProjection() && this.optProjectionPlace) {
+            assert this.ghostPlayer != null;
+
+            setYaw(this.ghostPlayer, this.ghostYaw);
+            setPitch(this.ghostPlayer, this.ghostPitch);
+            sendMotionUpdates(this.ghostPlayer);
+        }
+    }
+
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
-        if (name == "isControllingPlayer") {
-            return isControllingPlayer();
+        switch (name) {
+            case "isControllingPlayer":
+                return this.isControllingPlayer();
+            case "isControllingView":
+                return this.isControllingView();
+            case "getControlledEntity":
+                return this.getControlledEntity();
+            case "shouldUpdatePlayerActionState":
+                return this.shouldUpdatePlayerActionState();
+            case "onSetAngles":
+                assert arg instanceof Orientation;
+                return this.onSetAngles((Orientation) arg);
+            case "allowSwing":
+                return this.allowSwing();
+            case "allowItemSync":
+                return this.allowItemSync();
+            case "onClientUpdate":
+                this.onClientUpdate();
+                break;
+            case "beforeSendMotion":
+                this.beforeReset(this.optResetOnSendMotion);
+                break;
+            case "afterSendMotion":
+                this.afterReset(this.optResetOnSendMotion);
+                break;
+            case "beforeUpdateRenderer":
+                this.beforeReset(this.doResetOnUpdateRenderer);
+                break;
+            case "afterUpdateRenderer":
+                this.afterReset(this.doResetOnUpdateRenderer);
+                break;
+            case "catchUpdateRenderer":
+                this.doResetOnUpdateRenderer = true;
+                break;
+            case "beforeGetMouseOver":
+                this.beforeReset(this.doResetOnGetMouseOver);
+                break;
+            case "afterGetMouseOver":
+                this.afterReset(this.doResetOnGetMouseOver);
+                break;
+            case "catchGetMouseOver":
+                this.doResetOnGetMouseOver = true;
+                break;
         }
-        if (name == "isControllingView") {
-            return isControllingView();
-        }
-        if (name == "getControlledEntity") {
-            return getControlledEntity();
-        }
-        if (name == "shouldUpdatePlayerActionState") {
-            return shouldUpdatePlayerActionState();
-        }
-        if (name == "onSetAngles") {
-            return onSetAngles((Orientation) arg);
-        }
-        if (name == "allowSwing") {
-            return allowSwing();
-        }
-        if (name == "allowItemSync") {
-            return allowItemSync();
-        }
-        if (name == "onClientUpdate") {
-            onClientUpdate();
-        }
-        if (name == "beforeSendMotion") {
-            beforeReset(optResetOnSendMotion);
-        }
-        if (name == "afterSendMotion") {
-            afterReset(optResetOnSendMotion);
-        }
-        if (name == "beforeUpdateRenderer") {
-            beforeReset(doResetOnUpdateRenderer);
-        }
-        if (name == "afterUpdateRenderer") {
-            afterReset(doResetOnUpdateRenderer);
-        }
-        if (name == "catchUpdateRenderer") {
-            doResetOnUpdateRenderer = true;
-        }
-        if (name == "beforeGetMouseOver") {
-            beforeReset(doResetOnGetMouseOver);
-        }
-        if (name == "afterGetMouseOver") {
-            afterReset(doResetOnGetMouseOver);
-        }
-        if (name == "catchGetMouseOver") {
-            doResetOnGetMouseOver = true;
-        }
+
         return arg;
-    }
-
-    private static void beforeReset(boolean optReset) {
-        if (optReset && ghostView != null) {
-            setView(ghostPlayer);
-        }
-    }
-
-    private static void afterReset(boolean optReset) {
-        if (optReset && ghostView != null) {
-            setView(ghostView);
-        }
-    }
-
-    private static void onClientUpdate() {
-        if (ghostProjection != null && getView() == ghostProjection) {
-            ghostProjection.onUpdate();
-        }
-    }
-
-    private static boolean shouldUpdatePlayerActionState() {
-        return getView() == getPlayer() || getView() == ghostView;
-    }
-
-    private static boolean isControllingPlayer() {
-        return !isControllingProjection();
-    }
-
-    private static boolean isControllingProjection() {
-        return getView() == ghostProjection && !ghostProjectionLock;
-    }
-
-    private static boolean isControllingView() {
-        return getView() == getPlayer() || isControllingProjection();
-    }
-
-    @Nullable
-    private static EntityPlayer getControlledEntity() {
-        return isControllingProjection() ? ghostProjection : getPlayer();
-    }
-
-    private static boolean allowSwing() {
-        return isControllingPlayer() || optProjectionSwing;
-    }
-
-    private static boolean allowItemSync() {
-        return isControllingPlayer() || !optProjectionSpoof;
     }
 
     @Override
     protected void init() {
-        ghostView = null;
-        ghostPlayer = null;
-        ghostPossession = null;
-        ghostProjection = null;
-        ghostProjectionLock = false;
-        ghostUnspoof = false;
-        playerMovementInput = null;
-    }
-
-    @Nonnull
-    private static Orientation onSetAngles(@Nonnull Orientation rot) {
-        if (getPlayer() == null || isControllingPlayer()) {
-            return rot;
-        }
-        ghostProjection.setAngles(rot.yaw, rot.pitch);
-        return new Orientation(0, 0);
+        this.ghostView = null;
+        this.ghostPlayer = null;
+        this.ghostPossession = null;
+        this.ghostProjection = null;
+        this.ghostProjectionLock = false;
+        this.ghostUnspoof = false;
+        this.playerMovementInput = null;
     }
 
     @Override
     protected void quit() {
         setView(getPlayer());
-        ghostView = null;
-        ghostPlayer = null;
-        ghostPossession = null;
-        ghostProjection = null;
-        playerMovementInput = null;
+        this.ghostView = null;
+        this.ghostPlayer = null;
+        this.ghostPossession = null;
+        this.ghostProjection = null;
+        this.playerMovementInput = null;
         setMessage("view", null);
-    }
-
-    private static void beforeBlockDig() {
-        if (isControllingProjection() && optProjectionSpoof) {
-            if (!ghostUnspoof) {
-                getPlayerController().switchToRealItem();
-            }
-            ghostUnspoof = true;
-        }
     }
 
     @Override
     protected void updateConfig() {
-        keyPossession = getOptionKey("keyGhostPossession");
-        keyProjection = getOptionKey("keyGhostProjection");
-        keyRelocate = getOptionKey("keyGhostRelocate");
-        optProjectionSwing = getOptionBool("optGhostProjectionSwing");
-        optProjectionSpoof = getOptionBool("optGhostProjectionSpoof");
-        optProjectionPlace = getOptionBool("optGhostProjectionPlace");
-        optResetOnSendMotion = getOptionBool("optGhostResetOnSendMotion");
-        doResetOnUpdateRenderer = optResetOnUpdateRenderer = getOptionBool("optGhostResetOnUpdateRenderer");
-        doResetOnGetMouseOver = optResetOnGetMouseOver = getOptionBool("optGhostResetOnGetMouseOver");
-    }
-
-    private static void afterBlockDig() {
-        if (isControllingProjection() && optProjectionSpoof) {
-            if (ghostUnspoof) {
-                getPlayerController().switchToIdleItem();
-            }
-            ghostUnspoof = false;
-        }
+        this.keyPossession = getOptionKey("keyGhostPossession");
+        this.keyProjection = getOptionKey("keyGhostProjection");
+        this.keyRelocate = getOptionKey("keyGhostRelocate");
+        this.optProjectionSwing = getOptionBool("optGhostProjectionSwing");
+        this.optProjectionSpoof = getOptionBool("optGhostProjectionSpoof");
+        this.optProjectionPlace = getOptionBool("optGhostProjectionPlace");
+        this.optResetOnSendMotion = getOptionBool("optGhostResetOnSendMotion");
+        this.doResetOnUpdateRenderer = this.optResetOnUpdateRenderer = getOptionBool("optGhostResetOnUpdateRenderer");
+        this.doResetOnGetMouseOver = this.optResetOnGetMouseOver = getOptionBool("optGhostResetOnGetMouseOver");
     }
 
     @Override
     protected void onWorldChange() {
-        if (playerMovementInput != null && ghostPlayer != null) {
-            ghostPlayer.movementInput = playerMovementInput;
+        if (this.playerMovementInput != null && this.ghostPlayer != null) {
+            this.ghostPlayer.movementInput = this.playerMovementInput;
         }
-        if (ghostView != null && getView() == ghostView) {
+        if (this.ghostView != null && getView() == this.ghostView) {
             setView(getPlayer());
         }
-        ghostView = null;
-        ghostPlayer = null;
-        ghostPossession = null;
-        ghostProjection = null;
-        playerMovementInput = null;
+
+        this.ghostView = null;
+        this.ghostPlayer = null;
+        this.ghostPossession = null;
+        this.ghostProjection = null;
+        this.playerMovementInput = null;
     }
 
-    private static void beforeBlockPlace() {
-        if (isControllingProjection() && optProjectionSpoof) {
-            if (!ghostUnspoof) {
-                getPlayerController().switchToRealItem();
-            }
-            ghostUnspoof = true;
-        }
-        if (isControllingProjection() && optProjectionPlace) {
-            ghostYaw = getYaw(ghostPlayer);
-            ghostPitch = getPitch(ghostPlayer);
-            setYaw(ghostPlayer, getYaw(ghostProjection));
-            setPitch(ghostPlayer, getPitch(ghostProjection));
-            sendMotionUpdates(ghostPlayer);
-        }
-    }
-
+    // TODO split into mulitple methods
     @Override
     protected void onClientTick(@Nonnull EntityPlayerSP player) {
-        if (player != ghostPlayer) {
-            ghostPlayer = player;
-            playerMovementInput = player.movementInput;
-            if (ghostProjection != null) {
-                if (ghostProjection == ghostView) {
-                    ghostView = null;
+        if (player != this.ghostPlayer) {
+            this.ghostPlayer = player;
+            this.playerMovementInput = player.movementInput;
+            if (this.ghostProjection != null) {
+                if (this.ghostProjection == this.ghostView) {
+                    this.ghostView = null;
                     setView(player);
                 }
-                ghostProjection = null;
-                ghostProjectionLock = false;
+                this.ghostProjection = null;
+                this.ghostProjectionLock = false;
             }
         }
-        List list = ZWrapper.getEntities();
-        if (ghostView != null) {
+
+        final List<Entity> list = ZWrapper.getEntities();
+        if (this.ghostView != null) {
             if (getView() == player) {
-                if (ghostView == ghostProjection && !ghostProjectionLock) {
-                    ghostProjection.movementInput = new MovementInput();
-                    player.movementInput = playerMovementInput;
+                if (this.ghostView == this.ghostProjection && !this.ghostProjectionLock) {
+                    this.ghostProjection.movementInput = new MovementInput();
+                    player.movementInput = this.playerMovementInput;
                     setView(player);
-                    if (optProjectionSpoof) {
+
+                    if (this.optProjectionSpoof) {
                         setView(player);
                         syncCurrentItem();
                     }
                 }
-                ghostView = null;
+
+                this.ghostView = null;
             }
-            if (ghostView == null) {
+
+            if (this.ghostView == null) {
                 setView(player);
             }
         }
-        if (ghostPossession != null) {
-            if (!list.contains(ghostPossession) || ghostView != ghostPossession) {
-                if (ghostView == ghostPossession) {
-                    ghostView = null;
+
+        if (this.ghostPossession != null) {
+            if (!list.contains(this.ghostPossession) || this.ghostView != this.ghostPossession) {
+                if (this.ghostView == this.ghostPossession) {
+                    this.ghostView = null;
                 }
-                ghostPossession = null;
+
+                this.ghostPossession = null;
             }
-            if (ghostView == null) {
+
+            if (this.ghostView == null) {
                 setView(player);
             }
         }
-        if (ghostProjection != null) {
-            if (!list.contains(ghostProjection.playerBody)) {
-                if (ghostView == ghostProjection && !ghostProjectionLock) {
-                    ghostProjection.movementInput = new MovementInput();
-                    player.movementInput = playerMovementInput;
-                    if (optProjectionSpoof) {
+
+        if (this.ghostProjection != null) {
+            if (!list.contains(this.ghostProjection.playerBody)) {
+                if (this.ghostView == this.ghostProjection && !this.ghostProjectionLock) {
+                    this.ghostProjection.movementInput = new MovementInput();
+                    player.movementInput = this.playerMovementInput;
+
+                    if (this.optProjectionSpoof) {
                         setView(player);
                         syncCurrentItem();
                     }
                 }
-                if (ghostView == ghostProjection) {
-                    ghostView = null;
+
+                if (this.ghostView == this.ghostProjection) {
+                    this.ghostView = null;
                 }
-                ghostProjection = null;
+
+                this.ghostProjection = null;
             }
-            if (ghostView == null) {
+
+            if (this.ghostView == null) {
                 setView(player);
             }
         }
-        if (ghostView != null) {
-            String message = "View: \u00a7b" + ZWrapper.getName(ghostView) + "\u00a7f";
-            if (getView() == ghostProjection) {
-                if (getFlying(ghostProjection)) {
+
+        if (this.ghostView != null) {
+            String message = "View: \u00a7b" + ZWrapper.getName(this.ghostView) + "\u00a7f";
+            if (getView() == this.ghostProjection) {
+                if (getFlying(this.ghostProjection)) {
                     message += " flying";
                 }
-                if (getNoclip(ghostProjection)) {
+                if (getNoclip(this.ghostProjection)) {
                     message += " noclip";
                 }
             }
+
             setMessage("view", message);
         } else {
             setMessage("view", null);
         }
 
         if (!isInMenu()) {
-            if (wasKeyPressedThisTick(keyPossession)) {
-                if (ghostPossession != null) {
-                    ghostPossession = null;
-                    ghostView = null;
+            if (wasKeyPressedThisTick(this.keyPossession)) {
+                if (this.ghostPossession != null) {
+                    this.ghostPossession = null;
+                    this.ghostView = null;
                     setView(player);
                 } else {
                     Entity eye = getView();
@@ -349,25 +287,30 @@ public final class Ghost extends ZMod {
                     z1 = getZ(eye);
                     yaw = getYaw(eye) * (Math.PI / 180.0);
                     pitch = getPitch(eye) * (Math.PI / 180.0);
-                    x2 = x1 + 100f * (-Math.sin(yaw) * Math.abs(Math.cos(pitch)));
-                    y2 = y1 + 100f * (-Math.sin(pitch));
-                    z2 = z1 + 100f * (Math.cos(yaw) * Math.abs(Math.cos(pitch)));
+                    x2 = x1 + (100f * -Math.sin(yaw) * Math.abs(Math.cos(pitch)));
+                    y2 = y1 + (100f * -Math.sin(pitch));
+                    z2 = z1 + (100f * Math.cos(yaw) * Math.abs(Math.cos(pitch)));
                     EntityLivingBase best = null;
                     double bestDS = 1000000000f;
+
                     for (Object obj : list) {
                         if (!(obj instanceof EntityLivingBase) || obj == eye) {
                             continue;
                         }
+
                         EntityLivingBase ent = (EntityLivingBase) obj;
                         if (!(ent instanceof EntityPlayer)) {
-                            continue; /* can not view from other mobs for now */
+                            // Cannot view from other mobs for now
+                            continue;
                         }
+
                         x3 = getX(ent);
                         y3 = getY(ent);
                         z3 = getZ(ent);
                         if ((x2 - x1) * (x3 - x1) + (y2 - y1) * (y3 - y1) + (z2 - z1) * (z3 - z1) < 0f) {
                             continue;
                         }
+
                         factor = 1f / ((x1 - x3) * (x1 - x3) + (y1 - y3) * (y1 - y3) + (z1 - z3) * (z1 - z3));
                         xt = x2 - x1;
                         yt = y2 - y1;
@@ -378,95 +321,189 @@ public final class Ghost extends ZMod {
                         yt = y1 + u * (y2 - y1) - y3;
                         zt = z1 + u * (z2 - z1) - z3;
                         distS = (xt * xt + yt * yt + zt * zt) * factor;
+
                         if (distS < bestDS) {
                             best = ent;
                             bestDS = distS;
                         }
                     }
+
                     if (best != null) {
-                        if (getView() == ghostProjection && !ghostProjectionLock) {
-                            ghostProjection.movementInput = new MovementInput();
-                            player.movementInput = playerMovementInput;
-                            if (optProjectionSpoof) {
+                        if (getView() == this.ghostProjection && !this.ghostProjectionLock) {
+                            this.ghostProjection.movementInput = new MovementInput();
+                            player.movementInput = this.playerMovementInput;
+
+                            if (this.optProjectionSpoof) {
                                 setView(player);
                                 syncCurrentItem();
                             }
                         }
+
                         setView(best);
                         if (best == player) {
                             best = null;
                         }
-                        ghostView = ghostPossession = best;
+
+                        this.ghostView = this.ghostPossession = best;
                     }
                 }
             }
-            if (wasKeyPressedThisTick(keyProjection)) {
-                if (ghostProjection == null) {
-                    ghostProjection = new DummyPlayer(player);
-                    ghostProjection.placeAt(getView());
+
+            if (wasKeyPressedThisTick(this.keyProjection)) {
+                if (this.ghostProjection == null) {
+                    this.ghostProjection = new DummyPlayer(player);
+                    this.ghostProjection.placeAt(getView());
+
                     if (getView() == player) {
-                        setFlying(ghostProjection, getFlying(player));
-                        setNoclip(ghostProjection, getNoclip(player));
+                        setFlying(this.ghostProjection, getFlying(player));
+                        setNoclip(this.ghostProjection, getNoclip(player));
                     }
                 }
-                if (ghostView == ghostProjection) {
-                    ghostView = null;
-                    if (!ghostProjectionLock) {
-                        player.movementInput = playerMovementInput;
-                        ghostProjection.movementInput = new MovementInput();
-                        if (optProjectionSpoof) {
+                if (this.ghostView == this.ghostProjection) {
+                    this.ghostView = null;
+                    if (!this.ghostProjectionLock) {
+                        player.movementInput = this.playerMovementInput;
+                        this.ghostProjection.movementInput = new MovementInput();
+
+                        if (this.optProjectionSpoof) {
                             setView(player);
                             syncCurrentItem();
                         }
                     }
                 } else {
-                    ghostView = ghostProjection;
-                    if (!ghostProjectionLock) {
+                    this.ghostView = this.ghostProjection;
+                    if (!this.ghostProjectionLock) {
                         player.movementInput = new MovementInput();
-                        ghostProjection.movementInput = playerMovementInput;
+                        this.ghostProjection.movementInput = this.playerMovementInput;
                     }
                 }
-                if (ghostView != null) {
-                    setView(ghostView);
+
+                if (this.ghostView != null) {
+                    setView(this.ghostView);
                 } else {
                     setView(player);
                 }
             }
-            if (wasKeyPressedThisTick(keyRelocate)) {
+
+            if (wasKeyPressedThisTick(this.keyRelocate)) {
                 //if (ghostProjection == null) {
-                if (true) {
-                    boolean was = getView() == ghostProjection;
-                    ghostProjection = new DummyPlayer(player);
+                {
+                    boolean was = getView() == this.ghostProjection;
+                    this.ghostProjection = new DummyPlayer(player);
                     if (was) {
-                        setView(ghostView = ghostProjection);
+                        setView(this.ghostView = this.ghostProjection);
                     }
-                    if (!was || ghostProjectionLock) {
-                        ghostProjection.movementInput = new MovementInput();
+
+                    if (!was || this.ghostProjectionLock) {
+                        this.ghostProjection.movementInput = new MovementInput();
                     } else {
-                        ghostProjection.movementInput = playerMovementInput;
+                        this.ghostProjection.movementInput = this.playerMovementInput;
                     }
+
                     if (!was) {
-                        setFlying(ghostProjection, getFlying((EntityPlayer) getView()));
-                    } else if (ghostProjectionLock) {
-                        setFlying(ghostProjection, getFlying(player));
+                        setFlying(this.ghostProjection, getFlying((EntityPlayer) getView()));
+                    } else if (this.ghostProjectionLock) {
+                        setFlying(this.ghostProjection, getFlying(player));
                     }
                 }
-                ghostProjection.placeAt(ghostPossession != null ? ghostPossession : player);
+
+                this.ghostProjection.placeAt(this.ghostPossession != null ? this.ghostPossession : player);
             }
         }
     }
 
-    private static void afterBlockPlace() {
-        if (isControllingProjection() && optProjectionSpoof) {
-            if (ghostUnspoof) {
+    private void beforeReset(boolean optReset) {
+        if (optReset && this.ghostView != null) {
+            setView(this.ghostPlayer);
+        }
+    }
+
+    private void afterReset(boolean optReset) {
+        if (optReset && this.ghostView != null) {
+            setView(this.ghostView);
+        }
+    }
+
+    private void onClientUpdate() {
+        if (this.ghostProjection != null && getView() == this.ghostProjection) {
+            this.ghostProjection.onUpdate();
+        }
+    }
+
+    private boolean shouldUpdatePlayerActionState() {
+        return getView() == getPlayer() || getView() == this.ghostView;
+    }
+
+    private boolean isControllingPlayer() {
+        return !this.isControllingProjection();
+    }
+
+    private boolean isControllingProjection() {
+        return getView() == this.ghostProjection && !this.ghostProjectionLock;
+    }
+
+    private boolean isControllingView() {
+        return getView() == getPlayer() || this.isControllingProjection();
+    }
+
+    @Nullable
+    private EntityPlayer getControlledEntity() {
+        return this.isControllingProjection() ? this.ghostProjection : getPlayer();
+    }
+
+    private boolean allowSwing() {
+        return this.isControllingPlayer() || this.optProjectionSwing;
+    }
+
+    private boolean allowItemSync() {
+        return this.isControllingPlayer() || !this.optProjectionSpoof;
+    }
+
+    @Nonnull
+    private Orientation onSetAngles(@Nonnull Orientation rot) {
+        if (getPlayer() == null || this.isControllingPlayer()) {
+            return rot;
+        }
+
+        assert this.ghostProjection != null;
+
+        this.ghostProjection.setAngles(rot.yaw, rot.pitch);
+        return new Orientation(0, 0);
+    }
+
+    private void beforeBlockDig() {
+        if (this.isControllingProjection() && this.optProjectionSpoof) {
+            if (!this.ghostUnspoof) {
+                getPlayerController().switchToRealItem();
+            }
+            this.ghostUnspoof = true;
+        }
+    }
+
+    private void afterBlockDig() {
+        if (this.isControllingProjection() && this.optProjectionSpoof) {
+            if (this.ghostUnspoof) {
                 getPlayerController().switchToIdleItem();
             }
-            ghostUnspoof = false;
+            this.ghostUnspoof = false;
         }
-        if (isControllingProjection() && optProjectionPlace) {
-            setYaw(ghostPlayer, ghostYaw);
-            setPitch(ghostPlayer, ghostPitch);
-            sendMotionUpdates(ghostPlayer);
+    }
+
+    private void beforeBlockPlace() {
+        if (this.isControllingProjection() && this.optProjectionSpoof) {
+            if (!this.ghostUnspoof) {
+                getPlayerController().switchToRealItem();
+            }
+            this.ghostUnspoof = true;
+        }
+        if (this.isControllingProjection() && this.optProjectionPlace) {
+            assert this.ghostPlayer != null && this.ghostProjection != null;
+
+            this.ghostYaw = getYaw(this.ghostPlayer);
+            this.ghostPitch = getPitch(this.ghostPlayer);
+            setYaw(this.ghostPlayer, getYaw(this.ghostProjection));
+            setPitch(this.ghostPlayer, getPitch(this.ghostProjection));
+            sendMotionUpdates(this.ghostPlayer);
         }
     }
 }
