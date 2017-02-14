@@ -14,9 +14,9 @@ import static zombe.core.ZWrapper.*;
 
 public final class Motion extends ZMod {
 
-    private static boolean optFixMovedWrongly, optFixMovedTooQuickly;
-    private static int ticksForForceSync;
-    private static boolean anticipated;
+    private boolean optFixMovedWrongly, optFixMovedTooQuickly;
+    private int ticksForForceSync;
+    private boolean anticipated;
     @Nullable private DummyPlayer serverDummy = null, clientDummy = null;
     @Nullable private Vec3d sentPosition = null;
     @Nullable private Vec3d serverPosition = null;
@@ -83,27 +83,29 @@ public final class Motion extends ZMod {
         this.serverDummy.onUpdate();
         this.serverNextPosition = getPosition(this.serverDummy);
         this.serverNextMotion = getMotion(this.serverDummy);
-        anticipated = true;
+        this.anticipated = true;
     }
 
     private void beforePlayerMove(Vec3d move) {
         EntityPlayer player = getPlayer();
-        if (isSleeping(player) || player.isRiding()) {
+        if (player == null || isSleeping(player) || player.isRiding()) {
             return;
         }
 
         move = getMotion(player);
-        if (optFixMovedTooQuickly && isMultiplayer()) {
+        if (this.optFixMovedTooQuickly && isMultiplayer()) {
             assert this.clientPosition != null;
             int count = 0;
 
             while (this.isMoveTooQuick(this.clientPosition.add(move))) {
 
                 double mx = getX(move), my = getY(move), mz = getZ(move);
-                ++count;
+                count++;
                 if (count < 10) {
-                    // no idea how to do it yet
-                    // placeholder solution
+                    // TODO dunno what this was for
+                    //
+                    // > no idea how to do it yet
+                    // > placeholder solution
                     mx *= 0.8;
                     my *= 0.8;
                     mz *= 0.8;
@@ -135,7 +137,8 @@ public final class Motion extends ZMod {
                 move = new Vec3d(mx, my, mz);
             }
         }
-        if (optFixMovedWrongly && !isCreative(player) && !getNoclip(player)) {
+
+        if (this.optFixMovedWrongly && !isCreative(player) && !getNoclip(player)) {
             assert this.clientDummy != null && this.serverPosition != null;
 
             boolean wrong;
@@ -156,6 +159,7 @@ public final class Motion extends ZMod {
                 }
             } while (wrong);
         }
+
         setMotion(player, move);
     }
 
@@ -185,12 +189,13 @@ public final class Motion extends ZMod {
             double dx = getX(this.sentPosition) - getX(player);
             double dy = getY(this.sentPosition) - getY(player);
             double dz = getZ(this.sentPosition) - getZ(player);
-            boolean sync = (dx * dx + dy * dy + dz * dz > 9.0E-4D || ticksForForceSync >= 20);
-            ++ticksForForceSync;
+            boolean sync = dx * dx + dy * dy + dz * dz > 9.0E-4D || this.ticksForForceSync >= 20;
+            this.ticksForForceSync++;
             if (sync) {
                 newPosition = this.sentPosition = getPosition(player);
-                ticksForForceSync = 0;
+                this.ticksForForceSync = 0;
             }
+
             this.emulateHandleMotion(player, newPosition, getOnGround(player));
         }
     }
@@ -218,7 +223,7 @@ public final class Motion extends ZMod {
         }
 
         // server update part
-        if (!anticipated) {
+        if (!this.anticipated) {
             assert this.serverDummy != null && this.serverMotion != null;
 
             setPosition(this.serverDummy, this.serverPosition);
@@ -227,9 +232,10 @@ public final class Motion extends ZMod {
             this.serverNextPosition = getPosition(this.serverDummy);
             this.serverNextMotion = getMotion(this.serverDummy);
         }
+
         this.serverPosition = this.serverNextPosition;
         this.serverMotion = this.serverNextMotion;
-        anticipated = false;
+        this.anticipated = false;
 
         // moved too quickly check
         if (isMultiplayer() && this.isMoveTooQuick(newPosition)) {
@@ -245,6 +251,7 @@ public final class Motion extends ZMod {
         if (getOnGround(this.serverDummy) && !packetOnGround && getX(player) > getX(oldPosition)) {
             this.serverDummy.jump();
         }
+
         Vec3d move = newPosition.subtract(oldPosition);
         this.serverDummy.moveEntity(MoverType.SELF, getX(move), getY(move), getZ(move));
         setOnGround(this.serverDummy, packetOnGround);
@@ -253,6 +260,7 @@ public final class Motion extends ZMod {
         if (!isSleeping(player) && !isCreative(player) && this.wasMoveWrong(this.serverDummy, newPosition)) {
             moveWrong = true;
         }
+
         setPosition(this.serverDummy, newPosition);
         if (!getNoclip(player)) {
             boolean isFree = getWorld(player).getCollisionBoxes(player, getAABB(this.serverDummy).contract(spacing)).isEmpty();
@@ -262,6 +270,7 @@ public final class Motion extends ZMod {
                 return;
             }
         }
+
         setOnGround(this.serverDummy, packetOnGround);
         // serverUpdateMountedMovingPlayer(serverDummy)
         // serverDummy.handleFalling(getY(serverDummy) - getY(oldPosition), packetOnGround);
@@ -339,8 +348,8 @@ public final class Motion extends ZMod {
 
     @Override
     protected void init() {
-        ticksForForceSync = 0;
-        anticipated = false;
+        this.ticksForForceSync = 0;
+        this.anticipated = false;
         this.clientPosition = null;
         this.serverPosition = null;
         this.serverNextPosition = null;
@@ -357,8 +366,8 @@ public final class Motion extends ZMod {
 
     @Override
     protected void updateConfig() {
-        optFixMovedWrongly = getOptionBool("optMotionFixMovedWrongly");
-        optFixMovedTooQuickly = getOptionBool("optMotionFixMovedTooQuickly");
+        this.optFixMovedWrongly = getOptionBool("optMotionFixMovedWrongly");
+        this.optFixMovedTooQuickly = getOptionBool("optMotionFixMovedTooQuickly");
     }
 
     @Override
