@@ -15,18 +15,20 @@ import javax.annotation.Nullable;
 import static zombe.core.ZWrapper.*;
 
 public final class Safe extends ZMod {
-
     private static final int SAFE_MAX = 2048;
-    private static String tagSafe;
-    private static int keyShow, keyGhost;
-    @Nullable private static Color optDangerColor, optDangerColorSun;
-    private static boolean optShowWithSun;
-    private static int optLookupRadius;
-    @Nullable private static Vec3i safePoses[];
-    @Nullable private static Color safeMarks[];
-    private static boolean safeShow;
-    private static boolean safeGhost;
-    private static int safeCur, safeUpdate;
+
+    @Nullable private Color optDangerColor;
+    @Nullable private Color optDangerColorSun;
+    @Nullable private Vec3i safePoses[];
+    @Nullable private Color safeMarks[];
+    @Nullable private String tagSafe;
+
+    private int safeCur, safeUpdate;
+    private int keyShow, keyGhost;
+    private int optLookupRadius;
+    private boolean optShowWithSun;
+    private boolean safeShow;
+    private boolean safeGhost;
 
     public Safe() {
         super("safe", "1.8", "9.0.0");
@@ -39,7 +41,7 @@ public final class Safe extends ZMod {
         this.addOption("optSafeDangerColorSun", "Marks color (sun)", "0xdddd00");
     }
 
-    private static boolean emptySpaceHere(int pX, int pY, int pZ) {
+    private boolean emptySpaceHere(int pX, int pY, int pZ) {
         double x = pX + 0.5, y = (double) pY, z = pZ + 0.5;
         //double r = 0.3, h = 1.8; // skeleton size
         //double r = 0.35, h = 0.5; // cave spider size
@@ -49,9 +51,9 @@ public final class Safe extends ZMod {
         return getCollidingBlockAABBs(world, aabb).isEmpty() && !world.containsAnyLiquid(aabb);
     }
 
-    private static boolean couldSpawnHere(int x, int y, int z) {
+    private boolean couldSpawnHere(int x, int y, int z) {
         try {
-            return y >= 0 && getBlockLightLevel(x, y, z) < 8 && canMonsterSpawnAt(x, y, z) && emptySpaceHere(x, y, z);
+            return y >= 0 && getBlockLightLevel(x, y, z) < 8 && canMonsterSpawnAt(x, y, z) && this.emptySpaceHere(x, y, z);
         } catch (Exception e) {
             return false;
         }
@@ -59,35 +61,35 @@ public final class Safe extends ZMod {
 
     @Override
     protected void init() {
-        safePoses = new Vec3i[SAFE_MAX];
-        safeMarks = new Color[SAFE_MAX];
-        safeCur = 0;
-        safeUpdate = 0;
-        safeShow = false;
-        safeGhost = false;
+        this.safePoses = new Vec3i[SAFE_MAX];
+        this.safeMarks = new Color[SAFE_MAX];
+        this.safeCur = 0;
+        this.safeUpdate = 0;
+        this.safeShow = false;
+        this.safeGhost = false;
     }
 
     @Override
     protected void quit() {
-        safePoses = null;
-        safeMarks = null;
+        this.safePoses = null;
+        this.safeMarks = null;
     }
 
     @Override
     protected void updateConfig() {
-        tagSafe = getOptionString("tagSafe");
-        keyShow = getOptionKey("keySafeShow");
-        keyGhost = getOptionKey("keySafeGhost");
-        optLookupRadius = getOptionInt("optSafeLookupRadius");
-        optShowWithSun = getOptionBool("optSafeShowWithSun");
-        optDangerColor = getOptionColor("optSafeDangerColor");
-        optDangerColorSun = getOptionColor("optSafeDangerColorSun");
+        this.tagSafe = getOptionString("tagSafe");
+        this.keyShow = getOptionKey("keySafeShow");
+        this.keyGhost = getOptionKey("keySafeGhost");
+        this.optLookupRadius = getOptionInt("optSafeLookupRadius");
+        this.optShowWithSun = getOptionBool("optSafeShowWithSun");
+        this.optDangerColor = getOptionColor("optSafeDangerColor");
+        this.optDangerColorSun = getOptionColor("optSafeDangerColorSun");
     }
 
     @Override
     protected void onWorldChange() {
-        safeCur = 0;
-        safeUpdate = 0;
+        this.safeCur = 0;
+        this.safeUpdate = 0;
     }
 
     @Override
@@ -95,25 +97,27 @@ public final class Safe extends ZMod {
         if (isInMenu()) {
             return;
         }
-        if (wasKeyPressedThisTick(keyShow)) {
-            safeShow = !safeShow;
+        if (wasKeyPressedThisTick(this.keyShow)) {
+            this.safeShow = !this.safeShow;
         }
-        if (wasKeyPressedThisTick(keyGhost)) {
-            safeGhost = !safeGhost;
+        if (wasKeyPressedThisTick(this.keyGhost)) {
+            this.safeGhost = !this.safeGhost;
         }
     }
 
     @Override
     protected void onWorldDraw(float delta, float x, float y, float z) {
+        assert this.safePoses != null && this.safeMarks != null;
+
         float mx, my, mz;
-        if (!safeShow) {
+        if (!this.safeShow) {
             return;
         }
-        if (--safeUpdate < 0) {
-            safeUpdate = 13;
+        if (--this.safeUpdate < 0) {
+            this.safeUpdate = 13;
             this.reCheckSafe(fix(x), fix(y), fix(z));
         }
-        if (safeGhost) {
+        if (this.safeGhost) {
             GL11.glDisable(GL11.GL_DEPTH_TEST);
         } else {
             GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -122,9 +126,9 @@ public final class Safe extends ZMod {
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glDisable(GL11.GL_FOG);
         GL11.glBegin(GL11.GL_LINES);
-        for (int i = 0; i < safeCur; ++i) {
-            Vec3i pos = safePoses[i];
-            Color color = safeMarks[i];
+        for (int i = 0; i < this.safeCur; ++i) {
+            Vec3i pos = this.safePoses[i];
+            Color color = this.safeMarks[i];
             GL11.glColor3ub(color.rb, color.gb, color.bb);
             mx = pos.getX() - x;
             my = pos.getY() - y;
@@ -137,24 +141,29 @@ public final class Safe extends ZMod {
         GL11.glEnd();
     }
 
+    @Nullable
     @Override
     protected String getTag() {
-        if (!safeShow || tagSafe.length() == 0) {
+        if (!this.safeShow || this.tagSafe == null || this.tagSafe.isEmpty()) {
             return null;
         }
-        return tagSafe;
+
+        return this.tagSafe;
     }
 
     private void reCheckSafe(int pX, int pY, int pZ) {
-        safeCur = 0;
-        for (int x = pX - optLookupRadius; x <= pX + optLookupRadius; ++x) {
-            for (int y = pY - optLookupRadius; y <= pY + optLookupRadius; ++y) {
-                for (int z = pZ - optLookupRadius; z <= pZ + optLookupRadius; ++z) {
-                    if (couldSpawnHere(x, y, z)) {
-                        safePoses[safeCur] = new Vec3i(x, y, z);
-                        safeMarks[safeCur] = (optShowWithSun && getSkyLightLevel(x, y, z) > 7) ? optDangerColorSun : optDangerColor;
-                        ++safeCur;
-                        if (safeCur == SAFE_MAX) {
+        assert this.safePoses != null && this.safeMarks != null;
+
+        this.safeCur = 0;
+        for (int x = pX - this.optLookupRadius; x <= pX + this.optLookupRadius; ++x) {
+            for (int y = pY - this.optLookupRadius; y <= pY + this.optLookupRadius; ++y) {
+                for (int z = pZ - this.optLookupRadius; z <= pZ + this.optLookupRadius; ++z) {
+                    if (this.couldSpawnHere(x, y, z)) {
+                        this.safePoses[this.safeCur] = new Vec3i(x, y, z);
+                        this.safeMarks[this.safeCur] = (this.optShowWithSun && getSkyLightLevel(x, y, z) > 7) ? this.optDangerColorSun
+                                                                                                              : this.optDangerColor;
+                        this.safeCur++;
+                        if (this.safeCur == SAFE_MAX) {
                             return;
                         }
                     }
@@ -162,5 +171,4 @@ public final class Safe extends ZMod {
             }
         }
     }
-
 }
