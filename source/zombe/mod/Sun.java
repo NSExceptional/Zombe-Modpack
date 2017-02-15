@@ -7,21 +7,22 @@ import org.lwjgl.input.Keyboard;
 import zombe.core.ZMod;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import static zombe.core.ZWrapper.*;
 
 public final class Sun extends ZMod {
 
-    private static String tagSun;
-    private static int keyTimeAdd, keyTimeSub, keyStop, keyTimeNormal, keyServer;
-    private static int optTimeStep;
-    private static String optServerCmd;
-    private static boolean optServerCmdPlus;
-    private static boolean sunTimeStop, sunSleeping;
-    private static long sunTimeOffset, sunTimeMoment;
+    private String tagSun;
+    private int keyTimeAdd, keyTimeSub, keyStop, keyTimeNormal, keyServer;
+    private int optTimeStep;
+    private String optServerCmd;
+    private boolean optServerCmdPlus;
+    private boolean sunTimeStop, sunSleeping;
+    private long sunTimeOffset, sunTimeMoment;
 
-    private static boolean sunServerSetTime;
-    private static long sunServerTime;
+    private boolean sunServerSetTime;
+    private long sunServerTime;
 
     public Sun() {
         super("sun", "1.8", "9.0.1");
@@ -38,15 +39,17 @@ public final class Sun extends ZMod {
         this.addOption("optSunServerCmdPlus", "Add a '+' to time command in SMP", false);
     }
 
-    private static long getSunOffset(long def) {
-        return def + sunTimeOffset;
+    private long getSunOffset(long def) {
+        return def + this.sunTimeOffset;
     }
 
     @Override
     protected Object handle(@Nonnull String name, Object arg) {
-        if (name == "getSunOffset") {
-            return getSunOffset((Long) arg);
+        if (name.equals("getSunOffset")) {
+            assert arg != null;
+            return this.getSunOffset((Long) arg);
         }
+
         return arg;
     }
 
@@ -61,100 +64,104 @@ public final class Sun extends ZMod {
 
     @Override
     protected void updateConfig() {
-        tagSun = getOptionString("tagSunTime");
+        this.tagSun = getOptionString("tagSunTime");
 
-        optTimeStep = 20 * getOptionInt("optSunTimeStep");
-        keyTimeAdd       = getOptionKey("keySunTimeAdd");
-        keyTimeSub       = getOptionKey("keySunTimeSub");
-        keyStop          = getOptionKey("keySunStop");
-        keyTimeNormal    = getOptionKey("keySunTimeNormal");
-        keyServer        = getOptionKey("keySunServer");
-        optServerCmdPlus = getOptionBool("optSunServerCmdPlus");
-        optServerCmd     = getOptionString("optSunServerCmd");
+        this.optTimeStep = 20 * getOptionInt("optSunTimeStep");
+        this.keyTimeAdd = getOptionKey("keySunTimeAdd");
+        this.keyTimeSub = getOptionKey("keySunTimeSub");
+        this.keyStop = getOptionKey("keySunStop");
+        this.keyTimeNormal = getOptionKey("keySunTimeNormal");
+        this.keyServer = getOptionKey("keySunServer");
+        this.optServerCmdPlus = getOptionBool("optSunServerCmdPlus");
+        this.optServerCmd = getOptionString("optSunServerCmd");
     }
 
     @Override
     protected void onWorldChange() {
-        sunTimeOffset = 0;
-        sunTimeStop   = false;
-        sunServerSetTime = false;
+        this.sunTimeOffset = 0;
+        this.sunTimeStop = false;
+        this.sunServerSetTime = false;
     }
 
     @Override
     protected void onClientTick(@Nonnull EntityPlayerSP player) {
         long time = getTime();
         if (isSleeping(player)) {
-            sunSleeping = true;
-        } else if (sunSleeping) {
-            sunSleeping = false;
-            sunTimeOffset = 0;
+            this.sunSleeping = true;
+        } else if (this.sunSleeping) {
+            this.sunSleeping = false;
+            this.sunTimeOffset = 0;
         }
+
         if (!isInMenu()) {
-            if (isKeyDownThisTick(keyServer)) {
+            if (isKeyDownThisTick(this.keyServer)) {
                 if (isMultiplayer()) {
-                    if (wasKeyPressedThisTick(keyTimeAdd)) {
-                        sendChat(optServerCmd + (optServerCmdPlus ? " +" : " ") + optTimeStep);
-                    } else if (wasKeyPressedThisTick(keyTimeSub)) {
-                        sendChat(optServerCmd + " -" + optTimeStep);
+                    if (wasKeyPressedThisTick(this.keyTimeAdd)) {
+                        sendChat(this.optServerCmd + (this.optServerCmdPlus ? " +" : " ") + this.optTimeStep);
+                    } else if (wasKeyPressedThisTick(this.keyTimeSub)) {
+                        sendChat(this.optServerCmd + " -" + this.optTimeStep);
                     }
                 } else {
-                    if (wasKeyPressedThisTick(keyTimeAdd)) {
+                    if (wasKeyPressedThisTick(this.keyTimeAdd)) {
                         synchronized (this) {
-                            sunServerSetTime = true;
-                            setTime(sunServerTime = time + optTimeStep);
+                            this.sunServerSetTime = true;
+                            setTime(this.sunServerTime = time + this.optTimeStep);
                         }
-                    } else if (wasKeyPressedThisTick(keyTimeSub)) {
+                    } else if (wasKeyPressedThisTick(this.keyTimeSub)) {
                         synchronized (this) {
-                            sunServerSetTime = true;
-                            setTime(sunServerTime = time - optTimeStep);
+                            this.sunServerSetTime = true;
+                            setTime(this.sunServerTime = time - this.optTimeStep);
                         }
                     }
                 }
             } else {
-                if (wasKeyPressedThisTick(keyTimeAdd)) {
-                    if (sunTimeStop) {
-                        sunTimeMoment += optTimeStep;
+                if (wasKeyPressedThisTick(this.keyTimeAdd)) {
+                    if (this.sunTimeStop) {
+                        this.sunTimeMoment += this.optTimeStep;
                     }
-                    sunTimeOffset += optTimeStep;
-                } else if (wasKeyPressedThisTick(keyTimeSub)) {
-                    if (sunTimeStop) {
-                        sunTimeMoment -= optTimeStep;
+                    this.sunTimeOffset += this.optTimeStep;
+                } else if (wasKeyPressedThisTick(this.keyTimeSub)) {
+                    if (this.sunTimeStop) {
+                        this.sunTimeMoment -= this.optTimeStep;
                     }
-                    sunTimeOffset -= optTimeStep;
+                    this.sunTimeOffset -= this.optTimeStep;
                 }
             }
-            if (wasKeyPressedThisTick(keyStop)) {
-                sunTimeStop = !sunTimeStop;
-                if (sunTimeStop) {
-                    sunTimeMoment = time;
+
+            if (wasKeyPressedThisTick(this.keyStop)) {
+                this.sunTimeStop = !this.sunTimeStop;
+                if (this.sunTimeStop) {
+                    this.sunTimeMoment = time;
                 }
             }
-            if (wasKeyPressedThisTick(keyTimeNormal)) {
-                sunTimeOffset = 0;
+            if (wasKeyPressedThisTick(this.keyTimeNormal)) {
+                this.sunTimeOffset = 0;
             }
         }
-        if (sunTimeStop) {
-            sunTimeOffset -= time - sunTimeMoment;
-            sunTimeMoment = time;
+
+        if (this.sunTimeStop) {
+            this.sunTimeOffset -= time - this.sunTimeMoment;
+            this.sunTimeMoment = time;
         }
     }
 
     @Override
     protected void onServerTick(@Nonnull EntityPlayerMP player) {
         synchronized (this) {
-            if (sunServerSetTime) {
-                setTime(getWorld(player), sunServerTime);
-                sunServerSetTime = false;
+            if (this.sunServerSetTime) {
+                setTime(getWorld(player), this.sunServerTime);
+                this.sunServerSetTime = false;
             }
         }
     }
 
+    @Nullable
     @Override
     protected String getTag() {
-        if (sunTimeOffset == 0) {
+        if (this.sunTimeOffset == 0) {
             return null;
         }
-        return tagSun + (sunTimeOffset < 0 ? "" : "+") + (sunTimeOffset / 20);
-    }
 
+        return this.tagSun + (this.sunTimeOffset < 0 ? "" : "+") + (this.sunTimeOffset / 20);
+    }
 }
